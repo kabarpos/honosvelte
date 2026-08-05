@@ -1,0 +1,301 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-08-05T18:20:44.953Z",
+  "pages": {
+    "concepts/asset-version-negotiation": {
+      "type": "page",
+      "title": "asset-version-negotiation",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/correlation-id-logging": {
+      "type": "page",
+      "title": "correlation-id-logging",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/csrf-origin-check": {
+      "type": "page",
+      "title": "csrf-origin-check",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/fixed-window-rate-limiting": {
+      "type": "page",
+      "title": "fixed-window-rate-limiting",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/in-process-ssr": {
+      "type": "page",
+      "title": "in-process-ssr",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/one-shot-flash-messages": {
+      "type": "page",
+      "title": "one-shot-flash-messages",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/partial-reloads": {
+      "type": "page",
+      "title": "partial-reloads",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/route-guards-beforehandle": {
+      "type": "page",
+      "title": "route-guards-beforehandle",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/server-driven-ui": {
+      "type": "page",
+      "title": "server-driven-ui",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/svelte-5-migration": {
+      "type": "page",
+      "title": "svelte-5-migration",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/tailwind-v4-setup": {
+      "type": "page",
+      "title": "tailwind-v4-setup",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "concepts/versioned-sql-migrations": {
+      "type": "page",
+      "title": "versioned-sql-migrations",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/bun": {
+      "type": "page",
+      "title": "bun",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/bunpassword": {
+      "type": "page",
+      "title": "bunpassword",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/bunsqlite": {
+      "type": "page",
+      "title": "bunsqlite",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/docker": {
+      "type": "page",
+      "title": "docker",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/elysia-inertia-boilerplate": {
+      "type": "page",
+      "title": "elysia-inertia-boilerplate",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/elysia": {
+      "type": "page",
+      "title": "elysia",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/google-oauth": {
+      "type": "page",
+      "title": "google-oauth",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/inertia-v3": {
+      "type": "page",
+      "title": "inertia-v3",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/inertiajsreact": {
+      "type": "page",
+      "title": "inertiajsreact",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/mailtrap": {
+      "type": "page",
+      "title": "mailtrap",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/react-19": {
+      "type": "page",
+      "title": "react-19",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/resend": {
+      "type": "page",
+      "title": "resend",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "entities/typebox": {
+      "type": "page",
+      "title": "typebox",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/boilerplate-v010-released-and-pat-workflow-scope": {
+      "type": "page",
+      "title": "boilerplate-v010-released-and-pat-workflow-scope",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/elysia-14-hook-order-and-plugin-quirks": {
+      "type": "page",
+      "title": "elysia-14-hook-order-and-plugin-quirks",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/elysia-14-vs-2-benchmark-raw-speed": {
+      "type": "page",
+      "title": "elysia-14-vs-2-benchmark-raw-speed",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/elysia-2-vs-14-differences": {
+      "type": "page",
+      "title": "elysia-2-vs-14-differences",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": {
+      "type": "page",
+      "title": "obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": {
+      "type": "page",
+      "title": "obs-2026-08-03-session-design-sqlite-backed-not-jwt",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": {
+      "type": "page",
+      "title": "obs-2026-08-03-sql-migration-runner-for-bun-sqlite",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-03-styling-decision-vanilla-css-final": {
+      "type": "page",
+      "title": "obs-2026-08-03-styling-decision-vanilla-css-final",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture": {
+      "type": "page",
+      "title": "obs-2026-08-04-agents-md-created-codifying-repo-architecture",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision": {
+      "type": "page",
+      "title": "obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-04-professional-profile-page-with-info-and-password-forms": {
+      "type": "page",
+      "title": "obs-2026-08-04-professional-profile-page-with-info-and-password-forms",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-04-profile-page-with-tus-avatar-upload": {
+      "type": "page",
+      "title": "obs-2026-08-04-profile-page-with-tus-avatar-upload",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-04-project-renamed-to-dulak": {
+      "type": "page",
+      "title": "obs-2026-08-04-project-renamed-to-dulak",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-04-route-conventions-url-first-file-naming": {
+      "type": "page",
+      "title": "obs-2026-08-04-route-conventions-url-first-file-naming",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation": {
+      "type": "page",
+      "title": "obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention": {
+      "type": "page",
+      "title": "obs-2026-08-04-tus-uploads-restructured-to-flat-convention",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source": {
+      "type": "page",
+      "title": "obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13": {
+      "type": "page",
+      "title": "obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/obs-2026-08-05-project-rebranded-dulak-honosvelte": {
+      "type": "source",
+      "title": "\"Observation: Project rebranded dulak → honosvelte\"",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "slug": "obs-2026-08-05-project-rebranded-dulak-honosvelte",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-05T18:20:44.944Z",
+      "tags": [
+        "rename",
+        "branding",
+        "honosvelte"
+      ],
+      "source_context": "\"Renaming the project identity from dulak to honosvelte and moving the GitHub remote to kabarpos/honosvelte.\""
+    },
+    "sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox": {
+      "type": "page",
+      "title": "obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    },
+    "sources/pi-settings-git-source-url-format": {
+      "type": "source",
+      "title": "\"pi extension git sources need full https URL in settings.json\"",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "slug": "pi-settings-git-source-url-format",
+      "status": "insight",
+      "category": "devops"
+    },
+    "sources/SRC-2026-08-03-001": {
+      "type": "page",
+      "title": "SRC-2026-08-03-001",
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
+    }
+  }
+}

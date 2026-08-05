@@ -1,0 +1,136 @@
+/* ===========================================================================
+   colors.css — GLOBAL COLOR & THEME TOKENS (single source of truth)
+   ---------------------------------------------------------------------------
+   This is the ONE file to edit to rebrand the app. Change `--primary`
+   (light + dark) below and every component updates automatically.
+
+   - Light/dark via [data-theme] on <html> (set by an inline head script to
+     avoid FOUC; toggled by the dashboard topbar). Defaults to light.
+   - Components reference these tokens through Tailwind utilities that are
+     bridged in tailwind.css (e.g. bg-bg, bg-surface, text-text, text-muted,
+     border-border, bg-primary, text-primary, bg-primary-soft, text-danger,
+     bg-danger, bg-success, shadow-card, font-sans).
+   - A shadcn-compatible superset (--background, --foreground, --card,
+     --primary-foreground, --muted-foreground, --destructive, --accent, …) is
+     included so components may also use that naming.
+   - Design tokens only. Keyframes live in styles.css.
+=========================================================================== */
+
+:root,
+[data-theme="light"] {
+	/* ----- Brand (EDIT HERE TO REBRAND) ----- */
+	--primary: #059669;
+	--primary-hover: #047857;
+	--primary-soft: #ecfdf5;
+	--primary-foreground: #ffffff;
+
+	/* ----- shadcn-compatible set ----- */
+	--background: #f6f7fb;
+	--foreground: #1a1d27;
+	--card: #ffffff;
+	--card-foreground: #1a1d27;
+	--popover: #ffffff;
+	--popover-foreground: #1a1d27;
+	--secondary: #eef1f7;
+	--secondary-foreground: #1a1d27;
+	--muted: #eef1f7;
+	--muted-foreground: #6b7280;
+	--accent: #ecfdf5;
+	--accent-foreground: #047857;
+	--destructive: #dc2626;
+	--destructive-foreground: #ffffff;
+	--border: #e4e7ef;
+	--input: #e4e7ef;
+	--ring: #059669;
+	--chart-1: #059669;
+	--chart-2: #1a1d27;
+	--chart-3: #6b7280;
+	--chart-4: #34d399;
+	--chart-5: #d4d9ce;
+	--sidebar: #ffffff;
+	--sidebar-foreground: #1a1d27;
+	--sidebar-primary: #059669;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: #ecfdf5;
+	--sidebar-accent-foreground: #047857;
+	--sidebar-border: #e4e7ef;
+	--sidebar-ring: #059669;
+
+	/* ----- Project short aliases used by components ----- */
+	--bg: var(--background);
+	--surface: var(--card);
+	--text: var(--foreground);
+	--muted: var(--muted-foreground); /* text-muted -> grey */
+	--danger: var(--destructive);
+	--success: #16a34a;
+
+	/* ----- Typography ----- */
+	--font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system,
+		"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-serif: "Instrument Serif", Georgia, serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+	--tracking-normal: -0.01em;
+
+	/* ----- Shape & elevation ----- */
+	--radius: 12px;
+	--shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px -8px rgb(16 24 40 / 0.12);
+}
+
+[data-theme="dark"] {
+	/* ----- Brand (EDIT HERE TO REBRAND) ----- */
+	--primary: #10b981;
+	--primary-hover: #34d399;
+	--primary-soft: #06281f;
+	--primary-foreground: #04130d;
+
+	/* ----- shadcn-compatible set ----- */
+	--background: #0f1117;
+	--foreground: #e8eaf2;
+	--card: #171a23;
+	--card-foreground: #e8eaf2;
+	--popover: #171a23;
+	--popover-foreground: #e8eaf2;
+	--secondary: #1c2030;
+	--secondary-foreground: #e8eaf2;
+	--muted: #1c2030;
+	--muted-foreground: #9aa1b2;
+	--accent: #06281f;
+	--accent-foreground: #34d399;
+	--destructive: #ef4444;
+	--destructive-foreground: #ffffff;
+	--border: #2d3444;
+	--input: #2d3444;
+	--ring: #10b981;
+	--chart-1: #34d399;
+	--chart-2: #e8eaf2;
+	--chart-3: #9aa1b2;
+	--chart-4: #059669;
+	--chart-5: #f0ede5;
+	--sidebar: #131620;
+	--sidebar-foreground: #e8eaf2;
+	--sidebar-primary: #10b981;
+	--sidebar-primary-foreground: #04130d;
+	--sidebar-accent: #06281f;
+	--sidebar-accent-foreground: #34d399;
+	--sidebar-border: #2d3444;
+	--sidebar-ring: #10b981;
+
+	/* ----- Project short aliases used by components ----- */
+	--bg: var(--background);
+	--surface: var(--card);
+	--text: var(--foreground);
+	--muted: var(--muted-foreground); /* text-muted -> grey */
+	--danger: var(--destructive);
+	--success: #22c55e;
+
+	/* ----- Typography ----- */
+	--font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system,
+		"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-serif: "Instrument Serif", Georgia, serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+	--tracking-normal: -0.01em;
+
+	/* ----- Shape & elevation ----- */
+	--radius: 12px;
+	--shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5);
+}

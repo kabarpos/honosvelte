@@ -1,0 +1,62 @@
+@import "tailwindcss";
+/* Global color + font tokens — the single source of truth (edit colors.css to rebrand). */
+@import "./colors.css";
+
+/* Map dark mode to [data-theme="dark"] (boilerplate convention). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Bridge CSS variables (defined in colors.css) to Tailwind theme tokens.
+   `inline` means utilities compile to var(--token) so dark mode
+   auto-switches at runtime without duplicating values. */
+@theme inline {
+	--color-bg: var(--bg);
+	--color-surface: var(--surface);
+	--color-border: var(--border);
+	--color-text: var(--text);
+	--color-muted: var(--muted);
+	--color-primary: var(--primary);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-soft: var(--primary-soft);
+	--color-danger: var(--danger);
+	--color-success: var(--success);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+
+	--font-sans: var(--font-sans);
+	--font-serif: var(--font-serif);
+	--font-mono: var(--font-mono);
+	--radius: var(--radius);
+	--shadow-card: var(--shadow);
+}
+
+/* --- Base layer --------------------------------------------------------- */
+
+@layer base {
+	body {
+		@apply bg-bg text-text font-sans antialiased leading-normal;
+		margin: 0;
+	}
+
+	a:hover {
+		text-decoration: underline;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
