@@ -156,3 +156,11 @@ src/
   formatting.
 - Keep changes minimal and conventional; delete dead code rather than
   leaving shims or aliases behind a rename.
+- **All colors come from `src/client/colors.css` design tokens** — the single
+  source of truth, bridged to Tailwind utilities via `@theme inline` in
+  `tailwind.css`. Do NOT use hardcoded palette classes (`bg-green-500`,
+  `text-white`, `bg-black/50`, `border-red-200`, `#rrggbb`), and do NOT add
+  `dark:` color variants in components — the tokens already switch with
+  `[data-theme="dark"]`. To introduce a new color, add a semantic token to
+  `colors.css` (both `:root` and `[data-theme="dark"]`). Status colors are
+  `--success-bg/-fg/-border`, `--warning-*`, `--danger-*`, `--overlay`.

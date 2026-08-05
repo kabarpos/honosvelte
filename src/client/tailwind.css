@@ -36,6 +36,18 @@
 	--color-input: var(--input);
 	--color-ring: var(--ring);
 
+	/* Semantic status surfaces (theme-aware — no dark: variants needed). */
+	--color-success-bg: var(--success-bg);
+	--color-success-fg: var(--success-fg);
+	--color-success-border: var(--success-border);
+	--color-warning-bg: var(--warning-bg);
+	--color-warning-fg: var(--warning-fg);
+	--color-warning-border: var(--warning-border);
+	--color-danger-bg: var(--danger-bg);
+	--color-danger-fg: var(--danger-fg);
+	--color-danger-border: var(--danger-border);
+	--color-overlay: var(--overlay);
+
 	--font-sans: var(--font-sans);
 	--font-serif: var(--font-serif);
 	--font-mono: var(--font-mono);

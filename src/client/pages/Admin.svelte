@@ -66,7 +66,7 @@
                 </td>
                 <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap">
                   <span
-                    class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${u.role === 'admin' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-primary-soft text-primary'}`}
+                    class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${u.role === 'admin' ? 'bg-warning-bg text-warning-fg' : 'bg-primary-soft text-primary'}`}
                   >
                     {u.role}
                   </span>

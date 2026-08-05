@@ -7,7 +7,14 @@
  * The asset version doubles as the Inertia version for cache busting.
  */
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+	copyFileSync,
+	readdirSync,
+} from "node:fs";
 import { basename } from "node:path";
 import type { InertiaAssets } from "./inertia";
 import { sveltePlugin } from "./svelte-plugin";
@@ -17,6 +24,25 @@ const ASSETS_DIR = `${DIST_DIR}/assets`;
 const MANIFEST_PATH = `${DIST_DIR}/manifest.json`;
 const TAILWIND_INPUT = "src/client/tailwind.css";
 const TAILWIND_OUTPUT = "src/client/.tailwind.css";
+const FONTS_SRC = "src/client/fonts";
+const FONTS_DEST = `${ASSETS_DIR}/fonts`;
+
+/** Copy self-hosted font files (woff2/woff) so they are served same-origin
+ *  from /assets/fonts — required because the app's strict CSP uses
+ *  font-src 'self' and therefore blocks any external font CDN. */
+function copyFonts(): void {
+	mkdirSync(FONTS_DEST, { recursive: true });
+	if (!existsSync(FONTS_SRC)) return;
+	for (const file of readdirSync(FONTS_SRC)) {
+		if (
+			file.endsWith(".woff2") ||
+			file.endsWith(".woff") ||
+			file.endsWith(".css")
+		) {
+			copyFileSync(`${FONTS_SRC}/${file}`, `${FONTS_DEST}/${file}`);
+		}
+	}
+}
 
 async function compileTailwind(): Promise<void> {
 	await Bun.$`bunx @tailwindcss/cli -i ${TAILWIND_INPUT} -o ${TAILWIND_OUTPUT} --minify`.quiet();
@@ -25,6 +51,9 @@ async function compileTailwind(): Promise<void> {
 export async function buildClientAssets(): Promise<void> {
 	// 1. Compile Tailwind v4 → static CSS (no PostCSS needed).
 	await compileTailwind();
+
+	// 1b. Copy self-hosted fonts into dist/assets/fonts (served same-origin).
+	copyFonts();
 
 	// 2. Client bundle: Svelte compiled for browser.
 	const result = await Bun.build({
@@ -80,7 +109,7 @@ export async function buildClientAssets(): Promise<void> {
 	console.log(`Built client assets → dist/ (version ${assets.version})`);
 }
 
-export const manifestExists = (): boolean => existsSync(MANIFEST_PATH)
+export const manifestExists = (): boolean => existsSync(MANIFEST_PATH);
 
 export function loadManifest(): InertiaAssets {
 	const raw = readFileSync(MANIFEST_PATH, "utf8");
@@ -92,21 +121,26 @@ export function loadManifest(): InertiaAssets {
 }
 
 const CONTENT_TYPES: Record<string, string> = {
-  '.js': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.map': 'application/json; charset=utf-8',
-}
+	".js": "text/javascript; charset=utf-8",
+	".css": "text/css; charset=utf-8",
+	".map": "application/json; charset=utf-8",
+	".woff2": "font/woff2",
+	".woff": "font/woff",
+};
 
 /** Serves /assets/* from dist/assets with long-lived caching (hashed names). */
-export async function serveAsset(relPath: string | undefined): Promise<Response> {
-  if (!relPath || relPath.includes('..')) return new Response('Not found', { status: 404 })
-  const file = Bun.file(`${ASSETS_DIR}/${relPath}`)
-  if (!(await file.exists())) return new Response('Not found', { status: 404 })
-  const ext = relPath.slice(relPath.lastIndexOf('.'))
-  return new Response(file, {
-    headers: {
-      'content-type': CONTENT_TYPES[ext] ?? 'application/octet-stream',
-      'cache-control': 'public, max-age=31536000, immutable',
-    },
-  })
+export async function serveAsset(
+	relPath: string | undefined,
+): Promise<Response> {
+	if (!relPath || relPath.includes(".."))
+		return new Response("Not found", { status: 404 });
+	const file = Bun.file(`${ASSETS_DIR}/${relPath}`);
+	if (!(await file.exists())) return new Response("Not found", { status: 404 });
+	const ext = relPath.slice(relPath.lastIndexOf("."));
+	return new Response(file, {
+		headers: {
+			"content-type": CONTENT_TYPES[ext] ?? "application/octet-stream",
+			"cache-control": "public, max-age=31536000, immutable",
+		},
+	});
 }

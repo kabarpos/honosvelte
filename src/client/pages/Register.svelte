@@ -1,7 +1,9 @@
 <script lang="ts">
   import { Link, useForm } from '@inertiajs/svelte'
   import AuthLayout from '../components/AuthLayout.svelte'
-  import Field from '../components/Field.svelte'
+  import Button from '../components/Button.svelte'
+  import Alert from '../components/Alert.svelte'
+  import TextField from '../components/TextField.svelte'
 
   let { googleEnabled = false }: { googleEnabled?: boolean } = $props()
 
@@ -20,12 +22,9 @@
   <p class="text-muted mb-5">Start building with the boilerplate in seconds.</p>
 
   {#if googleEnabled}
-    <a
-      class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 w-full border border-border rounded-lg bg-surface font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
-      href="/auth/google"
-    >
+    <Button href="/auth/google" variant="secondary" fullWidth>
       Register with Google
-    </a>
+    </Button>
     <div class="flex items-center gap-3 text-muted text-xs my-5">
       <span class="flex-1 h-px bg-border"></span>
       or
@@ -34,52 +33,44 @@
   {/if}
 
   <form onsubmit={submit} novalidate>
-    <Field id="name" label="Name" error={form.errors.name}>
-      <!-- svelte-ignore a11y_autofocus -->
-      <input
-        id="name"
-        type="text"
-        name="name"
-        autocomplete="name"
-        autofocus
-        class="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary"
-        bind:value={form.name}
-        onchange={() => form.clearErrors('name')}
-      />
-    </Field>
+    <TextField
+      id="name"
+      label="Name"
+      error={form.errors.name}
+      type="text"
+      name="name"
+      autocomplete="name"
+      autofocus
+      bind:value={form.name}
+      onchange={() => form.clearErrors('name')}
+    />
 
-    <Field id="email" label="Email" error={form.errors.email}>
-      <input
-        id="email"
-        type="email"
-        name="email"
-        autocomplete="email"
-        class="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary"
-        bind:value={form.email}
-        onchange={() => form.clearErrors('email')}
-      />
-    </Field>
+    <TextField
+      id="email"
+      label="Email"
+      error={form.errors.email}
+      type="email"
+      name="email"
+      autocomplete="email"
+      bind:value={form.email}
+      onchange={() => form.clearErrors('email')}
+    />
 
-    <Field id="password" label="Password" error={form.errors.password}>
-      <input
-        id="password"
-        type="password"
-        name="password"
-        autocomplete="new-password"
-        class="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary"
-        bind:value={form.password}
-        onchange={() => form.clearErrors('password')}
-      />
-      <p class="text-xs text-muted mt-1">At least 8 characters.</p>
-    </Field>
+    <TextField
+      id="password"
+      label="Password"
+      error={form.errors.password}
+      type="password"
+      name="password"
+      autocomplete="new-password"
+      hint="At least 8 characters."
+      bind:value={form.password}
+      onchange={() => form.clearErrors('password')}
+    />
 
-    <button
-      class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 w-full border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline disabled:opacity-60 disabled:cursor-not-allowed"
-      type="submit"
-      disabled={form.processing}
-    >
+    <Button type="submit" fullWidth loading={form.processing}>
       {form.processing ? 'Creating account…' : 'Create account'}
-    </button>
+    </Button>
   </form>
 
   <p class="mt-5 text-center text-muted text-sm">

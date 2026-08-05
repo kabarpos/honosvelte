@@ -1,7 +1,7 @@
 {
-  "name": "Elysia + Inertia v3 boilerplate: full-stack starter (auth, roles, migrations, SSR, tests, docker)",
+  "name": "Honosvelte: Hono + Svelte 5 + bun:sqlite boilerplate (auth, roles, SSR, tests, docker)",
   "mode": "personal",
-  "topic": "Elysia + Inertia v3 boilerplate: full-stack starter (auth, roles, migrations, SSR, tests, docker)",
+  "topic": "Honosvelte: Hono + Svelte 5 + bun:sqlite boilerplate (auth, roles, SSR, tests, docker)",
   "created": "2026-08-03",
   "version": "1.0"
 }

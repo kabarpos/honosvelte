@@ -1,100 +1,143 @@
 {
-  "concepts/asset-version-negotiation": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/asset-version-negotiation": [],
+  "concepts/centralized-prepared-statements": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "concepts/correlation-id-logging": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/correlation-id-logging": [],
+  "concepts/csrf-origin-check": [],
+  "concepts/data-attribute-dark-mode": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "concepts/csrf-origin-check": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/design-tokens-via-css-variables": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "concepts/fixed-window-rate-limiting": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/discoverability-contract-file-url-namespace": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "concepts/in-process-ssr": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/fail-fast-config-validation": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "concepts/one-shot-flash-messages": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/fixed-window-rate-limiter": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "concepts/partial-reloads": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/fixed-window-rate-limiting": [],
+  "concepts/flat-server-architecture": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "concepts/route-guards-beforehandle": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/health-check-endpoint": [
+    "sources/SRC-2026-08-05-003"
   ],
-  "concepts/server-driven-ui": [
-    "sources/SRC-2026-08-03-001"
+  "concepts/in-process-ssr-with-inertia": [
+    "sources/SRC-2026-08-05-002"
+  ],
+  "concepts/in-process-ssr": [],
+  "concepts/json-vs-inertia-response-dispatch": [
+    "sources/SRC-2026-08-05-003"
+  ],
+  "concepts/middleware-registration-order": [
+    "sources/SRC-2026-08-05-003"
+  ],
+  "concepts/one-shot-flash-messages": [],
+  "concepts/partial-reloads": [],
+  "concepts/path-based-content-security-policy": [
+    "sources/SRC-2026-08-05-003"
+  ],
+  "concepts/route-factory-pattern": [
+    "sources/SRC-2026-08-05-002"
+  ],
+  "concepts/route-guards-beforehandle": [],
+  "concepts/schema-validation-to-422inertia-mapping": [
+    "sources/SRC-2026-08-05-003"
+  ],
+  "concepts/security-headers-stack": [
+    "sources/SRC-2026-08-05-003"
+  ],
+  "concepts/server-driven-ui": [],
+  "concepts/stored-xss-guard": [
+    "sources/SRC-2026-08-05-003"
+  ],
+  "concepts/strict-typescript-configuration": [
+    "sources/SRC-2026-08-05-002"
   ],
   "concepts/svelte-5-migration": [],
   "concepts/tailwind-v4-setup": [],
+  "concepts/test-process-isolation": [
+    "sources/SRC-2026-08-05-002"
+  ],
   "concepts/versioned-sql-migrations": [
-    "sources/SRC-2026-08-03-001"
+    "sources/SRC-2026-08-05-002"
+  ],
+  "entities/argon2id": [
+    "sources/SRC-2026-08-05-002"
+  ],
+  "entities/bun-1314": [
+    "sources/SRC-2026-08-05-003"
   ],
   "entities/bun": [
-    "sources/SRC-2026-08-03-001"
+    "sources/SRC-2026-08-05-002"
   ],
-  "entities/bunpassword": [
-    "sources/SRC-2026-08-03-001"
+  "entities/bunbuild": [
+    "sources/SRC-2026-08-05-002"
   ],
   "entities/bunsqlite": [
-    "sources/SRC-2026-08-03-001"
+    "sources/SRC-2026-08-05-002"
   ],
-  "entities/docker": [
-    "sources/SRC-2026-08-03-001"
+  "entities/compressionstream": [
+    "sources/SRC-2026-08-05-003"
   ],
-  "entities/elysia-inertia-boilerplate": [
-    "sources/boilerplate-v010-released-and-pat-workflow-scope",
-    "sources/elysia-14-hook-order-and-plugin-quirks"
+  "entities/docker": [],
+  "entities/google-oauth": [],
+  "entities/google": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "entities/elysia": [
-    "sources/elysia-14-vs-2-benchmark-raw-speed",
-    "sources/elysia-2-vs-14-differences",
-    "sources/SRC-2026-08-03-001"
+  "entities/hono": [
+    "sources/SRC-2026-08-05-002",
+    "sources/SRC-2026-08-05-003"
   ],
-  "entities/google-oauth": [
-    "sources/SRC-2026-08-03-001"
+  "entities/honoconninfo": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "entities/inertia-v3": [
-    "sources/SRC-2026-08-03-001"
+  "entities/honosecure-headers": [
+    "sources/SRC-2026-08-05-002"
   ],
-  "entities/inertiajsreact": [
-    "sources/SRC-2026-08-03-001"
+  "entities/inertia-v3": [],
+  "entities/inertia": [
+    "sources/SRC-2026-08-05-002",
+    "sources/SRC-2026-08-05-003"
   ],
   "entities/mailtrap": [
-    "sources/SRC-2026-08-03-001"
+    "sources/SRC-2026-08-05-002"
   ],
-  "entities/react-19": [
-    "sources/SRC-2026-08-03-001"
+  "entities/nodezlib": [
+    "sources/SRC-2026-08-05-002"
   ],
   "entities/resend": [
-    "sources/SRC-2026-08-03-001"
+    "sources/SRC-2026-08-05-002"
+  ],
+  "entities/svelte": [
+    "sources/SRC-2026-08-05-002"
+  ],
+  "entities/tailwind-css": [
+    "sources/SRC-2026-08-05-002"
+  ],
+  "entities/tailwindcsscli": [
+    "sources/SRC-2026-08-05-002"
+  ],
+  "entities/tus-protocol": [
+    "sources/SRC-2026-08-05-002"
+  ],
+  "entities/tus": [
+    "sources/SRC-2026-08-05-003"
   ],
   "entities/typebox": [
-    "sources/SRC-2026-08-03-001"
+    "sources/SRC-2026-08-05-002",
+    "sources/SRC-2026-08-05-003"
   ],
   "sources/boilerplate-v010-released-and-pat-workflow-scope": [],
-  "sources/elysia-14-hook-order-and-plugin-quirks": [
-    "entities/elysia-inertia-boilerplate",
-    "sources/elysia-2-vs-14-differences"
-  ],
-  "sources/elysia-14-vs-2-benchmark-raw-speed": [],
-  "sources/elysia-2-vs-14-differences": [
-    "sources/boilerplate-v010-released-and-pat-workflow-scope",
-    "sources/elysia-14-vs-2-benchmark-raw-speed"
-  ],
-  "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": [
-    "entities/elysia-inertia-boilerplate"
-  ],
-  "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": [
-    "entities/elysia-inertia-boilerplate"
-  ],
-  "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": [
-    "entities/elysia-inertia-boilerplate"
-  ],
-  "sources/obs-2026-08-03-styling-decision-vanilla-css-final": [
-    "sources/boilerplate-v010-released-and-pat-workflow-scope"
-  ],
+  "sources/honosvelte-component-library": [],
+  "sources/honosvelte-global-color-token-rule": [],
+  "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": [],
+  "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": [],
   "sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture": [],
   "sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision": [],
   "sources/obs-2026-08-04-professional-profile-page-with-info-and-password-forms": [],
@@ -106,32 +149,94 @@
   "sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source": [],
   "sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13": [],
   "sources/obs-2026-08-05-project-rebranded-dulak-honosvelte": [],
+  "sources/obs-2026-08-05-strict-csp-blocks-external-font-cdns-self-host-instead": [],
   "sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox": [],
   "sources/pi-settings-git-source-url-format": [],
-  "sources/SRC-2026-08-03-001": [
-    "concepts/asset-version-negotiation",
-    "concepts/correlation-id-logging",
-    "concepts/csrf-origin-check",
-    "concepts/fixed-window-rate-limiting",
-    "concepts/in-process-ssr",
-    "concepts/one-shot-flash-messages",
-    "concepts/partial-reloads",
-    "concepts/route-guards-beforehandle",
-    "concepts/server-driven-ui",
-    "concepts/versioned-sql-migrations",
-    "entities/bun",
-    "entities/bunpassword",
-    "entities/bunsqlite",
-    "entities/docker",
-    "entities/elysia-inertia-boilerplate",
-    "entities/elysia",
-    "entities/google-oauth",
-    "entities/inertia-v3",
-    "entities/inertiajsreact",
-    "entities/mailtrap",
-    "entities/react-19",
-    "entities/resend",
-    "entities/typebox",
-    "sources/SRC-2026-08-03-001"
+  "sources/SRC-2026-08-05-001": [
+    "sources/SRC-2026-08-05-001"
+  ],
+  "sources/SRC-2026-08-05-002": [
+    "concepts/centralized-prepared-statements",
+    "concepts/data-attribute-dark-mode",
+    "concepts/design-tokens-via-css-variables",
+    "concepts/discoverability-contract-file-url-namespace",
+    "concepts/fail-fast-config-validation",
+    "concepts/fixed-window-rate-limiter",
+    "concepts/flat-server-architecture",
+    "concepts/in-process-ssr-with-inertia",
+    "concepts/route-factory-pattern",
+    "concepts/strict-typescript-configuration",
+    "concepts/test-process-isolation",
+    "entities/argon2id",
+    "entities/bunbuild",
+    "entities/google",
+    "entities/honoconninfo",
+    "entities/honosecure-headers",
+    "entities/nodezlib",
+    "entities/svelte",
+    "entities/tailwind-css",
+    "entities/tailwindcsscli",
+    "entities/tus-protocol",
+    "sources/SRC-2026-08-05-002"
+  ],
+  "sources/SRC-2026-08-05-003": [
+    "concepts/health-check-endpoint",
+    "concepts/json-vs-inertia-response-dispatch",
+    "concepts/middleware-registration-order",
+    "concepts/path-based-content-security-policy",
+    "concepts/schema-validation-to-422inertia-mapping",
+    "concepts/security-headers-stack",
+    "concepts/stored-xss-guard",
+    "entities/bun-1314",
+    "entities/compressionstream",
+    "entities/hono",
+    "entities/inertia",
+    "entities/tus",
+    "sources/SRC-2026-08-05-003"
+  ],
+  "sources/SRC-2026-08-05-004": [
+    "sources/SRC-2026-08-05-004"
+  ],
+  "sources/SRC-2026-08-05-005": [
+    "sources/SRC-2026-08-05-005"
+  ],
+  "sources/SRC-2026-08-05-006": [
+    "sources/SRC-2026-08-05-006"
+  ],
+  "sources/SRC-2026-08-05-007": [
+    "sources/SRC-2026-08-05-007"
+  ],
+  "sources/SRC-2026-08-05-008": [
+    "sources/SRC-2026-08-05-008"
+  ],
+  "sources/SRC-2026-08-05-009": [
+    "sources/SRC-2026-08-05-009"
+  ],
+  "sources/SRC-2026-08-05-010": [
+    "sources/SRC-2026-08-05-010"
+  ],
+  "sources/SRC-2026-08-05-011": [
+    "sources/SRC-2026-08-05-011"
+  ],
+  "sources/SRC-2026-08-05-012": [
+    "sources/SRC-2026-08-05-012"
+  ],
+  "sources/SRC-2026-08-05-013": [
+    "sources/SRC-2026-08-05-013"
+  ],
+  "sources/SRC-2026-08-05-014": [
+    "sources/SRC-2026-08-05-014"
+  ],
+  "sources/SRC-2026-08-05-015": [
+    "sources/SRC-2026-08-05-015"
+  ],
+  "sources/SRC-2026-08-05-016": [
+    "sources/SRC-2026-08-05-016"
+  ],
+  "sources/SRC-2026-08-05-017": [
+    "sources/SRC-2026-08-05-017"
+  ],
+  "sources/SRC-2026-08-05-018": [
+    "sources/SRC-2026-08-05-018"
   ]
 }

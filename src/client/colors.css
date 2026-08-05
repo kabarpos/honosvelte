@@ -64,16 +64,30 @@
 	--danger: var(--destructive);
 	--success: #16a34a;
 
+	/* ----- Semantic status surfaces (Alert / Toaster / flash / Badge) ----- */
+	--success-bg: #ecfdf5;
+	--success-fg: #047857;
+	--success-border: #a7f3d0;
+	--warning-bg: #fffbeb;
+	--warning-fg: #b45309;
+	--warning-border: #fde68a;
+	--danger-bg: #fef2f2;
+	--danger-fg: #b91c1c;
+	--danger-border: #fecaca;
+	--overlay: rgba(15, 23, 42, 0.5);
+
 	/* ----- Typography ----- */
-	--font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system,
-		"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-sans:
+		"Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
 	--font-serif: "Instrument Serif", Georgia, serif;
 	--font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 	--tracking-normal: -0.01em;
 
 	/* ----- Shape & elevation ----- */
 	--radius: 12px;
-	--shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px -8px rgb(16 24 40 / 0.12);
+	--shadow:
+		0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px -8px rgb(16 24 40 / 0.12);
 }
 
 [data-theme="dark"] {
@@ -123,9 +137,22 @@
 	--danger: var(--destructive);
 	--success: #22c55e;
 
+	/* ----- Semantic status surfaces (Alert / Toaster / flash / Badge) ----- */
+	--success-bg: #06281f;
+	--success-fg: #6ee7b7;
+	--success-border: #065f46;
+	--warning-bg: #2a1c08;
+	--warning-fg: #fcd34d;
+	--warning-border: #78350f;
+	--danger-bg: #2a0e0e;
+	--danger-fg: #fca5a5;
+	--danger-border: #991b1b;
+	--overlay: rgba(15, 23, 42, 0.5);
+
 	/* ----- Typography ----- */
-	--font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system,
-		"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-sans:
+		"Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
 	--font-serif: "Instrument Serif", Georgia, serif;
 	--font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 	--tracking-normal: -0.01em;

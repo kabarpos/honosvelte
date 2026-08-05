@@ -167,7 +167,7 @@
     'w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary'
 
   const btnPrimary =
-    'inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline disabled:opacity-60 disabled:cursor-not-allowed'
+    'inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-primary rounded-lg bg-primary text-primary-foreground font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline disabled:opacity-60 disabled:cursor-not-allowed'
 </script>
 
 <svelte:head><title>Profile</title></svelte:head>
@@ -192,7 +192,7 @@
             />
           {:else}
             <span
-              class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary text-white text-sm font-bold shrink-0"
+              class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary text-primary-foreground text-sm font-bold shrink-0"
               aria-hidden="true"
             >
               {user.name
@@ -242,7 +242,7 @@
               </span>
             {/if}
             {#if message}
-              <p class="text-[#b91c1c] text-sm m-0">{message}</p>
+              <p class="text-danger-fg text-sm m-0">{message}</p>
             {/if}
             {#if phase === 'uploading' || (pending && phase === 'idle')}
               <div
@@ -259,7 +259,7 @@
               </div>
             {/if}
             {#if phase === 'done'}
-              <p class="text-green-700 font-semibold mt-3 m-0">Avatar updated.</p>
+              <p class="text-success-fg font-semibold mt-3 m-0">Avatar updated.</p>
             {/if}
           </div>
         </section>

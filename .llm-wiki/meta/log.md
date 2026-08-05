@@ -88,3 +88,74 @@
 ## [2026-08-05T18:20:44.945Z] observe
 - slug: "obs-2026-08-05-project-rebranded-dulak-honosvelte", title: "Project rebranded dulak → honosvelte", relevance: "high"
 
+## [2026-08-05T18:52:07.975Z] rebuild_meta
+
+## [2026-08-05T18:52:36.091Z] capture
+- source_id: "SRC-2026-08-05-001", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/README.md", format: "markdown"
+
+## [2026-08-05T18:52:36.094Z] capture
+- source_id: "SRC-2026-08-05-002", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/AGENTS.md", format: "markdown"
+
+## [2026-08-05T18:52:36.218Z] capture
+- source_id: "SRC-2026-08-05-003", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/app.ts", format: "file"
+
+## [2026-08-05T18:52:36.240Z] capture
+- source_id: "SRC-2026-08-05-005", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/db.ts", format: "file"
+
+## [2026-08-05T18:52:36.261Z] capture
+- source_id: "SRC-2026-08-05-004", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/auth.ts", format: "file"
+
+## [2026-08-05T18:52:36.279Z] capture
+- source_id: "SRC-2026-08-05-007", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/tus-protocol.ts", format: "file"
+
+## [2026-08-05T18:52:36.295Z] capture
+- source_id: "SRC-2026-08-05-006", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/config.ts", format: "file"
+
+## [2026-08-05T18:52:36.309Z] capture
+- source_id: "SRC-2026-08-05-008", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/tus-storage.ts", format: "file"
+
+## [2026-08-05T18:52:36.324Z] capture
+- source_id: "SRC-2026-08-05-009", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/rate-limit.ts", format: "file"
+
+## [2026-08-05T18:52:43.768Z] capture
+- source_id: "SRC-2026-08-05-011", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/validation.ts", format: "file"
+
+## [2026-08-05T18:52:43.785Z] capture
+- source_id: "SRC-2026-08-05-010", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/security.ts", format: "file"
+
+## [2026-08-05T18:52:43.805Z] capture
+- source_id: "SRC-2026-08-05-014", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/uploads.routes.ts", format: "file"
+
+## [2026-08-05T18:52:43.822Z] capture
+- source_id: "SRC-2026-08-05-012", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/mailer.ts", format: "file"
+
+## [2026-08-05T18:52:43.839Z] capture
+- source_id: "SRC-2026-08-05-013", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/inertia.ts", format: "file"
+
+## [2026-08-05T18:52:43.856Z] capture
+- source_id: "SRC-2026-08-05-016", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/profile.routes.ts", format: "file"
+
+## [2026-08-05T18:52:43.877Z] capture
+- source_id: "SRC-2026-08-05-015", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/auth.routes.ts", format: "file"
+
+## [2026-08-05T18:52:43.895Z] capture
+- source_id: "SRC-2026-08-05-018", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/pages.routes.ts", format: "file"
+
+## [2026-08-05T18:52:43.991Z] capture
+- source_id: "SRC-2026-08-05-017", file_path: "C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/google-oauth.routes.ts", format: "file"
+
+## [2026-08-05T18:53:49.229Z] ingest
+- source_id: "SRC-2026-08-05-003", entities_created: 5, concepts_created: 7, contradictions: 1, background: true
+
+## [2026-08-05T18:54:26.951Z] ingest
+- source_id: "SRC-2026-08-05-002", entities_created: 10, concepts_created: 11, contradictions: 4, background: true
+
+## [2026-08-05T19:35:46.630Z] observe
+- slug: "obs-2026-08-05-strict-csp-blocks-external-font-cdns-self-host-instead", title: "Strict CSP blocks external font CDNs — self-host instead", relevance: "high"
+
+## [2026-08-05T19:52:33.879Z] retro
+- slug: "honosvelte-component-library", title: "Component library in src/client/components", category: "frontend"
+
+## [2026-08-05T20:02:39.961Z] retro
+- slug: "honosvelte-global-color-token-rule", title: "Global color tokens via colors.css (no hardcoded colors)", category: "frontend"
+

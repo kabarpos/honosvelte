@@ -27,3 +27,27 @@
 {"timestamp":"2026-08-05T01:14:22.346Z","kind":"observe","slug":"obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox","title":"TypeBox formats not pre-registered in plain @sinclair/typebox","relevance":"high"}
 {"timestamp":"2026-08-05T17:53:08.537Z","kind":"retro","slug":"pi-settings-git-source-url-format","title":"pi extension git sources need full https URL in settings.json","category":"devops"}
 {"timestamp":"2026-08-05T18:20:44.945Z","kind":"observe","slug":"obs-2026-08-05-project-rebranded-dulak-honosvelte","title":"Project rebranded dulak → honosvelte","relevance":"high"}
+{"timestamp":"2026-08-05T18:52:07.975Z","kind":"rebuild_meta"}
+{"timestamp":"2026-08-05T18:52:36.091Z","kind":"capture","source_id":"SRC-2026-08-05-001","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/README.md","format":"markdown"}
+{"timestamp":"2026-08-05T18:52:36.094Z","kind":"capture","source_id":"SRC-2026-08-05-002","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/AGENTS.md","format":"markdown"}
+{"timestamp":"2026-08-05T18:52:36.218Z","kind":"capture","source_id":"SRC-2026-08-05-003","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/app.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:36.240Z","kind":"capture","source_id":"SRC-2026-08-05-005","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/db.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:36.261Z","kind":"capture","source_id":"SRC-2026-08-05-004","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/auth.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:36.279Z","kind":"capture","source_id":"SRC-2026-08-05-007","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/tus-protocol.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:36.295Z","kind":"capture","source_id":"SRC-2026-08-05-006","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/config.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:36.309Z","kind":"capture","source_id":"SRC-2026-08-05-008","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/tus-storage.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:36.324Z","kind":"capture","source_id":"SRC-2026-08-05-009","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/rate-limit.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.768Z","kind":"capture","source_id":"SRC-2026-08-05-011","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/validation.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.785Z","kind":"capture","source_id":"SRC-2026-08-05-010","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/security.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.805Z","kind":"capture","source_id":"SRC-2026-08-05-014","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/uploads.routes.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.822Z","kind":"capture","source_id":"SRC-2026-08-05-012","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/mailer.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.839Z","kind":"capture","source_id":"SRC-2026-08-05-013","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/inertia.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.856Z","kind":"capture","source_id":"SRC-2026-08-05-016","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/profile.routes.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.877Z","kind":"capture","source_id":"SRC-2026-08-05-015","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/auth.routes.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.895Z","kind":"capture","source_id":"SRC-2026-08-05-018","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/pages.routes.ts","format":"file"}
+{"timestamp":"2026-08-05T18:52:43.991Z","kind":"capture","source_id":"SRC-2026-08-05-017","file_path":"C:/Users/Administrator/Desktop/Development/honosvelte/src/server/routes/google-oauth.routes.ts","format":"file"}
+{"timestamp":"2026-08-05T18:53:49.229Z","kind":"ingest","source_id":"SRC-2026-08-05-003","entities_created":5,"concepts_created":7,"contradictions":1,"background":true}
+{"timestamp":"2026-08-05T18:54:26.951Z","kind":"ingest","source_id":"SRC-2026-08-05-002","entities_created":10,"concepts_created":11,"contradictions":4,"background":true}
+{"timestamp":"2026-08-05T19:35:46.630Z","kind":"observe","slug":"obs-2026-08-05-strict-csp-blocks-external-font-cdns-self-host-instead","title":"Strict CSP blocks external font CDNs — self-host instead","relevance":"high"}
+{"timestamp":"2026-08-05T19:52:33.879Z","kind":"retro","slug":"honosvelte-component-library","title":"Component library in src/client/components","category":"frontend"}
+{"timestamp":"2026-08-05T20:02:39.961Z","kind":"retro","slug":"honosvelte-global-color-token-rule","title":"Global color tokens via colors.css (no hardcoded colors)","category":"frontend"}

@@ -84,7 +84,7 @@
     }
     const el = document.documentElement
     el.setAttribute('data-theme', theme)
-    el.style.backgroundColor = theme === 'dark' ? '#0f1117' : '#f6f7fb'
+    el.style.backgroundColor = 'var(--background)'
     try {
       localStorage.setItem('theme', theme)
     } catch {
@@ -135,7 +135,7 @@
   <!-- Mobile backdrop -->
   {#if sidebarOpen}
     <div
-      class="fixed inset-0 bg-black/50 z-[25] animate-[fade-in_120ms_ease]"
+      class="fixed inset-0 bg-overlay z-[25] animate-[fade-in_120ms_ease]"
       aria-hidden="true"
       onclick={() => (sidebarOpen = false)}
     ></div>
@@ -397,7 +397,7 @@
                 />
               {:else}
                 <span
-                  class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-xs font-bold tracking-tight shrink-0"
+                  class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-bold tracking-tight shrink-0"
                   aria-hidden="true"
                 >
                   {initials(user.name)}
@@ -444,7 +444,7 @@
                     />
                   {:else}
                     <span
-                      class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary text-white text-sm font-bold shrink-0"
+                      class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary text-primary-foreground text-sm font-bold shrink-0"
                       aria-hidden="true"
                     >
                       {initials(user.name)}
@@ -514,7 +514,7 @@
             </Link>
             <Link
               href="/register"
-              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-primary rounded-lg bg-primary text-primary-foreground font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline"
             >
               Register
             </Link>
@@ -525,14 +525,14 @@
 
     {#if flash?.success}
       <div
-        class="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-green-200 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+        class="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-success-border bg-success-bg text-success-fg"
       >
         {String(flash.success)}
       </div>
     {/if}
     {#if flash?.error}
       <div
-        class="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
+        class="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-danger-border bg-danger-bg text-danger-fg"
       >
         {String(flash.error)}
       </div>
@@ -545,7 +545,7 @@
     </main>
 
     <footer
-      class="mt-auto px-5 py-3.5 flex items-center justify-between gap-3 text-muted text-xs border-t border-border dark:text-[#b6bdcb] max-md:px-4 max-md:py-3"
+      class="mt-auto px-5 py-3.5 flex items-center justify-between gap-3 text-muted text-xs border-t border-border max-md:px-4 max-md:py-3"
     >
       <span>Honosvelte boilerplate</span>
       <span>Bun · Hono · bun:sqlite · Inertia v3</span>

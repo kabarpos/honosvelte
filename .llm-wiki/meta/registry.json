@@ -1,12 +1,21 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-05T18:20:44.953Z",
+  "last_updated": "2026-08-05T20:02:39.977Z",
   "pages": {
     "concepts/asset-version-negotiation": {
       "type": "page",
       "title": "asset-version-negotiation",
       "created": "2026-08-05",
       "updated": "2026-08-05"
+    },
+    "concepts/centralized-prepared-statements": {
+      "type": "concept",
+      "title": "centralized-prepared-statements",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
     },
     "concepts/correlation-id-logging": {
       "type": "page",
@@ -20,17 +29,107 @@
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
+    "concepts/data-attribute-dark-mode": {
+      "type": "concept",
+      "title": "data-attribute-dark-mode",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "concepts/design-tokens-via-css-variables": {
+      "type": "concept",
+      "title": "design-tokens-via-css-variables",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "concepts/discoverability-contract-file-url-namespace": {
+      "type": "concept",
+      "title": "discoverability-contract-file-url-namespace",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "concepts/fail-fast-config-validation": {
+      "type": "concept",
+      "title": "fail-fast-config-validation",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "concepts/fixed-window-rate-limiter": {
+      "type": "concept",
+      "title": "fixed-window-rate-limiter",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
     "concepts/fixed-window-rate-limiting": {
       "type": "page",
       "title": "fixed-window-rate-limiting",
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
+    "concepts/flat-server-architecture": {
+      "type": "concept",
+      "title": "flat-server-architecture",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "concepts/health-check-endpoint": {
+      "type": "concept",
+      "title": "health-check-endpoint",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
+    },
+    "concepts/in-process-ssr-with-inertia": {
+      "type": "concept",
+      "title": "in-process-ssr-with-inertia",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
     "concepts/in-process-ssr": {
       "type": "page",
       "title": "in-process-ssr",
       "created": "2026-08-05",
       "updated": "2026-08-05"
+    },
+    "concepts/json-vs-inertia-response-dispatch": {
+      "type": "concept",
+      "title": "json-vs-inertia-response-dispatch",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
+    },
+    "concepts/middleware-registration-order": {
+      "type": "concept",
+      "title": "middleware-registration-order",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
     },
     "concepts/one-shot-flash-messages": {
       "type": "page",
@@ -44,17 +143,71 @@
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
+    "concepts/path-based-content-security-policy": {
+      "type": "concept",
+      "title": "path-based-content-security-policy",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
+    },
+    "concepts/route-factory-pattern": {
+      "type": "concept",
+      "title": "route-factory-pattern",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
     "concepts/route-guards-beforehandle": {
       "type": "page",
       "title": "route-guards-beforehandle",
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
+    "concepts/schema-validation-to-422inertia-mapping": {
+      "type": "concept",
+      "title": "schema-validation-to-422inertia-mapping",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
+    },
+    "concepts/security-headers-stack": {
+      "type": "concept",
+      "title": "security-headers-stack",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
+    },
     "concepts/server-driven-ui": {
       "type": "page",
       "title": "server-driven-ui",
       "created": "2026-08-05",
       "updated": "2026-08-05"
+    },
+    "concepts/stored-xss-guard": {
+      "type": "concept",
+      "title": "stored-xss-guard",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
+    },
+    "concepts/strict-typescript-configuration": {
+      "type": "concept",
+      "title": "strict-typescript-configuration",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
     },
     "concepts/svelte-5-migration": {
       "type": "page",
@@ -68,11 +221,38 @@
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
+    "concepts/test-process-isolation": {
+      "type": "concept",
+      "title": "test-process-isolation",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
     "concepts/versioned-sql-migrations": {
       "type": "page",
       "title": "versioned-sql-migrations",
       "created": "2026-08-05",
       "updated": "2026-08-05"
+    },
+    "entities/argon2id": {
+      "type": "entity",
+      "title": "argon2id",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "entities/bun-1314": {
+      "type": "entity",
+      "title": "bun-1314",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
     },
     "entities/bun": {
       "type": "page",
@@ -80,11 +260,14 @@
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
-    "entities/bunpassword": {
-      "type": "page",
-      "title": "bunpassword",
+    "entities/bunbuild": {
+      "type": "entity",
+      "title": "bunbuild",
       "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
     },
     "entities/bunsqlite": {
       "type": "page",
@@ -92,21 +275,18 @@
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
+    "entities/compressionstream": {
+      "type": "entity",
+      "title": "compressionstream",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
+    },
     "entities/docker": {
       "type": "page",
       "title": "docker",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
-    },
-    "entities/elysia-inertia-boilerplate": {
-      "type": "page",
-      "title": "elysia-inertia-boilerplate",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
-    },
-    "entities/elysia": {
-      "type": "page",
-      "title": "elysia",
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
@@ -116,17 +296,56 @@
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
+    "entities/google": {
+      "type": "entity",
+      "title": "google",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "entities/hono": {
+      "type": "entity",
+      "title": "hono",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
+    },
+    "entities/honoconninfo": {
+      "type": "entity",
+      "title": "honoconninfo",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "entities/honosecure-headers": {
+      "type": "entity",
+      "title": "honosecure-headers",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
     "entities/inertia-v3": {
       "type": "page",
       "title": "inertia-v3",
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
-    "entities/inertiajsreact": {
-      "type": "page",
-      "title": "inertiajsreact",
+    "entities/inertia": {
+      "type": "entity",
+      "title": "inertia",
       "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
     },
     "entities/mailtrap": {
       "type": "page",
@@ -134,17 +353,65 @@
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
-    "entities/react-19": {
-      "type": "page",
-      "title": "react-19",
+    "entities/nodezlib": {
+      "type": "entity",
+      "title": "nodezlib",
       "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
     },
     "entities/resend": {
       "type": "page",
       "title": "resend",
       "created": "2026-08-05",
       "updated": "2026-08-05"
+    },
+    "entities/svelte": {
+      "type": "entity",
+      "title": "svelte",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "entities/tailwind-css": {
+      "type": "entity",
+      "title": "tailwind-css",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "entities/tailwindcsscli": {
+      "type": "entity",
+      "title": "tailwindcsscli",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "entities/tus-protocol": {
+      "type": "entity",
+      "title": "tus-protocol",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-002]]"
+      ]
+    },
+    "entities/tus": {
+      "type": "entity",
+      "title": "tus",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "sources": [
+        "[[sources/SRC-2026-08-05-003]]"
+      ]
     },
     "entities/typebox": {
       "type": "page",
@@ -158,29 +425,23 @@
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
-    "sources/elysia-14-hook-order-and-plugin-quirks": {
-      "type": "page",
-      "title": "elysia-14-hook-order-and-plugin-quirks",
+    "sources/honosvelte-component-library": {
+      "type": "source",
+      "title": "\"Component library in src/client/components\"",
       "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "updated": "2026-08-05",
+      "slug": "honosvelte-component-library",
+      "status": "insight",
+      "category": "frontend"
     },
-    "sources/elysia-14-vs-2-benchmark-raw-speed": {
-      "type": "page",
-      "title": "elysia-14-vs-2-benchmark-raw-speed",
+    "sources/honosvelte-global-color-token-rule": {
+      "type": "source",
+      "title": "\"Global color tokens via colors.css (no hardcoded colors)\"",
       "created": "2026-08-05",
-      "updated": "2026-08-05"
-    },
-    "sources/elysia-2-vs-14-differences": {
-      "type": "page",
-      "title": "elysia-2-vs-14-differences",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
-    },
-    "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": {
-      "type": "page",
-      "title": "obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "updated": "2026-08-05",
+      "slug": "honosvelte-global-color-token-rule",
+      "status": "insight",
+      "category": "frontend"
     },
     "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": {
       "type": "page",
@@ -191,12 +452,6 @@
     "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": {
       "type": "page",
       "title": "obs-2026-08-03-sql-migration-runner-for-bun-sqlite",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
-    },
-    "sources/obs-2026-08-03-styling-decision-vanilla-css-final": {
-      "type": "page",
-      "title": "obs-2026-08-03-styling-decision-vanilla-css-final",
       "created": "2026-08-05",
       "updated": "2026-08-05"
     },
@@ -276,6 +531,25 @@
       ],
       "source_context": "\"Renaming the project identity from dulak to honosvelte and moving the GitHub remote to kabarpos/honosvelte.\""
     },
+    "sources/obs-2026-08-05-strict-csp-blocks-external-font-cdns-self-host-instead": {
+      "type": "source",
+      "title": "\"Observation: Strict CSP blocks external font CDNs — self-host instead\"",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "slug": "obs-2026-08-05-strict-csp-blocks-external-font-cdns-self-host-instead",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-05T19:35:46.629Z",
+      "tags": [
+        "honosvelte",
+        "csp",
+        "fonts",
+        "manrope",
+        "self-host",
+        "styling"
+      ],
+      "source_context": "\"Fixing \"ensure default font = Manrope\" task — font was declared but never rendered due to CSP\""
+    },
     "sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox": {
       "type": "page",
       "title": "obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox",
@@ -291,11 +565,203 @@
       "status": "insight",
       "category": "devops"
     },
-    "sources/SRC-2026-08-03-001": {
-      "type": "page",
-      "title": "SRC-2026-08-03-001",
+    "sources/SRC-2026-08-05-001": {
+      "type": "source",
+      "title": "SRC-2026-08-05-001",
       "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "updated": "2026-08-05",
+      "format": "markdown",
+      "source_id": "SRC-2026-08-05-001",
+      "raw_path": "raw/sources/SRC-2026-08-05-001/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-002": {
+      "type": "source",
+      "title": "SRC-2026-08-05-002",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "markdown",
+      "source_id": "SRC-2026-08-05-002",
+      "raw_path": "raw/sources/SRC-2026-08-05-002/extracted.md",
+      "captured": "2026-08-05",
+      "status": "ingested"
+    },
+    "sources/SRC-2026-08-05-003": {
+      "type": "source",
+      "title": "SRC-2026-08-05-003",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-003",
+      "raw_path": "raw/sources/SRC-2026-08-05-003/extracted.md",
+      "captured": "2026-08-05",
+      "status": "ingested"
+    },
+    "sources/SRC-2026-08-05-004": {
+      "type": "source",
+      "title": "SRC-2026-08-05-004",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-004",
+      "raw_path": "raw/sources/SRC-2026-08-05-004/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-005": {
+      "type": "source",
+      "title": "SRC-2026-08-05-005",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-005",
+      "raw_path": "raw/sources/SRC-2026-08-05-005/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-006": {
+      "type": "source",
+      "title": "SRC-2026-08-05-006",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-006",
+      "raw_path": "raw/sources/SRC-2026-08-05-006/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-007": {
+      "type": "source",
+      "title": "SRC-2026-08-05-007",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-007",
+      "raw_path": "raw/sources/SRC-2026-08-05-007/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-008": {
+      "type": "source",
+      "title": "SRC-2026-08-05-008",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-008",
+      "raw_path": "raw/sources/SRC-2026-08-05-008/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-009": {
+      "type": "source",
+      "title": "SRC-2026-08-05-009",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-009",
+      "raw_path": "raw/sources/SRC-2026-08-05-009/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-010": {
+      "type": "source",
+      "title": "SRC-2026-08-05-010",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-010",
+      "raw_path": "raw/sources/SRC-2026-08-05-010/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-011": {
+      "type": "source",
+      "title": "SRC-2026-08-05-011",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-011",
+      "raw_path": "raw/sources/SRC-2026-08-05-011/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-012": {
+      "type": "source",
+      "title": "SRC-2026-08-05-012",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-012",
+      "raw_path": "raw/sources/SRC-2026-08-05-012/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-013": {
+      "type": "source",
+      "title": "SRC-2026-08-05-013",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-013",
+      "raw_path": "raw/sources/SRC-2026-08-05-013/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-014": {
+      "type": "source",
+      "title": "SRC-2026-08-05-014",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-014",
+      "raw_path": "raw/sources/SRC-2026-08-05-014/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-015": {
+      "type": "source",
+      "title": "SRC-2026-08-05-015",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-015",
+      "raw_path": "raw/sources/SRC-2026-08-05-015/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-016": {
+      "type": "source",
+      "title": "SRC-2026-08-05-016",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-016",
+      "raw_path": "raw/sources/SRC-2026-08-05-016/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-017": {
+      "type": "source",
+      "title": "SRC-2026-08-05-017",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-017",
+      "raw_path": "raw/sources/SRC-2026-08-05-017/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
+    },
+    "sources/SRC-2026-08-05-018": {
+      "type": "source",
+      "title": "SRC-2026-08-05-018",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "format": "file",
+      "source_id": "SRC-2026-08-05-018",
+      "raw_path": "raw/sources/SRC-2026-08-05-018/extracted.md",
+      "captured": "2026-08-05",
+      "status": "skeleton"
     }
   }
 }

@@ -207,27 +207,28 @@ export class Inertia {
 		const cssTag = this.assets.css
 			? `<link rel="stylesheet" href="/assets/${this.assets.css}" />`
 			: "";
+		// Self-hosted Manrope, served same-origin so the strict CSP (font-src
+		// 'self') permits it. The woff2 files live at /assets/fonts/*.woff2.
+		const fontCssTag = `<link rel="stylesheet" href="/assets/fonts/fonts.css" />`;
 		const favicon = `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
 			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#059669"/><path d="M12 9h2.2c5.6 0 9.3 3.1 9.3 7s-3.7 7-9.3 7H12V9Z" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="16" y="18.2" width="4.4" height="2.2" rx="1.1" fill="#059669"/></svg>',
 		)}" />`;
 		// Inline script: set data-theme + background-color on <html> before the
 		// external stylesheet loads, so the page paints dark immediately (no FOUC).
 		// Reads localStorage('theme'), falls back to prefers-color-scheme, defaults light.
-		const themeBoot = `<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var el=document.documentElement;el.setAttribute('data-theme',t);el.style.backgroundColor=t==='dark'?'#0f1117':'#f6f7fb';}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
+		const themeBoot = `<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var el=document.documentElement;el.setAttribute('data-theme',t);el.style.backgroundColor='var(--background)';}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
 		const doc = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" />
 ${favicon}
 ${titleTag}
 ${headTags.join("\n")}
 ${themeBoot}
 ${cssTag}
+${fontCssTag}
 </head>
 <body>
 ${body}
