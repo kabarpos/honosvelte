@@ -35,6 +35,24 @@
       roles: ['admin'],
       match: (p) => p === '/admin' || p.startsWith('/admin'),
     },
+    {
+      href: '/users',
+      label: 'Users',
+      roles: ['admin'],
+      match: (p) => p === '/users' || p.startsWith('/users'),
+    },
+    {
+      href: '/roles',
+      label: 'Roles',
+      roles: ['admin'],
+      match: (p) => p === '/roles' || p.startsWith('/roles'),
+    },
+    {
+      href: '/permissions',
+      label: 'Permissions',
+      roles: ['admin'],
+      match: (p) => p === '/permissions' || p.startsWith('/permissions'),
+    },
   ]
 
   type Theme = 'light' | 'dark'
@@ -237,6 +255,54 @@
                     <path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z" />
                     <path d="m9 12 2 2 4-4" />
                   </svg>
+                {:else if item.href === '/users'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                {:else if item.href === '/roles'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z" />
+                    <path d="M12 22v-9" />
+                    <circle cx="12" cy="8.5" r="2" />
+                  </svg>
+                {:else if item.href === '/permissions'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    <rect x="4" y="11" width="16" height="10" rx="2" />
+                    <circle cx="12" cy="16" r="1.5" />
+                  </svg>
                 {/if}
               </span>
               <span>{item.label}</span>
@@ -247,7 +313,7 @@
     </nav>
 
     <div class="p-3 border-t border-border">
-      <div class="p-3.5 rounded-[10px] bg-bg border border-border">
+      <div class="p-3.5 rounded-card bg-bg border border-border">
         <p class="m-0 text-sm font-bold">Honosvelte</p>
         <p class="mt-0.5 text-xs text-muted">Bun · SQLite · Inertia v3</p>
       </div>
@@ -432,7 +498,7 @@
 
             {#if menuOpen}
               <div
-                class="absolute top-full right-0 mt-2 w-60 bg-surface border border-border rounded-xl shadow-card p-1 z-40 animate-[menu-in_120ms_ease]"
+                class="absolute top-full right-0 mt-2 w-60 bg-surface border border-border rounded-card shadow-card p-1 z-40 animate-[menu-in_120ms_ease]"
                 role="menu"
               >
                 <div class="flex items-center gap-1.5 px-2.5 pt-2 pb-2.5">

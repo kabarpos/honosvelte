@@ -64,7 +64,7 @@
 
   {#if open}
     <div
-      class={`absolute top-full mt-2 min-w-[180px] bg-surface border border-border rounded-xl shadow-card p-1 z-40 animate-[menu-in_120ms_ease] ${align === "right" ? "right-0" : "left-0"}`}
+      class={`absolute top-full mt-2 min-w-[180px] bg-surface border border-border rounded-card shadow-card p-1 z-40 animate-[menu-in_120ms_ease] ${align === "right" ? "right-0" : "left-0"}`}
       role="menu"
     >
       {#each items as item (item.label)}

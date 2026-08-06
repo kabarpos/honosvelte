@@ -4,7 +4,9 @@
  * both `src/server` (Bun runtime) and `src/client` (browser bundle).
  */
 
-export type Role = "user" | "admin";
+export type Role = "user" | "admin" | "super_admin";
+
+export type UserStatus = "active" | "inactive";
 
 export interface User {
 	id: number;
@@ -13,6 +15,34 @@ export interface User {
 	role: Role;
 	/** Relative path to the avatar image (served from /uploads), null when unset. */
 	avatarUrl: string | null;
+	status: UserStatus;
+	whatsapp: string | null;
+	createdAt: string;
+}
+
+export interface Permission {
+	id: number;
+	slug: string;
+	name: string;
+	description: string | null;
+	createdAt: string;
+}
+
+export interface RoleRecord {
+	id: number;
+	slug: string;
+	name: string;
+	description: string | null;
+	permissionSlugs: string[];
+	createdAt: string;
+}
+
+export interface RoleWithPermissions {
+	id: number;
+	slug: string;
+	name: string;
+	description: string | null;
+	permissions: Permission[];
 	createdAt: string;
 }
 

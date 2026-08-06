@@ -5,6 +5,6 @@
     $props();
 </script>
 
-<div class={`bg-surface border border-border rounded-radius ${className}`}>
+<div class={`bg-surface border border-border rounded-card ${className}`}>
   {@render children()}
 </div>

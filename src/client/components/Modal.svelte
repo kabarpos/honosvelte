@@ -50,7 +50,7 @@
   >
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
     <div
-      class={`w-full ${sizes[size]} max-h-[90vh] overflow-y-auto bg-surface border border-border rounded-xl shadow-card animate-[menu-in_140ms_ease] ${className}`}
+      class={`w-full ${sizes[size]} max-h-[90vh] overflow-y-auto bg-surface border border-border rounded-card shadow-card animate-[menu-in_140ms_ease] ${className}`}
       role="dialog"
       tabindex="-1"
       aria-modal="true"

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Link, usePage } from '@inertiajs/svelte'
   import Layout from '../components/Layout.svelte'
+  import Card from '../components/Card.svelte'
+  import Table from '../components/Table.svelte'
   import type { Paginated, User } from '../../shared/types'
 
   let { users }: { users: Paginated<User> } = $props()
@@ -36,10 +38,9 @@
       {currentPage} of {lastPage}.
     </p>
 
-    <section class="bg-surface border border-border rounded-radius p-6">
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-sm">
-          <thead>
+    <Card class="p-6">
+      <Table>
+        <thead>
             <tr>
               <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
                 Name
@@ -84,9 +85,8 @@
               </tr>
             {/if}
           </tbody>
-        </table>
-      </div>
-    </section>
+        </Table>
+    </Card>
 
     <nav class="flex items-center justify-between gap-4 mt-4" aria-label="Pagination">
       {#if currentPage > 1}

@@ -1,12 +1,12 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-05T20:02:39.977Z",
+  "last_updated": "2026-08-06T02:04:18.524Z",
   "pages": {
     "concepts/asset-version-negotiation": {
       "type": "page",
       "title": "asset-version-negotiation",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/centralized-prepared-statements": {
       "type": "concept",
@@ -20,14 +20,14 @@
     "concepts/correlation-id-logging": {
       "type": "page",
       "title": "correlation-id-logging",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/csrf-origin-check": {
       "type": "page",
       "title": "csrf-origin-check",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/data-attribute-dark-mode": {
       "type": "concept",
@@ -77,8 +77,8 @@
     "concepts/fixed-window-rate-limiting": {
       "type": "page",
       "title": "fixed-window-rate-limiting",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/flat-server-architecture": {
       "type": "concept",
@@ -110,8 +110,8 @@
     "concepts/in-process-ssr": {
       "type": "page",
       "title": "in-process-ssr",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/json-vs-inertia-response-dispatch": {
       "type": "concept",
@@ -134,14 +134,14 @@
     "concepts/one-shot-flash-messages": {
       "type": "page",
       "title": "one-shot-flash-messages",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/partial-reloads": {
       "type": "page",
       "title": "partial-reloads",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/path-based-content-security-policy": {
       "type": "concept",
@@ -164,8 +164,8 @@
     "concepts/route-guards-beforehandle": {
       "type": "page",
       "title": "route-guards-beforehandle",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/schema-validation-to-422inertia-mapping": {
       "type": "concept",
@@ -188,8 +188,8 @@
     "concepts/server-driven-ui": {
       "type": "page",
       "title": "server-driven-ui",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/stored-xss-guard": {
       "type": "concept",
@@ -212,14 +212,14 @@
     "concepts/svelte-5-migration": {
       "type": "page",
       "title": "svelte-5-migration",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/tailwind-v4-setup": {
       "type": "page",
       "title": "tailwind-v4-setup",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/test-process-isolation": {
       "type": "concept",
@@ -233,8 +233,8 @@
     "concepts/versioned-sql-migrations": {
       "type": "page",
       "title": "versioned-sql-migrations",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/argon2id": {
       "type": "entity",
@@ -257,8 +257,8 @@
     "entities/bun": {
       "type": "page",
       "title": "bun",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/bunbuild": {
       "type": "entity",
@@ -272,8 +272,8 @@
     "entities/bunsqlite": {
       "type": "page",
       "title": "bunsqlite",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/compressionstream": {
       "type": "entity",
@@ -287,14 +287,14 @@
     "entities/docker": {
       "type": "page",
       "title": "docker",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/google-oauth": {
       "type": "page",
       "title": "google-oauth",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/google": {
       "type": "entity",
@@ -335,8 +335,8 @@
     "entities/inertia-v3": {
       "type": "page",
       "title": "inertia-v3",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/inertia": {
       "type": "entity",
@@ -350,8 +350,8 @@
     "entities/mailtrap": {
       "type": "page",
       "title": "mailtrap",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/nodezlib": {
       "type": "entity",
@@ -365,8 +365,8 @@
     "entities/resend": {
       "type": "page",
       "title": "resend",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/svelte": {
       "type": "entity",
@@ -416,14 +416,14 @@
     "entities/typebox": {
       "type": "page",
       "title": "typebox",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/boilerplate-v010-released-and-pat-workflow-scope": {
       "type": "page",
       "title": "boilerplate-v010-released-and-pat-workflow-scope",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/honosvelte-component-library": {
       "type": "source",
@@ -446,74 +446,91 @@
     "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": {
       "type": "page",
       "title": "obs-2026-08-03-session-design-sqlite-backed-not-jwt",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": {
       "type": "page",
       "title": "obs-2026-08-03-sql-migration-runner-for-bun-sqlite",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture": {
       "type": "page",
       "title": "obs-2026-08-04-agents-md-created-codifying-repo-architecture",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision": {
       "type": "page",
       "title": "obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-04-professional-profile-page-with-info-and-password-forms": {
       "type": "page",
       "title": "obs-2026-08-04-professional-profile-page-with-info-and-password-forms",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-04-profile-page-with-tus-avatar-upload": {
       "type": "page",
       "title": "obs-2026-08-04-profile-page-with-tus-avatar-upload",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-04-project-renamed-to-dulak": {
       "type": "page",
       "title": "obs-2026-08-04-project-renamed-to-dulak",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-04-route-conventions-url-first-file-naming": {
       "type": "page",
       "title": "obs-2026-08-04-route-conventions-url-first-file-naming",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation": {
       "type": "page",
       "title": "obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention": {
       "type": "page",
       "title": "obs-2026-08-04-tus-uploads-restructured-to-flat-convention",
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
+    },
+    "sources/obs-2026-08-05-cards-use-radius-card-token-card-svelte-rounded-radius-bug-f": {
+      "type": "source",
+      "title": "\"Observation: Cards use --radius-card token; Card.svelte rounded-radius bug fixed\"",
       "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "updated": "2026-08-05",
+      "slug": "obs-2026-08-05-cards-use-radius-card-token-card-svelte-rounded-radius-bug-f",
+      "status": "observation",
+      "relevance": "medium",
+      "observed_at": "2026-08-05T20:11:23.384Z",
+      "tags": [
+        "frontend",
+        "tailwind",
+        "tokens",
+        "cards"
+      ],
+      "source_context": "\"Rounding all card components\""
     },
     "sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source": {
       "type": "page",
       "title": "obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13": {
       "type": "page",
       "title": "obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "sources/obs-2026-08-05-project-rebranded-dulak-honosvelte": {
       "type": "source",
@@ -553,8 +570,25 @@
     "sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox": {
       "type": "page",
       "title": "obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
+    },
+    "sources/obs-2026-08-06-pages-now-consume-card-table-components-previously-dead-code": {
+      "type": "source",
+      "title": "\"Observation: Pages now consume Card/Table components (previously dead code)\"",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
+      "slug": "obs-2026-08-06-pages-now-consume-card-table-components-previously-dead-code",
+      "status": "observation",
+      "relevance": "medium",
+      "observed_at": "2026-08-06T02:04:18.494Z",
+      "tags": [
+        "frontend",
+        "components",
+        "refactor",
+        "svelte"
+      ],
+      "source_context": "\"Wiring Card/Table components into pages\""
     },
     "sources/pi-settings-git-source-url-format": {
       "type": "source",
@@ -568,8 +602,8 @@
     "sources/SRC-2026-08-05-001": {
       "type": "source",
       "title": "SRC-2026-08-05-001",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "markdown",
       "source_id": "SRC-2026-08-05-001",
       "raw_path": "raw/sources/SRC-2026-08-05-001/extracted.md",
@@ -579,7 +613,7 @@
     "sources/SRC-2026-08-05-002": {
       "type": "source",
       "title": "SRC-2026-08-05-002",
-      "created": "2026-08-05",
+      "created": "2026-08-06",
       "updated": "2026-08-05",
       "format": "markdown",
       "source_id": "SRC-2026-08-05-002",
@@ -590,7 +624,7 @@
     "sources/SRC-2026-08-05-003": {
       "type": "source",
       "title": "SRC-2026-08-05-003",
-      "created": "2026-08-05",
+      "created": "2026-08-06",
       "updated": "2026-08-05",
       "format": "file",
       "source_id": "SRC-2026-08-05-003",
@@ -601,8 +635,8 @@
     "sources/SRC-2026-08-05-004": {
       "type": "source",
       "title": "SRC-2026-08-05-004",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-004",
       "raw_path": "raw/sources/SRC-2026-08-05-004/extracted.md",
@@ -612,8 +646,8 @@
     "sources/SRC-2026-08-05-005": {
       "type": "source",
       "title": "SRC-2026-08-05-005",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-005",
       "raw_path": "raw/sources/SRC-2026-08-05-005/extracted.md",
@@ -623,8 +657,8 @@
     "sources/SRC-2026-08-05-006": {
       "type": "source",
       "title": "SRC-2026-08-05-006",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-006",
       "raw_path": "raw/sources/SRC-2026-08-05-006/extracted.md",
@@ -634,8 +668,8 @@
     "sources/SRC-2026-08-05-007": {
       "type": "source",
       "title": "SRC-2026-08-05-007",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-007",
       "raw_path": "raw/sources/SRC-2026-08-05-007/extracted.md",
@@ -645,8 +679,8 @@
     "sources/SRC-2026-08-05-008": {
       "type": "source",
       "title": "SRC-2026-08-05-008",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-008",
       "raw_path": "raw/sources/SRC-2026-08-05-008/extracted.md",
@@ -656,8 +690,8 @@
     "sources/SRC-2026-08-05-009": {
       "type": "source",
       "title": "SRC-2026-08-05-009",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-009",
       "raw_path": "raw/sources/SRC-2026-08-05-009/extracted.md",
@@ -667,8 +701,8 @@
     "sources/SRC-2026-08-05-010": {
       "type": "source",
       "title": "SRC-2026-08-05-010",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-010",
       "raw_path": "raw/sources/SRC-2026-08-05-010/extracted.md",
@@ -678,8 +712,8 @@
     "sources/SRC-2026-08-05-011": {
       "type": "source",
       "title": "SRC-2026-08-05-011",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-011",
       "raw_path": "raw/sources/SRC-2026-08-05-011/extracted.md",
@@ -689,8 +723,8 @@
     "sources/SRC-2026-08-05-012": {
       "type": "source",
       "title": "SRC-2026-08-05-012",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-012",
       "raw_path": "raw/sources/SRC-2026-08-05-012/extracted.md",
@@ -700,8 +734,8 @@
     "sources/SRC-2026-08-05-013": {
       "type": "source",
       "title": "SRC-2026-08-05-013",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-013",
       "raw_path": "raw/sources/SRC-2026-08-05-013/extracted.md",
@@ -711,8 +745,8 @@
     "sources/SRC-2026-08-05-014": {
       "type": "source",
       "title": "SRC-2026-08-05-014",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-014",
       "raw_path": "raw/sources/SRC-2026-08-05-014/extracted.md",
@@ -722,8 +756,8 @@
     "sources/SRC-2026-08-05-015": {
       "type": "source",
       "title": "SRC-2026-08-05-015",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-015",
       "raw_path": "raw/sources/SRC-2026-08-05-015/extracted.md",
@@ -733,8 +767,8 @@
     "sources/SRC-2026-08-05-016": {
       "type": "source",
       "title": "SRC-2026-08-05-016",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-016",
       "raw_path": "raw/sources/SRC-2026-08-05-016/extracted.md",
@@ -744,8 +778,8 @@
     "sources/SRC-2026-08-05-017": {
       "type": "source",
       "title": "SRC-2026-08-05-017",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-017",
       "raw_path": "raw/sources/SRC-2026-08-05-017/extracted.md",
@@ -755,8 +789,8 @@
     "sources/SRC-2026-08-05-018": {
       "type": "source",
       "title": "SRC-2026-08-05-018",
-      "created": "2026-08-05",
-      "updated": "2026-08-05",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
       "format": "file",
       "source_id": "SRC-2026-08-05-018",
       "raw_path": "raw/sources/SRC-2026-08-05-018/extracted.md",

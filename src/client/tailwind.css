@@ -52,6 +52,7 @@
 	--font-serif: var(--font-serif);
 	--font-mono: var(--font-mono);
 	--radius: var(--radius);
+	--radius-card: var(--radius-card);
 	--shadow-card: var(--shadow);
 }
 

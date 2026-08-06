@@ -51,3 +51,5 @@
 {"timestamp":"2026-08-05T19:35:46.630Z","kind":"observe","slug":"obs-2026-08-05-strict-csp-blocks-external-font-cdns-self-host-instead","title":"Strict CSP blocks external font CDNs — self-host instead","relevance":"high"}
 {"timestamp":"2026-08-05T19:52:33.879Z","kind":"retro","slug":"honosvelte-component-library","title":"Component library in src/client/components","category":"frontend"}
 {"timestamp":"2026-08-05T20:02:39.961Z","kind":"retro","slug":"honosvelte-global-color-token-rule","title":"Global color tokens via colors.css (no hardcoded colors)","category":"frontend"}
+{"timestamp":"2026-08-05T20:11:23.387Z","kind":"observe","slug":"obs-2026-08-05-cards-use-radius-card-token-card-svelte-rounded-radius-bug-f","title":"Cards use --radius-card token; Card.svelte rounded-radius bug fixed","relevance":"medium"}
+{"timestamp":"2026-08-06T02:04:18.495Z","kind":"observe","slug":"obs-2026-08-06-pages-now-consume-card-table-components-previously-dead-code","title":"Pages now consume Card/Table components (previously dead code)","relevance":"medium"}

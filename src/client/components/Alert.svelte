@@ -21,7 +21,7 @@
 </script>
 
 <div
-  class={`px-4 py-3 rounded-lg text-sm border ${variants[variant]} ${className}`}
+  class={`px-4 py-3 rounded-card text-sm border ${variants[variant]} ${className}`}
   role={variant === "error" ? "alert" : "status"}
 >
   {@render children()}

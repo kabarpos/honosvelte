@@ -10,9 +10,12 @@ import Dashboard from "./pages/Dashboard.svelte";
 import ForgotPassword from "./pages/ForgotPassword.svelte";
 import Login from "./pages/Login.svelte";
 import NotFound from "./pages/NotFound.svelte";
+import Permissions from "./pages/Permissions.svelte";
 import Profile from "./pages/Profile.svelte";
 import Register from "./pages/Register.svelte";
 import ResetPassword from "./pages/ResetPassword.svelte";
+import Roles from "./pages/Roles.svelte";
+import Users from "./pages/Users.svelte";
 
 type PageModule = { default: Component<any> };
 
@@ -22,9 +25,12 @@ export const pages: Record<string, PageModule> = {
 	"./pages/ForgotPassword.svelte": { default: ForgotPassword },
 	"./pages/Login.svelte": { default: Login },
 	"./pages/NotFound.svelte": { default: NotFound },
+	"./pages/Permissions.svelte": { default: Permissions },
 	"./pages/Profile.svelte": { default: Profile },
 	"./pages/Register.svelte": { default: Register },
 	"./pages/ResetPassword.svelte": { default: ResetPassword },
+	"./pages/Roles.svelte": { default: Roles },
+	"./pages/Users.svelte": { default: Users },
 };
 
 /** Fallback for unknown component names — never resolve to undefined. */

@@ -35,7 +35,7 @@
 </script>
 
 <div
-  class={`divide-y divide-border border border-border rounded-xl bg-surface ${className}`}
+  class={`divide-y divide-border border border-border rounded-card bg-surface ${className}`}
 >
   {#each items as item (item.id)}
     {@const open = isOpen(item.id)}

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { router, useForm, usePage } from '@inertiajs/svelte'
   import Layout from '../components/Layout.svelte'
+  import Card from '../components/Card.svelte'
   import Field from '../components/Field.svelte'
 
   const page = usePage()
@@ -181,8 +182,8 @@
 
     <div class="grid grid-cols-[300px_1fr] gap-5 items-start max-md:grid-cols-1">
       <aside class="flex flex-col gap-4">
-        <section
-          class="bg-surface border border-border rounded-radius p-6 flex flex-col items-center text-center gap-2"
+        <Card
+          class="p-6 flex flex-col items-center text-center gap-2"
         >
           {#if user.avatarUrl}
             <img
@@ -262,11 +263,11 @@
               <p class="text-success-fg font-semibold mt-3 m-0">Avatar updated.</p>
             {/if}
           </div>
-        </section>
+        </Card>
       </aside>
 
       <div class="flex flex-col gap-5">
-        <section class="bg-surface border border-border rounded-radius p-6">
+        <Card class="p-6">
           <h2 class="text-[1.1rem] m-0 mb-3">Profile information</h2>
           <form onsubmit={submitInfo} novalidate>
             <Field id="name" label="Name" error={info.errors.name}>
@@ -295,9 +296,9 @@
               {info.processing ? 'Saving…' : 'Save changes'}
             </button>
           </form>
-        </section>
+        </Card>
 
-        <section class="bg-surface border border-border rounded-radius p-6">
+        <Card class="p-6">
           <h2 class="text-[1.1rem] m-0 mb-3">Change password</h2>
           <form onsubmit={submitPass} novalidate>
             <Field
@@ -349,7 +350,7 @@
               {pass.processing ? 'Updating…' : 'Update password'}
             </button>
           </form>
-        </section>
+        </Card>
       </div>
     </div>
   </Layout>

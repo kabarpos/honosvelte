@@ -86,6 +86,7 @@
 
 	/* ----- Shape & elevation ----- */
 	--radius: 12px;
+	--radius-card: 16px;
 	--shadow:
 		0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px -8px rgb(16 24 40 / 0.12);
 }
@@ -159,5 +160,6 @@
 
 	/* ----- Shape & elevation ----- */
 	--radius: 12px;
+	--radius-card: 16px;
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5);
 }

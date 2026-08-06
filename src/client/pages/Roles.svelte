@@ -1,0 +1,246 @@
+<script lang="ts">
+  import { router, useForm, usePage } from '@inertiajs/svelte'
+  import Layout from '../components/Layout.svelte'
+  import Card from '../components/Card.svelte'
+  import Table from '../components/Table.svelte'
+  import Field from '../components/Field.svelte'
+  import Input from '../components/Input.svelte'
+  import Button from '../components/Button.svelte'
+  import Badge from '../components/Badge.svelte'
+  import Modal from '../components/Modal.svelte'
+  import Checkbox from '../components/Checkbox.svelte'
+  import type { Permission, RoleRecord } from '../../shared/types'
+
+  let { roles, permissions }: {
+    roles: RoleRecord[]
+    permissions: Permission[]
+  } = $props()
+
+  const page = usePage()
+  const currentUser = $derived(page.props.auth.user)
+
+  let createOpen = $state(false)
+  let editRole = $state<RoleRecord | null>(null)
+  let editOpen = $state(false)
+  let permRole = $state<RoleRecord | null>(null)
+  let permOpen = $state(false)
+  let deleteRole = $state<RoleRecord | null>(null)
+  let deleteOpen = $state(false)
+
+  let createForm = $state(useForm({ slug: '', name: '', description: '' }))
+  let editForm = $state(useForm({ slug: '', name: '', description: '' }))
+  let permForm = $state(useForm({ permissionSlugs: [] as string[] }))
+  let deleteForm = $state(useForm({ slug: '' }))
+  let permSel = $state<Record<string, boolean>>({})
+
+  function openCreate() {
+    createForm.reset()
+    createOpen = true
+  }
+
+  function openEdit(r: RoleRecord) {
+    editRole = r
+    editForm = useForm({
+      slug: r.slug,
+      name: r.name,
+      description: r.description || '',
+    })
+    editOpen = true
+  }
+
+  function openPerms(r: RoleRecord) {
+    permRole = r
+    const sel: Record<string, boolean> = {}
+    for (const p of permissions) sel[p.slug] = r.permissionSlugs.includes(p.slug)
+    permSel = sel
+    permOpen = true
+  }
+
+  function submitCreate(e: SubmitEvent) {
+    e.preventDefault()
+    createForm.post('/roles', { onSuccess: () => (createOpen = false) })
+  }
+
+  function submitEdit(e: SubmitEvent) {
+    e.preventDefault()
+    if (!editRole) return
+    editForm.patch(`/roles/${editRole.id}`, {
+      onSuccess: () => {
+        editOpen = false
+        editRole = null
+      },
+    })
+  }
+
+  function submitPerms(e: SubmitEvent) {
+    e.preventDefault()
+    if (!permRole) return
+    const slugs = permissions.filter((p) => permSel[p.slug]).map((p) => p.slug)
+    permForm = useForm({ permissionSlugs: slugs })
+    permForm.post(`/roles/${permRole.id}/permissions`, {
+      onSuccess: () => {
+        permOpen = false
+        permRole = null
+      },
+    })
+  }
+
+  function submitDelete(e: SubmitEvent) {
+    e.preventDefault()
+    if (!deleteRole) return
+    deleteForm.delete(`/roles/${deleteRole.id}`, {
+      onSuccess: () => {
+        deleteOpen = false
+        deleteRole = null
+      },
+    })
+  }
+
+  const wrapper =
+    'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border rounded-lg bg-transparent text-text cursor-pointer transition-colors hover:bg-primary-soft'
+</script>
+
+<svelte:head><title>Roles</title></svelte:head>
+
+{#if currentUser && currentUser.role === 'admin'}
+  <Layout>
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <div>
+        <h1 class="text-[1.6rem] m-0 mb-1 tracking-tight">Roles</h1>
+        <p class="text-muted mb-0">
+          {roles.length} role{roles.length === 1 ? '' : 's'} — each role bundles
+          permissions that its users inherit.
+        </p>
+      </div>
+      <Button onclick={openCreate}>Add role</Button>
+    </div>
+
+    <Card class="p-0 overflow-hidden">
+      <Table>
+        <thead>
+          <tr>
+            <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
+              Role
+            </th>
+            <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
+              Slug
+            </th>
+            <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
+              Description
+            </th>
+            <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
+              Permissions
+            </th>
+            <th class="text-right px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="[&>tr:last-child>td]:border-b-0">
+          {#each roles as r (r.id)}
+            <tr class="transition-colors hover:bg-primary-soft">
+              <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap">
+                {r.name}
+              </td>
+              <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap">
+                <code class="text-xs bg-bg border border-border rounded px-1.5 py-0.5">{r.slug}</code>
+              </td>
+              <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted">
+                {r.description || '—'}
+              </td>
+              <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap">
+                <Badge variant={r.permissionSlugs.length ? 'primary' : 'neutral'}>
+                  {r.permissionSlugs.length}
+                </Badge>
+              </td>
+              <td class="text-right px-3 py-2.5 border-b border-border whitespace-nowrap">
+                <div class="inline-flex items-center gap-1.5">
+                  <button type="button" class={wrapper} onclick={() => openEdit(r)}>Edit</button>
+                  <button type="button" class={wrapper} onclick={() => openPerms(r)}>Permissions</button>
+                  {#if !['user', 'admin', 'super_admin'].includes(r.slug)}
+                    <button type="button" class={`${wrapper} text-danger`} onclick={() => { deleteRole = r; deleteOpen = true }}>
+                      Delete
+                    </button>
+                  {/if}
+                </div>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </Table>
+    </Card>
+
+    <Modal open={createOpen} title="Add role" size="md">
+      <form onsubmit={submitCreate} novalidate>
+        <Field id="cr-slug" label="Slug" error={createForm.errors.slug}>
+          <Input id="cr-slug" bind:value={createForm.slug} placeholder="e.g. editor" onchange={() => createForm.clearErrors('slug')} />
+        </Field>
+        <Field id="cr-name" label="Name" error={createForm.errors.name}>
+          <Input id="cr-name" bind:value={createForm.name} onchange={() => createForm.clearErrors('name')} />
+        </Field>
+        <Field id="cr-desc" label="Description" error={createForm.errors.description}>
+          <Input id="cr-desc" bind:value={createForm.description} onchange={() => createForm.clearErrors('description')} />
+        </Field>
+        <div class="flex items-center justify-end gap-2 mt-4">
+          <Button variant="ghost" type="button" onclick={() => (createOpen = false)}>Cancel</Button>
+          <Button variant="primary" type="submit" loading={createForm.processing}>Create</Button>
+        </div>
+      </form>
+    </Modal>
+
+    {#if editRole}
+      <Modal open={editOpen} title={`Edit ${editRole.name}`} size="md">
+        <form onsubmit={submitEdit} novalidate>
+          <Field id="er-slug" label="Slug" error={editForm.errors.slug}>
+            <Input id="er-slug" bind:value={editForm.slug} onchange={() => editForm.clearErrors('slug')} />
+          </Field>
+          <Field id="er-name" label="Name" error={editForm.errors.name}>
+            <Input id="er-name" bind:value={editForm.name} onchange={() => editForm.clearErrors('name')} />
+          </Field>
+          <Field id="er-desc" label="Description" error={editForm.errors.description}>
+            <Input id="er-desc" bind:value={editForm.description} onchange={() => editForm.clearErrors('description')} />
+          </Field>
+          <div class="flex items-center justify-end gap-2 mt-4">
+            <Button variant="ghost" type="button" onclick={() => (editOpen = false)}>Cancel</Button>
+            <Button variant="primary" type="submit" loading={editForm.processing}>Save</Button>
+          </div>
+        </form>
+      </Modal>
+    {/if}
+
+    {#if permRole}
+      <Modal open={permOpen} title={`Permissions — ${permRole.name}`} size="lg">
+        <form onsubmit={submitPerms} novalidate>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 max-md:grid-cols-1">
+            {#each permissions as p (p.id)}
+              <Checkbox
+                bind:checked={permSel[p.slug]}
+                label={`${p.name} (${p.slug})`}
+              />
+            {/each}
+          </div>
+          {#if permForm.errors.permissionSlugs}
+            <p class="text-danger text-xs mt-2">{permForm.errors.permissionSlugs}</p>
+          {/if}
+          <div class="flex items-center justify-end gap-2 mt-4">
+            <Button variant="ghost" type="button" onclick={() => (permOpen = false)}>Cancel</Button>
+            <Button variant="primary" type="submit" loading={permForm.processing}>Save permissions</Button>
+          </div>
+        </form>
+      </Modal>
+    {/if}
+
+    {#if deleteRole}
+      <Modal open={deleteOpen} title="Delete role" size="sm">
+        <p>Delete <strong>{deleteRole.name}</strong> ({deleteRole.slug})? Users holding this role lose its permissions.</p>
+        {#if deleteForm.errors.slug}
+          <p class="text-danger text-xs mt-2">{deleteForm.errors.slug}</p>
+        {/if}
+        <div class="flex items-center justify-end gap-2 mt-4">
+          <Button variant="ghost" type="button" onclick={() => (deleteOpen = false)}>Cancel</Button>
+          <Button variant="danger" type="button" loading={deleteForm.processing} onclick={submitDelete}>Delete</Button>
+        </div>
+      </Modal>
+    {/if}
+  </Layout>
+{/if}

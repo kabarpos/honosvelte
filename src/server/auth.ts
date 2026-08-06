@@ -15,10 +15,13 @@ import {
 	deletePasswordResetsByEmail,
 	deleteSession,
 	findPasswordReset,
+	findRoleBySlug,
 	findSession,
 	findUserById,
 	insertPasswordReset,
 	insertSession,
+	listRolePermissionSlugs,
+	listUserPermissionRows,
 	updateSessionFlash,
 	type UserRow,
 } from "./db";
@@ -227,12 +230,47 @@ export const guestOnly = async (c: Context<AppEnv>, next: Next) => {
 	return next();
 };
 
-/** Guard factory: e.g. `requireRole('admin')` — non-admins go to /dashboard. */
+/** Guard factory: e.g. `requireRole('admin')` — non-admins go to /dashboard.
+ *  super_admin outranks every role (implicit access). */
 export const requireRole =
 	(...roles: Role[]) =>
 	async (c: Context<AppEnv>, next: Next) => {
 		if (!c.var.user) return redirectTo(c.req.raw, "/login");
+		if (c.var.user.role === "super_admin") return next();
 		if (!roles.includes(c.var.user.role))
 			return redirectTo(c.req.raw, "/dashboard");
 		return next();
+	};
+
+/**
+ * Effective permission slugs for `userId`: the user's role permissions, then
+ * per-user overrides (a deny in user_permissions removes a role permission;
+ * a grant adds one). super_admin implicitly holds everything.
+ */
+export function permissionsForUser(user: UserRow): Set<string> {
+	if (user.role === "super_admin") return new Set<string>();
+	const result = new Set<string>();
+	const role = findRoleBySlug.get(user.role);
+	if (role) {
+		for (const row of listRolePermissionSlugs.all(role.id)) result.add(row.slug);
+	}
+	for (const row of listUserPermissionRows.all(user.id)) {
+		if (row.granted) result.add(row.slug);
+		else result.delete(row.slug);
+	}
+	return result;
+}
+
+/** Guard factory: requires any one of the given permission slugs. */
+export const requirePermission =
+	(...permissionSlugs: string[]) =>
+	async (c: Context<AppEnv>, next: Next) => {
+		if (!c.var.user) return redirectTo(c.req.raw, "/login");
+		const full = findUserById.get(c.var.user.id);
+		const allowed = full
+			? full.role === "super_admin" ||
+				permissionSlugs.some((slug) => permissionsForUser(full).has(slug))
+			: false;
+		if (allowed) return next();
+		return redirectTo(c.req.raw, "/dashboard");
 	};

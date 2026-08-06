@@ -146,11 +146,13 @@
   "sources/obs-2026-08-04-route-conventions-url-first-file-naming": [],
   "sources/obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation": [],
   "sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention": [],
+  "sources/obs-2026-08-05-cards-use-radius-card-token-card-svelte-rounded-radius-bug-f": [],
   "sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source": [],
   "sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13": [],
   "sources/obs-2026-08-05-project-rebranded-dulak-honosvelte": [],
   "sources/obs-2026-08-05-strict-csp-blocks-external-font-cdns-self-host-instead": [],
   "sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox": [],
+  "sources/obs-2026-08-06-pages-now-consume-card-table-components-previously-dead-code": [],
   "sources/pi-settings-git-source-url-format": [],
   "sources/SRC-2026-08-05-001": [
     "sources/SRC-2026-08-05-001"

@@ -19,7 +19,7 @@
 >
   {#each toasts as t (t.id)}
     <div
-      class={`flex items-start gap-3 px-4 py-3 rounded-lg text-sm border shadow-card animate-[menu-in_140ms_ease] ${variants[t.variant]}`}
+      class={`flex items-start gap-3 px-4 py-3 rounded-card text-sm border shadow-card animate-[menu-in_140ms_ease] ${variants[t.variant]}`}
       role="status"
     >
       <span class="flex-1 min-w-0">{t.message}</span>

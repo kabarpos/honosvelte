@@ -18,11 +18,16 @@ import { logError, requestLogger } from "./logger";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
 import { googleOauthRoutes } from "./routes/google-oauth.routes";
 import { pageRoutes } from "./routes/pages.routes";
+import { permissionsRoutes } from "./routes/permissions.routes";
 import {
 	profileRoutes,
 	PROFILE_VALIDATION_MESSAGES,
 } from "./routes/profile.routes";
+import { rolesRoutes } from "./routes/roles.routes";
 import { uploadsRoutes } from "./routes/uploads.routes";
+import { usersRoutes, USERS_VALIDATION_MESSAGES } from "./routes/users.routes";
+import { ROLES_VALIDATION_MESSAGES } from "./routes/roles.routes";
+import { PERMISSIONS_VALIDATION_MESSAGES } from "./routes/permissions.routes";
 import { checkOrigin } from "./security";
 import { safeUrl } from "./url";
 import { ValidationFailed } from "./validation";
@@ -38,9 +43,23 @@ const COMPONENT_BY_PATH: Record<string, string> = {
 	"/profile/password": "Profile",
 };
 
+function componentForPath(pathname: string): string | undefined {
+	if (pathname === "/users" || pathname.startsWith("/users/")) return "Users";
+	if (pathname === "/roles" || pathname.startsWith("/roles/")) return "Roles";
+	if (
+		pathname === "/permissions" ||
+		pathname.startsWith("/permissions/")
+	)
+		return "Permissions";
+	return undefined;
+}
+
 const VALIDATION_MESSAGES_ALL = {
 	...VALIDATION_MESSAGES,
 	...PROFILE_VALIDATION_MESSAGES,
+	...USERS_VALIDATION_MESSAGES,
+	...ROLES_VALIDATION_MESSAGES,
+	...PERMISSIONS_VALIDATION_MESSAGES,
 };
 
 const isUploadsPath = (pathname: string) =>
@@ -130,7 +149,7 @@ export function createApp(assets: InertiaAssets) {
 
 		// Schema validation (TypeBox) → 422 with field errors, Inertia-aware.
 		if (err instanceof ValidationFailed) {
-			const component = COMPONENT_BY_PATH[pathname];
+			const component = COMPONENT_BY_PATH[pathname] ?? componentForPath(pathname);
 			const errors: Record<string, string> = {};
 			for (const item of err.errors) {
 				const field = item.path.replace(/^\//, "");
@@ -176,6 +195,9 @@ export function createApp(assets: InertiaAssets) {
 	app.route("/", googleOauthRoutes());
 	app.route("/", pageRoutes());
 	app.route("/", profileRoutes());
+	app.route("/", usersRoutes());
+	app.route("/", rolesRoutes());
+	app.route("/", permissionsRoutes());
 
 	return app;
 }

@@ -159,3 +159,9 @@
 ## [2026-08-05T20:02:39.961Z] retro
 - slug: "honosvelte-global-color-token-rule", title: "Global color tokens via colors.css (no hardcoded colors)", category: "frontend"
 
+## [2026-08-05T20:11:23.387Z] observe
+- slug: "obs-2026-08-05-cards-use-radius-card-token-card-svelte-rounded-radius-bug-f", title: "Cards use --radius-card token; Card.svelte rounded-radius bug fixed", relevance: "medium"
+
+## [2026-08-06T02:04:18.495Z] observe
+- slug: "obs-2026-08-06-pages-now-consume-card-table-components-previously-dead-code", title: "Pages now consume Card/Table components (previously dead code)", relevance: "medium"
+

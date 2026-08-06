@@ -1,6 +1,8 @@
 <script lang="ts">
   import { usePage } from '@inertiajs/svelte'
   import Layout from '../components/Layout.svelte'
+  import Card from '../components/Card.svelte'
+  import Table from '../components/Table.svelte'
   import type { DashboardStats } from '../../shared/types'
 
   let { stats }: { stats: DashboardStats } = $props()
@@ -30,31 +32,24 @@
     <section
       class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 my-6"
     >
-      <div
-        class="bg-surface border border-border rounded-radius p-5 flex flex-col items-start gap-1"
-      >
+      <Card class="p-5 flex flex-col items-start gap-1">
         <span class="text-xl font-bold">{stats.userCount}</span>
         <span class="text-[0.82rem] text-muted">Total users</span>
-      </div>
-      <div
-        class="bg-surface border border-border rounded-radius p-5 flex flex-col items-start gap-1"
-      >
+      </Card>
+      <Card class="p-5 flex flex-col items-start gap-1">
         <span class="text-xl font-bold capitalize">{user.role}</span>
         <span class="text-[0.82rem] text-muted">Role</span>
-      </div>
-      <div
-        class="bg-surface border border-border rounded-radius p-5 flex flex-col items-start gap-1"
-      >
+      </Card>
+      <Card class="p-5 flex flex-col items-start gap-1">
         <span class="text-xl font-bold">{formatDate(user.createdAt)}</span>
         <span class="text-[0.82rem] text-muted">Member since</span>
-      </div>
+      </Card>
     </section>
 
-    <section class="bg-surface border border-border rounded-radius p-6">
+    <Card class="p-6">
       <h2 class="text-[1.1rem] m-0 mb-3">Recent users</h2>
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-sm">
-          <thead>
+      <Table>
+        <thead>
             <tr>
               <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
                 Name
@@ -82,8 +77,7 @@
               </tr>
             {/each}
           </tbody>
-        </table>
-      </div>
-    </section>
+        </Table>
+    </Card>
   </Layout>
 {/if}
