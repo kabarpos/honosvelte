@@ -7,7 +7,7 @@
 
   let { googleEnabled = false }: { googleEnabled?: boolean } = $props()
 
-  const form = useForm({ name: '', email: '', password: '' })
+  const form = useForm({ name: '', email: '', password: '', whatsapp: '' })
 
   function submit(e: SubmitEvent) {
     e.preventDefault()
@@ -66,6 +66,18 @@
       hint="At least 8 characters."
       bind:value={form.password}
       onchange={() => form.clearErrors('password')}
+    />
+
+    <TextField
+      id="whatsapp"
+      label="WhatsApp (optional)"
+      error={form.errors.whatsapp}
+      type="tel"
+      name="whatsapp"
+      autocomplete="tel"
+      placeholder="+62 812 3456 7890"
+      bind:value={form.whatsapp}
+      onchange={() => form.clearErrors('whatsapp')}
     />
 
     <Button type="submit" fullWidth loading={form.processing}>

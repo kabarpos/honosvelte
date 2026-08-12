@@ -7,6 +7,7 @@
   import Input from '../components/Input.svelte'
   import Button from '../components/Button.svelte'
   import Modal from '../components/Modal.svelte'
+  import RowActions from '../components/RowActions.svelte'
   import type { Permission } from '../../shared/types'
 
   let { permissions }: { permissions: Permission[] } = $props()
@@ -31,11 +32,12 @@
 
   function openEdit(p: Permission) {
     editPerm = p
-    editForm = useForm({
+    editForm.setStore({
       slug: p.slug,
       name: p.name,
       description: p.description || '',
     })
+    editForm.clearErrors()
     editOpen = true
   }
 
@@ -66,8 +68,6 @@
     })
   }
 
-  const wrapper =
-    'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border rounded-lg bg-transparent text-text cursor-pointer transition-colors hover:bg-primary-soft'
 </script>
 
 <svelte:head><title>Permissions</title></svelte:head>
@@ -116,12 +116,19 @@
                 {p.description || '—'}
               </td>
               <td class="text-right px-3 py-2.5 border-b border-border whitespace-nowrap">
-                <div class="inline-flex items-center gap-1.5">
-                  <button type="button" class={wrapper} onclick={() => openEdit(p)}>Edit</button>
-                  <button type="button" class={`${wrapper} text-danger`} onclick={() => { deletePerm = p; deleteOpen = true }}>
-                    Delete
-                  </button>
-                </div>
+                <RowActions
+                  items={[
+                    { label: 'Edit', onClick: () => openEdit(p) },
+                    {
+                      label: 'Delete',
+                      danger: true,
+                      onClick: () => {
+                        deletePerm = p
+                        deleteOpen = true
+                      },
+                    },
+                  ]}
+                />
               </td>
             </tr>
           {/each}

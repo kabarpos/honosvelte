@@ -22,6 +22,7 @@ import {
 } from "../auth";
 import { config } from "../config";
 import { createUser, findUserByEmail, updateUserPassword } from "../db";
+import { recordActivity } from "../activity";
 import type { AppEnv } from "../inertia-middleware";
 import { sendMail } from "../mailer";
 import { rateLimit } from "../rate-limit";
@@ -34,6 +35,7 @@ const registerBody = t.Object(
 		name: t.String({ minLength: 2, maxLength: 80 }),
 		email: t.String({ format: "email" }),
 		password: t.String({ minLength: 8, maxLength: 72 }),
+		whatsapp: t.Optional(t.String({ maxLength: 20 })),
 	},
 	{ additionalProperties: false },
 );
@@ -79,6 +81,7 @@ export const VALIDATION_MESSAGES: Record<string, string> = {
 	"/password": "Password must be at least 8 characters.",
 	"/passwordConfirmation": "Confirm your password.",
 	"/token": "The reset token is missing.",
+	"/whatsapp": "WhatsApp number must be at most 20 characters.",
 };
 
 export const authRoutes = () => {
@@ -122,7 +125,12 @@ export const authRoutes = () => {
 			});
 		}
 		const passwordHash = await hashPassword(body.password);
-		const user = createUser.get(body.name, body.email, passwordHash);
+		const user = createUser.get(
+			body.name,
+			body.email,
+			passwordHash,
+			body.whatsapp?.trim() || null,
+		);
 		if (!user)
 			return page.error("Register", {
 				email: "Could not create your account.",
@@ -131,6 +139,7 @@ export const authRoutes = () => {
 		if (c.var.sessionToken) deleteSessionByToken(c.var.sessionToken);
 		const session = createSession(user.id);
 		setSessionCookie(c, session.token, session.expiresAt);
+		recordActivity(c, user.id, "register", `Account created`);
 		return page.redirect("/dashboard");
 	});
 
@@ -148,10 +157,13 @@ export const authRoutes = () => {
 		const session = createSession(user.id);
 		setSessionCookie(c, session.token, session.expiresAt);
 		setFlash(session.token, { success: `Welcome back, ${user.name}!` });
+		recordActivity(c, user.id, "login", `Signed in as ${user.name}`);
 		return page.redirect("/dashboard");
 	});
 
 	app.post("/logout", requireAuth, (c) => {
+		const user = c.var.user;
+		if (user) recordActivity(c, user.id, "logout", `Signed out`);
 		if (c.var.sessionToken) deleteSessionByToken(c.var.sessionToken);
 		clearSessionCookie(c);
 		return c.var.inertia.redirect("/login");

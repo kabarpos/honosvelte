@@ -21,6 +21,7 @@ import {
 import type { AppEnv } from "../inertia-middleware";
 import type { Permission, RoleRecord } from "../../shared/types";
 import { validateJson } from "../validation";
+import { recordActivity } from "../activity";
 
 const slugPattern = "^[a-z0-9]+(\\.[a-z0-9]+)*$";
 
@@ -81,6 +82,9 @@ export const rolesRoutes = () => {
 			});
 		}
 		insertRole.run(body.slug, body.name, body.description || null);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "roles.create", `Created role ${body.slug}`);
 		flash(c, "Role created.");
 		return c.var.inertia.redirect("/roles");
 	});
@@ -102,6 +106,9 @@ export const rolesRoutes = () => {
 			});
 		}
 		updateRole.run(body.slug, body.name, body.description || null, id);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "roles.update", `Updated role ${body.slug}`);
 		flash(c, "Role updated.");
 		return c.var.inertia.redirect("/roles");
 	});
@@ -115,6 +122,14 @@ export const rolesRoutes = () => {
 			const perm = findPermissionBySlug.get(slug);
 			if (perm) assignRolePermission.run(id, perm.id);
 		}
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(
+				c,
+				acting.id,
+				"roles.assign",
+				`Assigned ${body.permissionSlugs.length} permission(s) to role #${id}`,
+			);
 		flash(c, "Role permissions updated.");
 		return c.var.inertia.redirect("/roles");
 	});
@@ -129,6 +144,9 @@ export const rolesRoutes = () => {
 			});
 		}
 		deleteRole.run(id);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "roles.delete", `Deleted role ${role.slug}`);
 		flash(c, "Role deleted.");
 		return c.var.inertia.redirect("/roles");
 	});

@@ -8,6 +8,7 @@
   import Button from '../components/Button.svelte'
   import Badge from '../components/Badge.svelte'
   import Modal from '../components/Modal.svelte'
+  import RowActions from '../components/RowActions.svelte'
   import Checkbox from '../components/Checkbox.svelte'
   import type { Permission, RoleRecord } from '../../shared/types'
 
@@ -40,11 +41,12 @@
 
   function openEdit(r: RoleRecord) {
     editRole = r
-    editForm = useForm({
+    editForm.setStore({
       slug: r.slug,
       name: r.name,
       description: r.description || '',
     })
+    editForm.clearErrors()
     editOpen = true
   }
 
@@ -76,7 +78,7 @@
     e.preventDefault()
     if (!permRole) return
     const slugs = permissions.filter((p) => permSel[p.slug]).map((p) => p.slug)
-    permForm = useForm({ permissionSlugs: slugs })
+    permForm.setStore({ permissionSlugs: slugs })
     permForm.post(`/roles/${permRole.id}/permissions`, {
       onSuccess: () => {
         permOpen = false
@@ -96,8 +98,6 @@
     })
   }
 
-  const wrapper =
-    'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border rounded-lg bg-transparent text-text cursor-pointer transition-colors hover:bg-primary-soft'
 </script>
 
 <svelte:head><title>Roles</title></svelte:head>
@@ -154,15 +154,24 @@
                 </Badge>
               </td>
               <td class="text-right px-3 py-2.5 border-b border-border whitespace-nowrap">
-                <div class="inline-flex items-center gap-1.5">
-                  <button type="button" class={wrapper} onclick={() => openEdit(r)}>Edit</button>
-                  <button type="button" class={wrapper} onclick={() => openPerms(r)}>Permissions</button>
-                  {#if !['user', 'admin', 'super_admin'].includes(r.slug)}
-                    <button type="button" class={`${wrapper} text-danger`} onclick={() => { deleteRole = r; deleteOpen = true }}>
-                      Delete
-                    </button>
-                  {/if}
-                </div>
+                <RowActions
+                  items={[
+                    { label: 'Edit', onClick: () => openEdit(r) },
+                    { label: 'Permissions', onClick: () => openPerms(r) },
+                    ...(!['user', 'admin', 'super_admin'].includes(r.slug)
+                      ? [
+                          {
+                            label: 'Delete',
+                            danger: true,
+                            onClick: () => {
+                              deleteRole = r
+                              deleteOpen = true
+                            },
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
               </td>
             </tr>
           {/each}

@@ -6,7 +6,7 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import type { Permission, Role, UserStatus } from "../shared/types";
+import type { Role, UserStatus } from "../shared/types";
 import { config } from "./config";
 import { migrate } from "./migrations";
 
@@ -79,8 +79,11 @@ export const pingDb = db.query<{ n: number }, []>(`SELECT 1 AS n`);
 // Users
 // ---------------------------------------------------------------------------
 
-export const createUser = db.query<{ id: number }, [string, string, string]>(
-	`INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?) RETURNING id`,
+export const createUser = db.query<
+	{ id: number },
+	[string, string, string, string | null]
+>(
+	`INSERT INTO users (name, email, password_hash, whatsapp) VALUES (?, ?, ?, ?) RETURNING id`,
 );
 export const createUserWithRole = db.query<
 	{ id: number },
@@ -188,9 +191,10 @@ export const insertRole = db.query<
 	{ id: number },
 	[string, string, string | null]
 >(`INSERT INTO roles (slug, name, description) VALUES (?, ?, ?) RETURNING id`);
-export const updateRole = db.query<null, [string, string, string | null, number]>(
-	`UPDATE roles SET slug = ?, name = ?, description = ? WHERE id = ?`,
-);
+export const updateRole = db.query<
+	null,
+	[string, string, string | null, number]
+>(`UPDATE roles SET slug = ?, name = ?, description = ? WHERE id = ?`);
 export const deleteRole = db.query<null, [number]>(
 	`DELETE FROM roles WHERE id = ?`,
 );
@@ -321,4 +325,174 @@ export const deleteUpload = db.query<null, [string]>(
  *  `now` (ISO) so tests can control time. */
 export const listExpired = db.query<UploadRow, [string]>(
 	`SELECT id, upload_length AS uploadLength, offset, metadata, user_id AS userId, path, created_at AS createdAt, expires_at AS expiresAt FROM uploads WHERE expires_at IS NOT NULL AND expires_at < ?`,
+);
+
+// ---------------------------------------------------------------------------
+// Media library
+// ---------------------------------------------------------------------------
+
+export interface MediaRow {
+	id: number;
+	userId: number | null;
+	filename: string;
+	originalName: string;
+	mimeType: string;
+	size: number;
+	category: string;
+	title: string | null;
+	altText: string | null;
+	description: string | null;
+	createdAt: string;
+}
+
+const MEDIA_COLUMNS = `id, user_id AS userId, filename, original_name AS originalName,
+	mime_type AS mimeType, size, category, title, alt_text AS altText,
+	description, created_at AS createdAt`;
+
+export const insertMedia = db.query<
+	{ id: number },
+	[number | null, string, string, string, number, string]
+>(
+	`INSERT INTO media (user_id, filename, original_name, mime_type, size, category)
+   VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+);
+
+export const findMediaById = db.query<MediaRow, [number]>(
+	`SELECT ${MEDIA_COLUMNS} FROM media WHERE id = ?`,
+);
+
+/** Filters: category/userId/search pass "" to ignore. Ordering newest first.
+ *  Each filter expands to two `?` placeholders, so every param is passed
+ *  twice (once for the equality test, once for the OR branch). */
+export const listMedia = db.query<
+	MediaRow,
+	[string, string, string, string, string, string, number, number]
+>(
+	`SELECT ${MEDIA_COLUMNS} FROM media
+   WHERE (? = '' OR category = ?) AND (? = '' OR user_id = ?) AND (? = '' OR original_name LIKE ?)
+   ORDER BY id DESC LIMIT ? OFFSET ?`,
+);
+
+export const countMedia = db.query<
+	{ n: number },
+	[string, string, string, string, string, string]
+>(
+	`SELECT COUNT(*) AS n FROM media
+   WHERE (? = '' OR category = ?) AND (? = '' OR user_id = ?) AND (? = '' OR original_name LIKE ?)`,
+);
+
+export const countAllMedia = db.query<{ n: number }, []>(
+	`SELECT COUNT(*) AS n FROM media`,
+);
+
+export const updateMediaMeta = db.query<
+	null,
+	[string | null, string | null, string | null, string | null, number]
+>(
+	`UPDATE media SET original_name = ?, title = ?, alt_text = ?, description = ? WHERE id = ?`,
+);
+
+export const deleteMediaById = db.query<null, [number]>(
+	`DELETE FROM media WHERE id = ?`,
+);
+
+export const listMediaPicker = db.query<
+	Pick<
+		MediaRow,
+		"id" | "originalName" | "mimeType" | "size" | "title" | "altText"
+	>,
+	[string, string, string]
+>(
+	`SELECT id, original_name AS originalName, mime_type AS mimeType, size, title, alt_text AS altText
+   FROM media
+   WHERE ? = '' OR original_name LIKE ? OR COALESCE(title, '') LIKE ?
+   ORDER BY id DESC LIMIT 20`,
+);
+
+export interface ActivityLogRow {
+	id: number;
+	userId: number | null;
+	userName: string | null;
+	event: string;
+	detail: string | null;
+	ip: string | null;
+	url: string | null;
+	method: string | null;
+	createdAt: string;
+}
+
+const ACTIVITY_COLUMNS = `al.id, al.user_id AS userId, u.name AS userName,
+	al.event, al.detail, al.ip, al.url, al.method, al.created_at AS createdAt`;
+
+/** Insert one activity entry (event, detail, ip, url, method; user optional). */
+export const insertActivity = db.query<
+	null,
+	[
+		number | null,
+		string,
+		string | null,
+		string | null,
+		string | null,
+		string | null,
+	]
+>(
+	`INSERT INTO activity_logs (user_id, event, detail, ip, url, method)
+   VALUES (?, ?, ?, ?, ?, ?)`,
+);
+
+export const findActivityById = db.query<ActivityLogRow, [number]>(
+	`SELECT ${ACTIVITY_COLUMNS}
+   FROM activity_logs al LEFT JOIN users u ON u.id = al.user_id
+   WHERE al.id = ?`,
+);
+
+/** Filters: event/search pass "" to ignore (search matches user, event, detail,
+ *  url). Ordering newest first. Each filter expands to two `?` placeholders. */
+export const listActivity = db.query<
+	ActivityLogRow,
+	[string, string, string, string, string, string, string, number, number]
+>(
+	`SELECT ${ACTIVITY_COLUMNS}
+   FROM activity_logs al LEFT JOIN users u ON u.id = al.user_id
+   WHERE (? = '' OR al.event = ?)
+     AND (? = '' OR u.name LIKE ? OR al.event LIKE ? OR COALESCE(al.detail, '') LIKE ? OR COALESCE(al.url, '') LIKE ?)
+   ORDER BY al.id DESC LIMIT ? OFFSET ?`,
+);
+
+export const countActivity = db.query<
+	{ n: number },
+	[string, string, string, string, string, string, string]
+>(
+	`SELECT COUNT(*) AS n
+   FROM activity_logs al LEFT JOIN users u ON u.id = al.user_id
+   WHERE (? = '' OR al.event = ?)
+     AND (? = '' OR u.name LIKE ? OR al.event LIKE ? OR COALESCE(al.detail, '') LIKE ? OR COALESCE(al.url, '') LIKE ?)`,
+);
+
+export const listActivityEvents = db.query<{ event: string }, []>(
+	`SELECT DISTINCT event FROM activity_logs ORDER BY event`,
+);
+
+export interface SettingRow {
+	key: string;
+	category: string;
+	value: string;
+}
+
+/** All settings ordered by category then key (seed order is preserved by key). */
+export const allSettings = db.query<SettingRow, []>(
+	`SELECT key, category, value FROM settings ORDER BY category, key`,
+);
+
+/** One setting by key, null when absent. */
+export const findSettingByKey = db.query<SettingRow, [string]>(
+	`SELECT key, category, value FROM settings WHERE key = ?`,
+);
+
+/** Insert or update one setting. Category is kept from the seed on conflict. */
+export const upsertSetting = db.query<null, [string, string]>(
+	`INSERT INTO settings (key, category, value) VALUES (?, 'general', ?)
+   ON CONFLICT(key) DO UPDATE SET
+     value = excluded.value,
+     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')`,
 );

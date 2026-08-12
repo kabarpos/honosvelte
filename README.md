@@ -117,6 +117,20 @@ roles, SSR, and test suite.
   creation-with-upload, termination, expiration, checksum) with SQLite state
   and on-disk storage — demonstrated end to end by the avatar upload on the
   profile page.
+- **Activity log** (PRD Modul 13): every meaningful action — auth events,
+  user/role/permission/media CRUD, profile changes — is recorded with user,
+  event, IP, URL and method. Admins browse a paginated `/activity` log with
+  event filter, search and a JSON detail endpoint (`activity.read`
+  permission).
+- **Settings** (PRD Modul 15): admin page at `/settings` editing the
+  app-wide key-value configuration (general, contact, regional, footer,
+  script) through a cached settings store (`settings.read` /
+  `settings.update` permissions). Field kinds include text, textarea,
+  select (locale/timezone), a WhatsApp-number repeater, and media uploads
+  — logos (light/dark) and favicon are tus-uploaded to `/uploads` and
+  linked via `POST /settings/media`, which validates ownership and image
+  type before storing the served path. Dedicated analytics/pixel keys
+  (Meta Pixel, TikTok, Google Ads, GA4) join the generic head/body scripts.
 - **Migrations**: versioned SQL files applied at startup in transactions.
 - **Ops**: batched request logging with correlation id, gzip compression,
   security headers (CSP, nosniff, frame denial), `/health`, graceful
@@ -138,6 +152,7 @@ roles, SSR, and test suite.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
 | `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints |
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
+| `MEDIA_DIR` | `./data/media` | media library files on disk |
 | `TUS_MAX_SIZE` | `0` | max upload size in bytes (`0` = unlimited) |
 | `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL in seconds (`0` = no expiry) |
 
@@ -185,11 +200,13 @@ src/
 │   ├── assets.ts           # Bun.build pipeline + manifest + static serving
 │   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
 │   ├── tus-storage.ts      # tus upload bytes on disk (data/uploads)
+│   ├── settings.ts         # app settings store (Modul 15) + global-config cache
 │   └── routes/
 │       ├── auth.routes.ts         # /login /register /logout /forgot/reset (GET+POST)
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
+│       ├── settings.routes.ts     # /settings admin page + save (Modul 15)
 │       └── uploads.routes.ts      # /uploads* (tus resumable upload)
 ├── client/
 │   ├── app.ts              # Inertia client bootstrap (hydrate or mount)

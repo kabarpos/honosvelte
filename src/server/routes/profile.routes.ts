@@ -22,6 +22,7 @@ import {
 } from "../db";
 import type { AppEnv } from "../inertia-middleware";
 import { validateJson } from "../validation";
+import { recordActivity } from "../activity";
 
 const avatarBody = t.Object(
 	{ uploadId: t.String({ minLength: 1 }) },
@@ -87,6 +88,7 @@ export const profileRoutes = () => {
 			});
 		}
 		updateUserAvatar.run("/uploads/" + upload.id, user.id);
+		recordActivity(c, user.id, "profile.change", `Changed avatar`);
 		return new Response(null, { status: 204 });
 	});
 
@@ -101,6 +103,7 @@ export const profileRoutes = () => {
 			});
 		}
 		updateUserProfile.run(body.name, body.email, user.id);
+		recordActivity(c, user.id, "profile.update", `Updated profile`);
 		if (c.var.sessionToken)
 			setFlash(c.var.sessionToken, { success: "Profile updated." });
 		return c.var.inertia.redirect("/profile");
@@ -128,6 +131,7 @@ export const profileRoutes = () => {
 			}
 			const passwordHash = await hashPassword(body.password);
 			updateUserPassword.run(passwordHash, user.id);
+			recordActivity(c, user.id, "profile.change", `Changed password`);
 			if (c.var.sessionToken) {
 				deleteOtherSessionsByToken(c.var.sessionToken, user.id);
 				setFlash(c.var.sessionToken, { success: "Password updated." });

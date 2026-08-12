@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { usePage } from '@inertiajs/svelte'
+  import { Link, usePage } from '@inertiajs/svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Table from '../components/Table.svelte'
@@ -39,6 +39,12 @@
       <Card class="p-5 flex flex-col items-start gap-1">
         <span class="text-xl font-bold capitalize">{user.role}</span>
         <span class="text-[0.82rem] text-muted">Role</span>
+      </Card>
+      <Card class="p-5 flex flex-col items-start gap-1">
+        <Link href="/media" class="no-underline">
+          <span class="text-xl font-bold">{stats.mediaCount}</span>
+          <span class="block text-[0.82rem] text-muted">Media files</span>
+        </Link>
       </Card>
       <Card class="p-5 flex flex-col items-start gap-1">
         <span class="text-xl font-bold">{formatDate(user.createdAt)}</span>

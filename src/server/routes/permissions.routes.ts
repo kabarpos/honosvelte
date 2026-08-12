@@ -16,6 +16,7 @@ import {
 import type { AppEnv } from "../inertia-middleware";
 import type { Permission } from "../../shared/types";
 import { validateJson } from "../validation";
+import { recordActivity } from "../activity";
 
 const slugPattern = "^[a-z0-9]+(\\.[a-z0-9]+)*$";
 
@@ -75,6 +76,9 @@ export const permissionsRoutes = () => {
 			});
 		}
 		insertPermission.run(body.slug, body.name, body.description || null);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "permissions.create", `Created permission ${body.slug}`);
 		flash(c, "Permission created.");
 		return c.var.inertia.redirect("/permissions");
 	});
@@ -96,6 +100,9 @@ export const permissionsRoutes = () => {
 			});
 		}
 		updatePermission.run(body.slug, body.name, body.description || null, id);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "permissions.update", `Updated permission ${body.slug}`);
 		flash(c, "Permission updated.");
 		return c.var.inertia.redirect("/permissions");
 	});
@@ -110,6 +117,9 @@ export const permissionsRoutes = () => {
 			});
 		}
 		deletePermission.run(id);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "permissions.delete", `Deleted permission ${permission.slug}`);
 		flash(c, "Permission deleted.");
 		return c.var.inertia.redirect("/permissions");
 	});

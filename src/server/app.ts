@@ -16,9 +16,13 @@ import { Inertia, type InertiaAssets } from "./inertia";
 import { inertiaMiddleware, type AppEnv } from "./inertia-middleware";
 import { logError, requestLogger } from "./logger";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
+import { activityRoutes } from "./routes/activity.routes";
+import { billingRoutes } from "./routes/billing.routes";
 import { googleOauthRoutes } from "./routes/google-oauth.routes";
+import { mediaRoutes, MEDIA_VALIDATION_MESSAGES } from "./routes/media.routes";
 import { pageRoutes } from "./routes/pages.routes";
 import { permissionsRoutes } from "./routes/permissions.routes";
+import { settingsRoutes } from "./routes/settings.routes";
 import {
 	profileRoutes,
 	PROFILE_VALIDATION_MESSAGES,
@@ -46,11 +50,17 @@ const COMPONENT_BY_PATH: Record<string, string> = {
 function componentForPath(pathname: string): string | undefined {
 	if (pathname === "/users" || pathname.startsWith("/users/")) return "Users";
 	if (pathname === "/roles" || pathname.startsWith("/roles/")) return "Roles";
-	if (
-		pathname === "/permissions" ||
-		pathname.startsWith("/permissions/")
-	)
+	if (pathname === "/permissions" || pathname.startsWith("/permissions/"))
 		return "Permissions";
+	if (pathname === "/media" || pathname.startsWith("/media/")) return "Media";
+	if (pathname === "/billing" || pathname.startsWith("/billing/"))
+		return "Billing";
+	if (pathname === "/activity" || pathname.startsWith("/activity/"))
+		return "Activity";
+	// Exact match only: POST /settings/media is a JSON API (not an Inertia
+	// page), so its validation errors must come back as plain JSON, not an
+	// Inertia envelope (mirrors /profile/avatar).
+	if (pathname === "/settings") return "Settings";
 	return undefined;
 }
 
@@ -60,6 +70,7 @@ const VALIDATION_MESSAGES_ALL = {
 	...USERS_VALIDATION_MESSAGES,
 	...ROLES_VALIDATION_MESSAGES,
 	...PERMISSIONS_VALIDATION_MESSAGES,
+	...MEDIA_VALIDATION_MESSAGES,
 };
 
 const isUploadsPath = (pathname: string) =>
@@ -149,7 +160,8 @@ export function createApp(assets: InertiaAssets) {
 
 		// Schema validation (TypeBox) → 422 with field errors, Inertia-aware.
 		if (err instanceof ValidationFailed) {
-			const component = COMPONENT_BY_PATH[pathname] ?? componentForPath(pathname);
+			const component =
+				COMPONENT_BY_PATH[pathname] ?? componentForPath(pathname);
 			const errors: Record<string, string> = {};
 			for (const item of err.errors) {
 				const field = item.path.replace(/^\//, "");
@@ -198,6 +210,10 @@ export function createApp(assets: InertiaAssets) {
 	app.route("/", usersRoutes());
 	app.route("/", rolesRoutes());
 	app.route("/", permissionsRoutes());
+	app.route("/", mediaRoutes());
+	app.route("/", billingRoutes());
+	app.route("/", activityRoutes());
+	app.route("/", settingsRoutes());
 
 	return app;
 }

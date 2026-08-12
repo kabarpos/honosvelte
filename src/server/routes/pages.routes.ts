@@ -5,7 +5,7 @@
  */
 import { Hono } from "hono";
 import { requireAuth, requireRole } from "../auth";
-import { countUsers, listUsers, recentUsers, toPublicUser } from "../db";
+import { countAllMedia, countUsers, listUsers, recentUsers, toPublicUser } from "../db";
 import type { AppEnv } from "../inertia-middleware";
 import type { DashboardStats, Paginated, User } from "../../shared/types";
 
@@ -13,6 +13,7 @@ function dashboardStats(): DashboardStats {
 	return {
 		userCount: countUsers.get()?.n ?? 0,
 		recentUsers: recentUsers.all(5).map(toPublicUser),
+		mediaCount: countAllMedia.get()?.n ?? 0,
 	};
 }
 

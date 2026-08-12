@@ -10,6 +10,7 @@
   import Badge from '../components/Badge.svelte'
   import Modal from '../components/Modal.svelte'
   import Pagination from '../components/Pagination.svelte'
+  import RowActions from '../components/RowActions.svelte'
   import type { Paginated, RoleRecord, User } from '../../shared/types'
 
   let { users, roles, search }: {
@@ -63,7 +64,7 @@
 
   function openEdit(u: User) {
     editUser = u
-    editForm = useForm({
+    editForm.setStore({
       name: u.name,
       email: u.email,
       whatsapp: u.whatsapp || '',
@@ -72,6 +73,7 @@
       password: '',
       passwordConfirmation: '',
     })
+    editForm.clearErrors()
     editOpen = true
   }
 
@@ -121,8 +123,6 @@
     return `/users?page=${p}${q}`
   }
 
-  const wrapper =
-    'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border rounded-lg bg-transparent text-text cursor-pointer transition-colors hover:bg-primary-soft'
 </script>
 
 <svelte:head><title>Users</title></svelte:head>
@@ -199,17 +199,27 @@
                 </Badge>
               </td>
               <td class="text-right px-3 py-2.5 border-b border-border whitespace-nowrap">
-                <div class="inline-flex items-center gap-1.5">
-                  <button type="button" class={wrapper} onclick={() => openEdit(u)}>
-                    Edit
-                  </button>
-                  {#if u.id !== currentUser?.id}
-                    <button type="button" class={wrapper} onclick={() => toggleStatus(u)}>
-                      {u.status === 'active' ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button type="button" class={`${wrapper} text-danger`} onclick={() => { deleteUser = u; deleteOpen = true }}>Delete</button>
-                  {/if}
-                </div>
+                <RowActions
+                  items={[
+                    { label: 'Edit', onClick: () => openEdit(u) },
+                    ...(u.id !== currentUser?.id
+                      ? [
+                          {
+                            label: u.status === 'active' ? 'Deactivate' : 'Activate',
+                            onClick: () => toggleStatus(u),
+                          },
+                          {
+                            label: 'Delete',
+                            danger: true,
+                            onClick: () => {
+                              deleteUser = u
+                              deleteOpen = true
+                            },
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
               </td>
             </tr>
           {/each}

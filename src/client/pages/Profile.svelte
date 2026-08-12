@@ -28,7 +28,7 @@
   // Initialize form defaults from user once available.
   $effect(() => {
     if (user) {
-      info = useForm({ name: user.name, email: user.email })
+      info.setStore({ name: user.name, email: user.email })
     }
   })
 

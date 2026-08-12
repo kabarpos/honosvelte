@@ -24,6 +24,7 @@ import {
 import type { AppEnv } from "../inertia-middleware";
 import type { Paginated, Role, RoleRecord, User, UserStatus } from "../../shared/types";
 import { validateJson } from "../validation";
+import { recordActivity } from "../activity";
 
 const roleEnum = ["user", "admin", "super_admin"] as const;
 const statusEnum = ["active", "inactive"] as const;
@@ -143,6 +144,9 @@ export const usersRoutes = () => {
 			body.role as Role,
 			body.status as UserStatus,
 		);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "users.create", `Created user ${body.email}`);
 		flash(c, "User created.");
 		return c.var.inertia.redirect("/users");
 	});
@@ -178,6 +182,9 @@ export const usersRoutes = () => {
 			const passwordHash = await hashPassword(body.password);
 			updateUserPassword.run(passwordHash, id);
 		}
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "users.update", `Updated user #${id}`);
 		flash(c, "User updated.");
 		return c.var.inertia.redirect("/users");
 	});
@@ -187,6 +194,14 @@ export const usersRoutes = () => {
 		if (!findUserById.get(id)) return c.var.inertia.redirect("/users");
 		const body = c.req.valid("json") as StatusBody;
 		setUserStatus.run(body.status as UserStatus, id);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(
+				c,
+				acting.id,
+				body.status === "active" ? "users.activate" : "users.deactivate",
+				`User #${id} ${body.status === "active" ? "activated" : "deactivated"}`,
+			);
 		flash(
 			c,
 			body.status === "active" ? "User activated." : "User deactivated.",
@@ -210,6 +225,9 @@ export const usersRoutes = () => {
 			});
 		}
 		deleteUser.run(id);
+		const acting = c.var.user;
+		if (acting)
+			recordActivity(c, acting.id, "users.delete", `Deleted user ${target.email}`);
 		flash(c, "User deleted.");
 		return c.var.inertia.redirect("/users");
 	});

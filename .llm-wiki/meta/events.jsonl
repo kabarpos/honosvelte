@@ -53,3 +53,9 @@
 {"timestamp":"2026-08-05T20:02:39.961Z","kind":"retro","slug":"honosvelte-global-color-token-rule","title":"Global color tokens via colors.css (no hardcoded colors)","category":"frontend"}
 {"timestamp":"2026-08-05T20:11:23.387Z","kind":"observe","slug":"obs-2026-08-05-cards-use-radius-card-token-card-svelte-rounded-radius-bug-f","title":"Cards use --radius-card token; Card.svelte rounded-radius bug fixed","relevance":"medium"}
 {"timestamp":"2026-08-06T02:04:18.495Z","kind":"observe","slug":"obs-2026-08-06-pages-now-consume-card-table-components-previously-dead-code","title":"Pages now consume Card/Table components (previously dead code)","relevance":"medium"}
+{"slug":"fixed-position-menus-break-under-transform-ancestors","title":"Fixed-position menus break under transform ancestors","category":"frontend","timestamp":"2026-08-11T17:01:57.360Z","kind":"retro"}
+{"slug":"obs-2026-08-11-gosvelte-actionmenu-dropdown-fixed-by-removing-transform-fro","title":"gosvelte ActionMenu dropdown fixed by removing transform from fade-up keyframes","relevance":"high","timestamp":"2026-08-11T17:01:57.365Z","kind":"observe"}
+{"slug":"obs-2026-08-12-modul-15-settings-implemented-as-easiest-prd-gap","title":"Modul 15 Settings implemented as easiest PRD gap","relevance":"high","timestamp":"2026-08-12T03:11:21.426Z","kind":"observe"}
+{"slug":"honosvelte-feature-addition-conventions","title":"Adding a feature module to honosvelte","category":"architecture","timestamp":"2026-08-12T03:11:29.386Z","kind":"retro"}
+{"slug":"obs-2026-08-12-settings-upgrade-modul-15-completed-media-repeater-script-fi","title":"Settings upgrade (Modul 15) completed — media/repeater/script fields + tests","relevance":"high","timestamp":"2026-08-12T03:47:23.341Z","kind":"observe"}
+{"slug":"record-task-before-starting-todo","title":"Record tasks in todo + wiki before starting","category":"process","timestamp":"2026-08-12T03:47:23.344Z","kind":"retro"}

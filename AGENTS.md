@@ -42,11 +42,13 @@ src/
 │   ├── assets.ts           # Bun.build pipeline + manifest + static serving
 │   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
 │   ├── tus-storage.ts      # tus upload bytes on disk
+│   ├── settings.ts         # app settings store (Modul 15) + global-config cache
 │   └── routes/
 │       ├── auth.routes.ts         # /login /register /logout /forgot-password /reset-password (GET+POST)
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
+│       ├── settings.routes.ts     # /settings admin page + save (Modul 15)
 │       └── uploads.routes.ts      # /uploads* (tus protocol)
 ├── client/                 # Svelte + Inertia (pages/, components/, styles.css)
 ├── shared/                 # types.ts, inertia.d.ts (client+server shared)

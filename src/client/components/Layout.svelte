@@ -30,6 +30,16 @@
       match: (p) => p === '/profile' || p.startsWith('/profile'),
     },
     {
+      href: '/media',
+      label: 'Media',
+      match: (p) => p === '/media' || p.startsWith('/media'),
+    },
+    {
+      href: '/billing',
+      label: 'Billing',
+      match: (p) => p === '/billing' || p.startsWith('/billing'),
+    },
+    {
       href: '/admin',
       label: 'Admin',
       roles: ['admin'],
@@ -52,6 +62,18 @@
       label: 'Permissions',
       roles: ['admin'],
       match: (p) => p === '/permissions' || p.startsWith('/permissions'),
+    },
+    {
+      href: '/activity',
+      label: 'Activity',
+      roles: ['admin'],
+      match: (p) => p === '/activity' || p.startsWith('/activity'),
+    },
+    {
+      href: '/settings',
+      label: 'Settings',
+      roles: ['admin'],
+      match: (p) => p === '/settings' || p.startsWith('/settings'),
     },
   ]
 
@@ -240,6 +262,37 @@
                     <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
+                {:else if item.href === '/media'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="9" cy="9" r="2" />
+                    <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
+                  </svg>
+                {:else if item.href === '/billing'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <path d="M2 10h20" />
+                  </svg>
                 {:else if item.href === '/admin'}
                   <svg
                     viewBox="0 0 24 24"
@@ -302,6 +355,21 @@
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     <rect x="4" y="11" width="16" height="10" rx="2" />
                     <circle cx="12" cy="16" r="1.5" />
+                  </svg>
+                {:else if item.href === '/settings'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
                   </svg>
                 {/if}
               </span>

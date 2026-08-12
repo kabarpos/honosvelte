@@ -58,6 +58,10 @@ export const config = {
 		/** Seconds after which an unfinished upload may be swept (Expiration). 0 = no expiry. */
 		expirationSeconds: Number(pick(process.env.TUS_EXPIRATION_SECONDS, "0")),
 	},
+	media: {
+		/** Directory where media library files are stored on disk. */
+		dir: pick(process.env.MEDIA_DIR, "./data/media"),
+	},
 	mail: {
 		driver: mailDriver,
 		from: pick(process.env.MAIL_FROM, "no-reply@example.com"),
