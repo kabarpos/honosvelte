@@ -15,6 +15,7 @@
 import type { Page } from "@inertiajs/core";
 import type { FlashData, SharedPageProps } from "../shared/types";
 import { clearFlash } from "./auth";
+import { config } from "./config";
 
 /**
  * Lazy-loaded SSR renderer. dist/ssr.js is built by buildClientAssets()
@@ -235,6 +236,20 @@ export class Inertia {
 		const description = s["app.description"]
 			? `<meta name="description" content="${escapeHtml(s["app.description"])}" />`
 			: "";
+		// Social preview (Open Graph). app.thumbnail is a served media path
+		// (/media/<id>); og:image must be an absolute URL, so we prefix the
+		// configured base URL (config.appUrl). og:title/og:description reuse
+		// the app name / description when present.
+		const ogImage = s["app.thumbnail"]
+			? `<meta property="og:image" content="${config.appUrl}${escapeHtml(s["app.thumbnail"])}" />`
+			: "";
+		const ogTitle = `<meta property="og:title" content="${escapeHtml(appName)}" />`;
+		const ogDescription = s["app.description"]
+			? `<meta property="og:description" content="${escapeHtml(s["app.description"])}" />`
+			: "";
+		const twitterCard = s["app.thumbnail"]
+			? `<meta name="twitter:card" content="summary_large_image" />`
+			: "";
 		// Admin-configured head snippets (generic head + analytics/pixel keys).
 		// Inline scripts are permitted by the app CSP (script-src
 		// 'unsafe-inline'); external vendor scripts are covered by the CSP
@@ -263,6 +278,10 @@ export class Inertia {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
 ${description}
+${ogTitle}
+${ogDescription}
+${ogImage}
+${twitterCard}
 ${favicon}
 ${titleTag}
 ${headTags.join("\n")}

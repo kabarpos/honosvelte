@@ -130,7 +130,9 @@ roles, SSR, and test suite.
   — logos (light/dark) and favicon are uploaded through the **media
   library** (`POST /media`, Modul 8) so the files persist with metadata;
   `POST /settings/media` validates the media item is a raster image and
-  stores the served path (`/media/<id>`) as the setting value. Dedicated
+  stores the served path (`/media/<id>`) as the setting value. A social
+  preview image (`app.thumbnail`) is uploaded the same way and emitted as
+  the Open Graph `og:image` (absolute URL via `APP_URL`). Dedicated
   analytics/pixel keys (Meta Pixel, TikTok, Google Ads, GA4) join the
   generic head/body scripts. **Settings are consumed everywhere — nothing
   is hardcoded**: `app.*` drives the HTML title (`Page · App Name`), meta

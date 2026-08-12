@@ -159,6 +159,10 @@ describe("Modul 15 — Settings", () => {
 		for (const key of ["app.logo_light", "app.logo_dark", "app.favicon"]) {
 			expect(general.items.find((i) => i.key === key)?.kind).toBe("media");
 		}
+		// Social preview image is also a media-valued setting.
+		expect(general.items.find((i) => i.key === "app.thumbnail")?.kind).toBe(
+			"media",
+		);
 		expect(general.items.find((i) => i.key === "app.name")?.kind).toBe("text");
 		// WhatsApp is a repeater of numbers; regional fields are selects.
 		expect(
@@ -340,6 +344,7 @@ describe("settings are consumed by the app (no hardcode)", () => {
 		setSetting("app.name", "Acme Systems");
 		setSetting("app.description", "A boring admin panel.");
 		setSetting("app.favicon", "/media/42");
+		setSetting("app.thumbnail", "/media/99");
 		setSetting("regional.locale", "id");
 		setSetting("script.head", '<meta name="theme-color" content="#ff0000">');
 		setSetting("script.meta_pixel", "<script>window.pixel = 1;</script>");
@@ -356,6 +361,18 @@ describe("settings are consumed by the app (no hardcode)", () => {
 			'<meta name="description" content="A boring admin panel." />',
 		);
 		expect(html).toContain('<link rel="icon" href="/media/42" />');
+		// Open Graph social preview: og:image is absolute (config.appUrl + the
+		// served media path), with matching og:title / og:description / card.
+		expect(html).toContain(
+			'<meta property="og:image" content="http://localhost:4000/media/99" />',
+		);
+		expect(html).toContain('<meta property="og:title" content="Acme Systems" />');
+		expect(html).toContain(
+			'<meta property="og:description" content="A boring admin panel." />',
+		);
+		expect(
+			html,
+		).toContain('<meta name="twitter:card" content="summary_large_image" />');
 		// Head snippets (generic + analytics keys) land inside <head>.
 		const head = html.slice(0, html.indexOf("</head>"));
 		expect(head).toContain('<meta name="theme-color" content="#ff0000">');
@@ -388,6 +405,7 @@ describe("settings are consumed by the app (no hardcode)", () => {
 		setSetting("app.name", "");
 		setSetting("app.description", "");
 		setSetting("app.favicon", "");
+		setSetting("app.thumbnail", "");
 		setSetting("regional.locale", "");
 		setSetting("script.head", "");
 		setSetting("script.meta_pixel", "");
@@ -399,5 +417,8 @@ describe("settings are consumed by the app (no hardcode)", () => {
 		expect(html).toContain('<html lang="en">');
 		expect(html).toContain("<title>Login · Honosvelte</title>");
 		expect(html).toContain('rel="icon" href="data:image/svg+xml');
+		// No thumbnail set → no Open Graph image / card meta at all.
+		expect(html).not.toContain("og:image");
+		expect(html).not.toContain("twitter:card");
 	});
 });

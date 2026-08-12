@@ -38,7 +38,7 @@ const settingsBody = t.Record(
 type SettingsBody = Static<typeof settingsBody>;
 
 /** Keys whose value is a served media path, set via POST /settings/media. */
-const MEDIA_KEYS = ["app.logo_light", "app.logo_dark", "app.favicon"] as const;
+const MEDIA_KEYS = ["app.logo_light", "app.logo_dark", "app.favicon", "app.thumbnail"] as const;
 
 /** Raster-only like avatars: SVG can carry inline scripts, ico cannot. */
 const MEDIA_IMAGE_TYPES = [
@@ -107,6 +107,13 @@ const FIELD_META: Record<string, FieldMeta> = {
 		label: "Favicon",
 		kind: "media",
 		hint: "Browser tab icon. PNG, WebP or ICO.",
+	},
+	"app.thumbnail": {
+		category: "general",
+		label: "Social preview image",
+		kind: "media",
+		hint:
+			"Shown when the site is shared on social media (og:image). PNG, JPEG, GIF, WebP or ICO.",
 	},
 	// Contact
 	"contact.email": { category: "contact", label: "Email", kind: "text" },
