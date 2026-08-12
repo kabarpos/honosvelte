@@ -59,6 +59,8 @@ export interface SharedPageProps {
 	[key: string]: unknown;
 	auth: { user: User | null };
 	errors: Record<string, string>;
+	/** App-wide settings (PRD Modul 15), merged into every page payload. */
+	settings: Record<string, string>;
 }
 
 /** Props for the dashboard page. */

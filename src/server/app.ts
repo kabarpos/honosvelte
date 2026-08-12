@@ -12,6 +12,7 @@ import { compress } from "./compress";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { serveAsset } from "./assets";
 import { pingDb, toPublicUser } from "./db";
+import { getSettings } from "./settings";
 import { Inertia, type InertiaAssets } from "./inertia";
 import { inertiaMiddleware, type AppEnv } from "./inertia-middleware";
 import { logError, requestLogger } from "./logger";
@@ -99,6 +100,7 @@ function inertiaFromContext(
 			user: row ? toPublicUser(row) : null,
 			flash: readFlash(sessionToken),
 			sessionToken,
+			settings: Object.fromEntries(getSettings()),
 		},
 		assets,
 	);
@@ -127,16 +129,28 @@ export function createApp(assets: InertiaAssets) {
 			// a sandbox CSP can't be set per-path through secureHeaders).
 			contentSecurityPolicy: {
 				defaultSrc: ["'self'"],
+				// Tracking vendors the admin can embed through the script.*
+				// settings (Meta Pixel, TikTok, Google Ads, GA4): the official
+				// snippet loaders + beacon/pixel endpoints. Admin-authored
+				// snippets are trusted by definition; the allowlist still blocks
+				// arbitrary third-party script hosts.
 				scriptSrc: [
 					(c) =>
 						UPLOADS_RE.test(safeUrl(c.req.url).pathname)
 							? "'none'"
-							: "'self' 'unsafe-inline'",
+							: "'self' 'unsafe-inline'" +
+								" https://www.googletagmanager.com" +
+								" https://connect.facebook.net" +
+								" https://www.google-analytics.com" +
+								" https://analytics.tiktok.com" +
+								" https://www.googleadservices.com" +
+								" https://googleads.g.doubleclick.net" +
+								" https://td.doubleclick.net",
 				],
 				styleSrc: ["'self'", "'unsafe-inline'"],
-				imgSrc: ["'self'", "data:"],
+				imgSrc: ["'self'", "data:", "https:"],
 				fontSrc: ["'self'"],
-				connectSrc: ["'self'"],
+				connectSrc: ["'self'", "https:"],
 				frameAncestors: ["'none'"],
 				baseUri: ["'self'"],
 				formAction: ["'self'"],

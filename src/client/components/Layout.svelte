@@ -10,6 +10,31 @@
   const user = $derived(page.props.auth.user)
   const flash = $derived(page.flash)
   const url = $derived(page.url)
+	// App-wide settings (PRD Modul 15) drive the brand, footer and contact
+	// strip — see /settings.
+	const settings = $derived(page.props.settings ?? {})
+	// contact.whatsapp is a JSON array of numbers (Settings repeater).
+	const whatsappNumbers = $derived.by(() => {
+	  const raw = settings['contact.whatsapp'] ?? ''
+	  if (!raw) return []
+	  try {
+	    const parsed: unknown = JSON.parse(raw)
+	    return Array.isArray(parsed)
+	      ? parsed.filter(
+	          (n): n is string => typeof n === 'string' && n.trim().length > 0,
+	        )
+	      : []
+	  } catch {
+	    return []
+	  }
+	})
+	const contactAny = $derived(
+	  Boolean(
+	    settings['contact.email'] ||
+	      settings['contact.address'] ||
+	      whatsappNumbers.length > 0,
+	  ),
+	)
 
   type NavItem = {
     href: string
@@ -189,7 +214,12 @@
     <div
       class="flex items-center justify-between gap-2 px-5 border-b border-border h-16 shrink-0"
     >
-      <Brand href={user ? '/dashboard' : '/login'} />
+	      <Brand
+	        href={user ? '/dashboard' : '/login'}
+	        name={settings['app.name']}
+	        logoLight={settings['app.logo_light']}
+	        logoDark={settings['app.logo_dark']}
+	      />
       <button
         type="button"
         class="hidden items-center justify-center w-9 h-9 border border-border rounded-lg bg-transparent text-text cursor-pointer max-md:flex"
@@ -381,10 +411,14 @@
     </nav>
 
     <div class="p-3 border-t border-border">
-      <div class="p-3.5 rounded-card bg-bg border border-border">
-        <p class="m-0 text-sm font-bold">Honosvelte</p>
-        <p class="mt-0.5 text-xs text-muted">Bun · SQLite · Inertia v3</p>
-      </div>
+	      <div class="p-3.5 rounded-card bg-bg border border-border">
+	        <p class="m-0 text-sm font-bold">
+	          {settings['app.name'] || 'Honosvelte'}
+	        </p>
+	        {#if settings['app.tagline']}
+	          <p class="mt-0.5 text-xs text-muted">{settings['app.tagline']}</p>
+	        {/if}
+	      </div>
     </div>
   </aside>
 
@@ -678,11 +712,37 @@
       {@render children()}
     </main>
 
-    <footer
-      class="mt-auto px-5 py-3.5 flex items-center justify-between gap-3 text-muted text-xs border-t border-border max-md:px-4 max-md:py-3"
-    >
-      <span>Honosvelte boilerplate</span>
-      <span>Bun · Hono · bun:sqlite · Inertia v3</span>
-    </footer>
+	    {#if contactAny}
+	      <div
+	        class="px-5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted text-xs border-t border-border max-md:px-4"
+	      >
+	        {#if settings['contact.email']}
+	          <a class="hover:text-text" href={`mailto:${settings['contact.email']}`}>
+	            {settings['contact.email']}
+	          </a>
+	        {/if}
+	        {#each whatsappNumbers as number}
+	          <a
+	            class="hover:text-text"
+	            href={`https://wa.me/${number.replace(/\D/g, '')}`}
+	          >
+	            WhatsApp: {number}
+	          </a>
+	        {/each}
+	        {#if settings['contact.address']}
+	          <span>{settings['contact.address']}</span>
+	        {/if}
+	      </div>
+	    {/if}
+
+	    <footer
+	      class="mt-auto px-5 py-3.5 flex items-center justify-between gap-3 text-muted text-xs border-t border-border max-md:px-4 max-md:py-3"
+	    >
+	      <span>{settings['footer.text'] || settings['app.name'] || 'Honosvelte'}</span>
+	      <span>
+	        {settings['footer.copyright'] ||
+	          `© ${new Date().getFullYear()} ${settings['app.name'] || 'Honosvelte'}`}
+	      </span>
+	    </footer>
   </div>
 </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { router, useForm } from '@inertiajs/svelte'
+  import { router, useForm, usePage } from '@inertiajs/svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Input from '../components/Input.svelte'
@@ -9,6 +9,7 @@
   import Pagination from '../components/Pagination.svelte'
   import EmptyState from '../components/EmptyState.svelte'
   import type { ActivityLogEntry, Paginated } from '../../shared/types'
+  import { formatDateTime } from '../intl'
 
   let { activity, events, event, search }: {
     activity: Paginated<ActivityLogEntry>
@@ -18,6 +19,9 @@
   } = $props()
 
   const { currentPage, lastPage } = $derived(activity.meta)
+
+  const pageStore = usePage()
+  const settings = $derived(pageStore.props.settings ?? {})
 
   let searchForm = $state(useForm({ q: search }))
   let page = $state(currentPage)
@@ -56,16 +60,6 @@
   function openDetail(entry: ActivityLogEntry) {
     detailEntry = entry
     detailOpen = true
-  }
-
-  function formatDate(iso: string): string {
-    return new Date(iso).toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
   }
 
   /** Map an event slug to a readable label and badge tone. */
@@ -156,7 +150,7 @@
               </td>
               <td class="px-4 py-3 text-muted">{entry.method ?? '—'}</td>
               <td class="px-4 py-3 text-muted truncate max-w-[220px]">{entry.url ?? '—'}</td>
-              <td class="px-4 py-3 text-muted whitespace-nowrap">{formatDate(entry.createdAt)}</td>
+              <td class="px-4 py-3 text-muted whitespace-nowrap">{formatDateTime(entry.createdAt, settings)}</td>
               <td class="px-4 py-3 text-right">
                 <button
                   type="button"
@@ -191,7 +185,7 @@
         <span class="text-muted">IP address</span>
         <span class="text-text">{detailEntry.ip ?? '—'}</span>
         <span class="text-muted">When</span>
-        <span class="text-text">{formatDate(detailEntry.createdAt)}</span>
+        <span class="text-text">{formatDateTime(detailEntry.createdAt, settings)}</span>
       </div>
       <div class="flex items-center justify-end gap-2 mt-4">
         <Button variant="ghost" type="button" onclick={() => (detailOpen = false)}>Close</Button>

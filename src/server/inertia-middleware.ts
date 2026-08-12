@@ -14,6 +14,7 @@ import { getCookie } from "hono/cookie";
 import type { FlashData, User } from "../shared/types";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { toPublicUser } from "./db";
+import { getSettings } from "./settings";
 import { Inertia, type InertiaAssets } from "./inertia";
 
 /** Context variables shared by every route/middleware. */
@@ -46,6 +47,8 @@ export const inertiaMiddleware =
 					user,
 					flash,
 					sessionToken,
+					// App-wide settings for the shared props + HTML shell (cached).
+					settings: Object.fromEntries(getSettings()),
 				},
 				assets,
 			),

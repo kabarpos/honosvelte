@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { router, useForm } from '@inertiajs/svelte'
+  import { router, useForm, usePage } from '@inertiajs/svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Field from '../components/Field.svelte'
@@ -9,6 +9,7 @@
   import Modal from '../components/Modal.svelte'
   import Pagination from '../components/Pagination.svelte'
   import type { Media, MediaCategory, Paginated } from '../../shared/types'
+  import { formatDate } from '../intl'
 
   let { media, categories, search, category }: {
     media: Paginated<Media>
@@ -18,6 +19,9 @@
   } = $props()
 
   const { currentPage, lastPage } = $derived(media.meta)
+
+  const pageStore = usePage()
+  const settings = $derived(pageStore.props.settings ?? {})
 
   let searchForm = $state(useForm({ q: search }))
   let page = $state(currentPage)
@@ -166,14 +170,6 @@
     return `${(n / 1024 / 1024).toFixed(1)} MB`
   }
 
-  function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  }
-
   function badgeVariant(c: MediaCategory): 'primary' | 'neutral' | 'amber' {
     if (c === 'image') return 'primary'
     if (c === 'archive') return 'amber'
@@ -283,7 +279,7 @@
               <Badge variant={badgeVariant(m.category)}>{m.category}</Badge>
               <span class="text-xs text-muted">{formatBytes(m.size)}</span>
             </div>
-            <p class="m-0 text-xs text-muted">{formatDate(m.createdAt)}</p>
+            <p class="m-0 text-xs text-muted">{formatDate(m.createdAt, settings)}</p>
             <div class="flex items-center gap-1.5 mt-1">
               <button type="button" class={wrapper} onclick={() => openEdit(m)}>Edit</button>
               <button type="button" class={`${wrapper} text-danger`} onclick={() => { deleteMedia = m; deleteOpen = true }}>Delete</button>

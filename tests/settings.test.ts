@@ -333,3 +333,74 @@ describe("Modul 15 — Settings", () => {
 		expect(getSetting("app.favicon")).toBe("");
 	});
 });
+
+describe("settings are consumed by the app (no hardcode)", () => {
+	it("injects settings into the HTML shell (title, description, favicon, lang, scripts)", async () => {
+		const { setSetting } = await import("../src/server/settings");
+		setSetting("app.name", "Acme Systems");
+		setSetting("app.description", "A boring admin panel.");
+		setSetting("app.favicon", "/media/42");
+		setSetting("regional.locale", "id");
+		setSetting(
+			"script.head",
+			'<meta name="theme-color" content="#ff0000">',
+		);
+		setSetting("script.meta_pixel", "<script>window.pixel = 1;</script>");
+		setSetting("script.google_analytics", "<script>window.ga = 1;</script>");
+		setSetting("script.body", "<script>console.log('body-script');</script>");
+
+		const res = await app.request(`${BASE}/login`, { method: "GET" });
+		expect(res.status).toBe(200);
+		const html = await res.text();
+
+		expect(html).toContain('<html lang="id">');
+		expect(html).toContain("<title>Login · Acme Systems</title>");
+		expect(html).toContain(
+			'<meta name="description" content="A boring admin panel." />',
+		);
+		expect(html).toContain('<link rel="icon" href="/media/42" />');
+		// Head snippets (generic + analytics keys) land inside <head>.
+		const head = html.slice(0, html.indexOf("</head>"));
+		expect(head).toContain('<meta name="theme-color" content="#ff0000">');
+		expect(head).toContain("window.pixel = 1");
+		expect(head).toContain("window.ga = 1");
+		// Body snippet lands inside <body>, before the app bundle.
+		const body = html.slice(html.indexOf("<body>"));
+		expect(body).toContain("console.log('body-script')");
+		const bundleAt = body.indexOf("/assets/app.js");
+		const scriptAt = body.indexOf("body-script");
+		expect(scriptAt).toBeGreaterThan(-1);
+		expect(scriptAt).toBeLessThan(bundleAt);
+	});
+
+	it("merges settings into every Inertia payload (shared props)", async () => {
+		const res = await call("/login", { headers: xhr });
+		expect(res.status).toBe(200);
+		const payload = (await res.json()) as {
+			props: { settings: Record<string, string> };
+		};
+		expect(payload.props.settings["app.name"]).toBe("Acme Systems");
+		expect(payload.props.settings["regional.locale"]).toBe("id");
+		expect(payload.props.settings["script.head"]).toBe(
+			'<meta name="theme-color" content="#ff0000">',
+		);
+	});
+
+	it("falls back to defaults when branding settings are empty", async () => {
+		const { setSetting } = await import("../src/server/settings");
+		setSetting("app.name", "");
+		setSetting("app.description", "");
+		setSetting("app.favicon", "");
+		setSetting("regional.locale", "");
+		setSetting("script.head", "");
+		setSetting("script.meta_pixel", "");
+		setSetting("script.google_analytics", "");
+		setSetting("script.body", "");
+
+		const res = await app.request(`${BASE}/login`, { method: "GET" });
+		const html = await res.text();
+		expect(html).toContain('<html lang="en">');
+		expect(html).toContain("<title>Login · Honosvelte</title>");
+		expect(html).toContain('rel="icon" href="data:image/svg+xml');
+	});
+});

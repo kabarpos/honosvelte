@@ -4,19 +4,13 @@
   import Card from '../components/Card.svelte'
   import Table from '../components/Table.svelte'
   import type { DashboardStats } from '../../shared/types'
+  import { formatDate } from '../intl'
 
   let { stats }: { stats: DashboardStats } = $props()
 
   const page = usePage()
   const user = $derived(page.props.auth.user)
-
-  function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  }
+  const settings = $derived(page.props.settings ?? {})
 </script>
 
 <svelte:head><title>Dashboard</title></svelte:head>
@@ -47,7 +41,7 @@
         </Link>
       </Card>
       <Card class="p-5 flex flex-col items-start gap-1">
-        <span class="text-xl font-bold">{formatDate(user.createdAt)}</span>
+        <span class="text-xl font-bold">{formatDate(user.createdAt, settings)}</span>
         <span class="text-[0.82rem] text-muted">Member since</span>
       </Card>
     </section>
@@ -78,7 +72,7 @@
                   {u.email}
                 </td>
                 <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap">
-                  {formatDate(u.createdAt)}
+                  {formatDate(u.createdAt, settings)}
                 </td>
               </tr>
             {/each}

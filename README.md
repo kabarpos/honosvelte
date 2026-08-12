@@ -132,7 +132,14 @@ roles, SSR, and test suite.
   `POST /settings/media` validates the media item is a raster image and
   stores the served path (`/media/<id>`) as the setting value. Dedicated
   analytics/pixel keys (Meta Pixel, TikTok, Google Ads, GA4) join the
-  generic head/body scripts.
+  generic head/body scripts. **Settings are consumed everywhere — nothing
+  is hardcoded**: `app.*` drives the HTML title (`Page · App Name`), meta
+  description, favicon and the brand in the header/auth pages;
+  `regional.*` sets the HTML `lang` and locale/timezone-aware date
+  formatting; `footer.*` and `contact.*` render the footer and a contact
+  strip; `script.*` snippets are injected into `<head>`/`<body>` (the CSP
+  allowlists the standard tracking vendors). Every page payload also
+  carries the settings as shared props.
 - **Migrations**: versioned SQL files applied at startup in transactions.
 - **Ops**: batched request logging with correlation id, gzip compression,
   security headers (CSP, nosniff, frame denial), `/health`, graceful

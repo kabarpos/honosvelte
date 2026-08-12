@@ -54,6 +54,7 @@ export interface InertiaContext {
 	user: SharedPageProps["auth"]["user"];
 	flash: FlashData;
 	sessionToken: string | null;
+	settings: SharedPageProps["settings"];
 }
 
 const splitList = (value: string | undefined): string[] | undefined =>
@@ -121,6 +122,9 @@ export class Inertia {
 			component,
 			props: {
 				...pageProps,
+				// Shared props merged after the partial-reload filter so they
+				// survive X-Inertia-Partial-Only requests (like auth/errors).
+				settings: this.c.settings,
 				auth: { user: this.c.user },
 				errors: errors ?? flashErrors ?? {},
 			} as unknown as Page["props"], // core types `errors` as Errors & ErrorBag (intersection)
@@ -201,37 +205,75 @@ export class Inertia {
 	}
 
 	private html(head: string[], body: string, status: number): Response {
+		const s = this.c.settings;
+		const appName = s["app.name"] || "Honosvelte";
 		const headTags = head.filter((h) => h && h.trim().length > 0);
-		const hasTitle = headTags.some((h) => h.includes("<title"));
-		const titleTag = hasTitle ? "" : "<title>Honosvelte</title>";
+		// The page's own <title> gets prefixed with the app name (browser tab
+		// reads "Login · Acme Systems"); pages without a title just get the
+		// app name. app.name comes from /settings — never hardcoded.
+		const pageTitle = headTags.find((h) => h.includes("<title"));
+		const titleTag = pageTitle
+			? pageTitle.replace(
+					/<title>([^<]*)<\/title>/,
+					(_, t: string) =>
+						`<title>${escapeHtml(t.trim())} · ${escapeHtml(appName)}</title>`,
+				)
+			: `<title>${escapeHtml(appName)}</title>`;
 		const cssTag = this.assets.css
 			? `<link rel="stylesheet" href="/assets/${this.assets.css}" />`
 			: "";
 		// Self-hosted Manrope, served same-origin so the strict CSP (font-src
 		// 'self') permits it. The woff2 files live at /assets/fonts/*.woff2.
 		const fontCssTag = `<link rel="stylesheet" href="/assets/fonts/fonts.css" />`;
-		const favicon = `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
-			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#059669"/><path d="M12 9h2.2c5.6 0 9.3 3.1 9.3 7s-3.7 7-9.3 7H12V9Z" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="16" y="18.2" width="4.4" height="2.2" rx="1.1" fill="#059669"/></svg>',
-		)}" />`;
+		// app.favicon is a served media path (e.g. /media/<id>); fall back to
+		// the boilerplate mark when no favicon has been uploaded.
+		const favicon = s["app.favicon"]
+			? `<link rel="icon" href="${escapeHtml(s["app.favicon"])}" />`
+			: `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
+					'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#059669"/><path d="M12 9h2.2c5.6 0 9.3 3.1 9.3 7s-3.7 7-9.3 7H12V9Z" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="16" y="18.2" width="4.4" height="2.2" rx="1.1" fill="#059669"/></svg>',
+				)} />`;
+		const description = s["app.description"]
+			? `<meta name="description" content="${escapeHtml(s["app.description"])}" />`
+			: "";
+		// Admin-configured head snippets (generic head + analytics/pixel keys).
+		// Inline scripts are permitted by the app CSP (script-src
+		// 'unsafe-inline'); external vendor scripts are covered by the CSP
+		// allowlist in app.ts.
+		const headScriptKeys = [
+			"script.head",
+			"script.meta_pixel",
+			"script.tiktok",
+			"script.google_ads",
+			"script.google_analytics",
+		];
+		const headScripts = headScriptKeys
+			.map((k) => s[k] ?? "")
+			.filter((v) => v.trim().length > 0)
+			.join("\n");
+		// Admin-configured body snippet, injected before the app bundle.
+		const bodyScript = (s["script.body"] ?? "").trim();
 		// Inline script: set data-theme + background-color on <html> before the
 		// external stylesheet loads, so the page paints dark immediately (no FOUC).
 		// Reads localStorage('theme'), falls back to prefers-color-scheme, defaults light.
 		const themeBoot = `<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var el=document.documentElement;el.setAttribute('data-theme',t);el.style.backgroundColor='var(--background)';}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
 		const doc = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${escapeHtml(s["regional.locale"] || "en")}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
+${description}
 ${favicon}
 ${titleTag}
 ${headTags.join("\n")}
+${headScripts}
 ${themeBoot}
 ${cssTag}
 ${fontCssTag}
 </head>
 <body>
 ${body}
+${bodyScript}
 <script type="module" src="/assets/${this.assets.js}"></script>
 </body>
 </html>`;
@@ -240,4 +282,13 @@ ${body}
 			headers: { "content-type": "text/html; charset=utf-8" },
 		});
 	}
+}
+
+/** Escape a value for safe embedding inside an HTML attribute or text node. */
+function escapeHtml(value: string): string {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/"/g, "&quot;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
 }
