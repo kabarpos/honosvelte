@@ -341,10 +341,7 @@ describe("settings are consumed by the app (no hardcode)", () => {
 		setSetting("app.description", "A boring admin panel.");
 		setSetting("app.favicon", "/media/42");
 		setSetting("regional.locale", "id");
-		setSetting(
-			"script.head",
-			'<meta name="theme-color" content="#ff0000">',
-		);
+		setSetting("script.head", '<meta name="theme-color" content="#ff0000">');
 		setSetting("script.meta_pixel", "<script>window.pixel = 1;</script>");
 		setSetting("script.google_analytics", "<script>window.ga = 1;</script>");
 		setSetting("script.body", "<script>console.log('body-script');</script>");

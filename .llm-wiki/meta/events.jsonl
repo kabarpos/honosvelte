@@ -62,3 +62,5 @@
 {"slug":"obs-2026-08-12-settings-logo-favicon-real-media-library-uploads-post-media-","title":"Settings logo/favicon = real media-library uploads (POST /media), not tus links","relevance":"high","timestamp":"2026-08-12T04:58:06.920Z","kind":"observe"}
 {"slug":"obs-2026-08-12-settings-media-migration-rate-limiter-scoping-committed-33cd","title":"Settings media migration + rate limiter scoping committed (33cdc47)","relevance":"high","timestamp":"2026-08-12T05:40:19.472Z","kind":"observe"}
 {"slug":"route-level-rate-limiter-scoping-hono","title":"Scope Hono rate limiters to the action handlers, not app.use","category":"architecture","timestamp":"2026-08-12T05:40:24.000Z","kind":"retro"}
+{"slug":"obs-2026-08-12-all-settings-data-consumed-app-wide-f50f7bf","title":"All /settings data consumed app-wide (f50f7bf)","relevance":"high","timestamp":"2026-08-12T06:02:27.834Z","kind":"observe"}
+{"slug":"obs-2026-08-12-settings-media-upload-shows-local-preview-e3ac148","title":"Settings media upload shows local preview (e3ac148)","relevance":"medium","timestamp":"2026-08-12T06:08:45.409Z","kind":"observe"}
