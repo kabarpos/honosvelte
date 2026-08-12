@@ -9,7 +9,6 @@
   import Textarea from '../components/Textarea.svelte'
   import Select from '../components/Select.svelte'
   import Button from '../components/Button.svelte'
-  import { tusUpload } from '../tus'
   import type { SettingsGroup } from '../../shared/types'
 
   let { groups }: { groups: SettingsGroup[] } = $props()
@@ -52,10 +51,12 @@
   }
 
   // ---- media (logo / favicon) uploads --------------------------------------
+  // Uploads go through the media library (POST /media, Modul 8) so the file
+  // is stored persistently with metadata; /settings/media only records the
+  // media id as the setting value.
   let mediaTarget = $state('')
   let fileInputRef = $state<HTMLInputElement | null>(null)
   let uploadingKey = $state('')
-  let uploadProgress = $state(0)
   let uploadError = $state('')
 
   function pickMedia(key: string) {
@@ -77,17 +78,31 @@
     if (!file || !key) return
     uploadingKey = key
     uploadError = ''
-    uploadProgress = 0
     try {
-      const uploadId = await tusUpload('', file, (p) => (uploadProgress = p))
+      // 1. Store the file in the media library.
+      const mediaRes = await fetch('/media', {
+        method: 'POST',
+        headers: {
+          'x-file-name': file.name,
+          'Content-Type': file.type || 'application/octet-stream',
+        },
+        body: file,
+      })
+      if (!mediaRes.ok) {
+        const body = (await mediaRes.json().catch(() => null)) as { error?: string } | null
+        uploadError = body?.error ?? `Upload failed (HTTP ${mediaRes.status})`
+        return
+      }
+      const { media } = (await mediaRes.json()) as { media: { id: number } }
+      // 2. Point the setting at the stored media item.
       const res = await fetch('/settings/media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, uploadId }),
+        body: JSON.stringify({ key, mediaId: media.id }),
       })
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null
-        uploadError = body?.error ?? `Request failed (HTTP ${res.status})`
+        uploadError = body?.error ?? `Link failed (HTTP ${res.status})`
         return
       }
       router.reload()
@@ -202,20 +217,6 @@
                           </Button>
                         {/if}
                       </div>
-                      {#if uploadingKey === item.key}
-                        <div
-                          class="mt-3 h-2 rounded-full bg-border overflow-hidden"
-                          role="progressbar"
-                          aria-valuenow={uploadProgress}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                        >
-                          <div
-                            class="h-full rounded-full bg-primary transition-[width] duration-[120ms] ease-out"
-                            style={`width: ${uploadProgress}%`}
-                          ></div>
-                        </div>
-                      {/if}
                       {#if item.hint}
                         <p class="text-xs text-muted mt-1">{item.hint}</p>
                       {/if}

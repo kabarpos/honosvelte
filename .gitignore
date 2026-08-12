@@ -5,6 +5,7 @@ dist/
 *.sqlite-shm
 *.sqlite-wal
 data/uploads/
+data/media/
 .playwright-mcp/
 *.png
 src/client/.tailwind.css

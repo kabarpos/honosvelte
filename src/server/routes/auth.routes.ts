@@ -87,12 +87,15 @@ export const VALIDATION_MESSAGES: Record<string, string> = {
 export const authRoutes = () => {
 	const app = new Hono<AppEnv>();
 
-	app.use(
-		rateLimit({
-			max: config.rateLimit.authMax,
-			windowSeconds: config.rateLimit.authWindow,
-		}),
-	);
+	// Brute-force protection on credential SUBMISSION only. Path-scoped AND
+	// attached to the POST handlers: the app is mounted at "/", so an
+	// unscoped app.use() would rate-limit EVERY request in the app
+	// (settings, media, pages…) to 10/60s per IP, and a path-scoped
+	// app.use() would also throttle GET page views.
+	const limitAuth = rateLimit({
+		max: config.rateLimit.authMax,
+		windowSeconds: config.rateLimit.authWindow,
+	});
 
 	app.get("/login", guestOnly, (c) => {
 		const noticeParam = c.req.query("notice");
@@ -116,7 +119,7 @@ export const authRoutes = () => {
 		}),
 	);
 
-	app.post("/register", validateJson(registerBody), async (c) => {
+	app.post("/register", limitAuth, validateJson(registerBody), async (c) => {
 		const body = c.req.valid("json") as RegisterBody;
 		const page = c.var.inertia;
 		if (findUserByEmail.get(body.email)) {
@@ -143,7 +146,7 @@ export const authRoutes = () => {
 		return page.redirect("/dashboard");
 	});
 
-	app.post("/login", validateJson(loginBody), async (c) => {
+	app.post("/login", limitAuth, validateJson(loginBody), async (c) => {
 		const body = c.req.valid("json") as LoginBody;
 		const page = c.var.inertia;
 		const user = findUserByEmail.get(body.email);
@@ -169,7 +172,7 @@ export const authRoutes = () => {
 		return c.var.inertia.redirect("/login");
 	});
 
-	app.post("/forgot-password", validateJson(forgotPasswordBody), async (c) => {
+	app.post("/forgot-password", limitAuth, validateJson(forgotPasswordBody), async (c) => {
 		const body = c.req.valid("json") as ForgotPasswordBody;
 		// Always answer the same way (no user enumeration); the reset email
 		// is only sent when the account exists.
@@ -189,7 +192,7 @@ export const authRoutes = () => {
 		return c.var.inertia.render("ForgotPassword", { status: "sent" });
 	});
 
-	app.post("/reset-password", validateJson(resetPasswordBody), async (c) => {
+	app.post("/reset-password", limitAuth, validateJson(resetPasswordBody), async (c) => {
 		const body = c.req.valid("json") as ResetPasswordBody;
 		const page = c.var.inertia;
 		if (body.password !== body.passwordConfirmation) {

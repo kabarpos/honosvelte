@@ -127,10 +127,12 @@ roles, SSR, and test suite.
   script) through a cached settings store (`settings.read` /
   `settings.update` permissions). Field kinds include text, textarea,
   select (locale/timezone), a WhatsApp-number repeater, and media uploads
-  — logos (light/dark) and favicon are tus-uploaded to `/uploads` and
-  linked via `POST /settings/media`, which validates ownership and image
-  type before storing the served path. Dedicated analytics/pixel keys
-  (Meta Pixel, TikTok, Google Ads, GA4) join the generic head/body scripts.
+  — logos (light/dark) and favicon are uploaded through the **media
+  library** (`POST /media`, Modul 8) so the files persist with metadata;
+  `POST /settings/media` validates the media item is a raster image and
+  stores the served path (`/media/<id>`) as the setting value. Dedicated
+  analytics/pixel keys (Meta Pixel, TikTok, Google Ads, GA4) join the
+  generic head/body scripts.
 - **Migrations**: versioned SQL files applied at startup in transactions.
 - **Ops**: batched request logging with correlation id, gzip compression,
   security headers (CSP, nosniff, frame denial), `/health`, graceful

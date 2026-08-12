@@ -4,15 +4,15 @@
  * permission guards). Only keys listed in FIELD_META are rendered or
  * applied — the client cannot inject arbitrary keys.
  *
- * Media-valued settings (logos, favicon) travel through the tus protocol at
- * /uploads (see uploads.routes.ts): the client uploads the file, then POSTs
- * the upload id to /settings/media, which validates ownership + type and
- * stores the served path (`/uploads/<id>`) as the setting value.
+ * Media-valued settings (logos, favicon) are uploaded through the media
+ * library (Modul 8): the client uploads the file to POST /media, then POSTs
+ * the resulting media id to /settings/media, which validates the type and
+ * stores the served path (`/media/<id>`) as the setting value.
  */
 import { Type as t, type Static } from "@sinclair/typebox";
 import { Hono } from "hono";
 import { requirePermission, requireRole, setFlash } from "../auth";
-import { allSettings, findUpload } from "../db";
+import { allSettings, findMediaById } from "../db";
 import type { AppEnv } from "../inertia-middleware";
 import type {
 	SettingsGroup,
@@ -23,10 +23,17 @@ import { validateJson } from "../validation";
 import { recordActivity } from "../activity";
 import { setSetting } from "../settings";
 
-/** Value limit covers script snippets (pixels/analytics can be a few KB). */
-const settingsBody = t.Record(t.String(), t.String({ maxLength: 10000 }), {
-	additionalProperties: false,
-});
+/**
+ * Inertia's useForm nests dotted keys into objects (`app.name` becomes
+ * `{ app: { name } }`), so the request body is one record per category.
+ * Values must be strings; the handler flattens back to `key.value` and
+ * filters through FIELD_META, so the client still cannot write arbitrary
+ * settings.
+ */
+const settingsBody = t.Record(
+	t.String(),
+	t.Record(t.String(), t.String({ maxLength: 10000 })),
+);
 
 type SettingsBody = Static<typeof settingsBody>;
 
@@ -72,7 +79,7 @@ interface FieldMeta {
 	hint?: string;
 }
 
-/** Display whitelist + shape per key (unknown keys never render or save). */
+/** Display allowlist + shape per key (unknown keys never render or save). */
 const FIELD_META: Record<string, FieldMeta> = {
 	// General
 	"app.name": { category: "general", label: "Application name", kind: "text" },
@@ -203,10 +210,14 @@ export const settingsRoutes = () => {
 		validateJson(settingsBody),
 		(c) => {
 			const body = c.req.valid("json") as SettingsBody;
-			// Apply whitelisted keys only; unknown keys in the body are ignored.
-			for (const key of Object.keys(FIELD_META)) {
-				const value = body[key];
-				if (value !== undefined) setSetting(key, value);
+			// Flatten the nested Inertia shape back to `key.value` and apply the
+			// FIELD_META allowlist — unknown keys in the body are ignored.
+			for (const [group, fields] of Object.entries(body)) {
+				for (const [field, value] of Object.entries(fields)) {
+					if (value === undefined) continue;
+					const key = `${group}.${field}`;
+					if (FIELD_META[key]) setSetting(key, value);
+				}
 			}
 			const acting = c.var.user;
 			if (acting)
@@ -221,8 +232,9 @@ export const settingsRoutes = () => {
 		},
 	);
 
-	// Link a completed tus upload to a media-valued setting. Returns plain
-	// JSON (this is a fetch call, not an Inertia request).
+	// Link a media-library item to a media-valued setting. Returns plain
+	// JSON (this is a fetch call, not an Inertia request). The file itself is
+	// stored by POST /media; here we only validate and record the reference.
 	app.post(
 		"/settings/media",
 		requireRole("admin"),
@@ -234,43 +246,29 @@ export const settingsRoutes = () => {
 			const raw = (await c.req.json().catch(() => null)) as unknown;
 			if (!raw || typeof raw !== "object")
 				return c.json({ error: "Malformed JSON body." }, 400);
-			const { key, uploadId } = raw as Record<string, unknown>;
-			if (
-				typeof key !== "string" ||
-				typeof uploadId !== "string" ||
-				uploadId.length === 0
-			)
-				return c.json({ error: "key and uploadId are required." }, 422);
+			const { key, mediaId } = raw as Record<string, unknown>;
+			const id = Number(mediaId);
+			if (typeof key !== "string" || !Number.isInteger(id) || id <= 0)
+				return c.json({ error: "key and mediaId are required." }, 422);
 			if (!(MEDIA_KEYS as readonly string[]).includes(key))
 				return c.json({ error: "Unknown media setting key." }, 422);
 
-			const upload = findUpload.get(uploadId);
-			if (!upload || upload.userId !== user.id)
-				return c.json({ error: "Upload not found." }, 404);
-			if (upload.offset < upload.uploadLength)
-				return c.json({ error: "Upload is not complete." }, 400);
-
-			let filetype = "";
-			try {
-				const meta = JSON.parse(upload.metadata) as Record<string, string>;
-				filetype = typeof meta.filetype === "string" ? meta.filetype : "";
-			} catch {
-				/* metadata may be empty or malformed */
-			}
-			if (!MEDIA_IMAGE_TYPES.includes(filetype)) {
+			const media = findMediaById.get(id);
+			if (!media) return c.json({ error: "Media item not found." }, 404);
+			if (!MEDIA_IMAGE_TYPES.includes(media.mimeType)) {
 				return c.json(
 					{ error: "Only image uploads can be used as a logo or favicon." },
 					422,
 				);
 			}
 
-			const url = `/uploads/${upload.id}`;
+			const url = `/media/${media.id}`;
 			setSetting(key, url);
 			recordActivity(
 				c,
 				user.id,
 				"settings.update",
-				`Set ${key} to a new upload`,
+				`Set ${key} to a new media upload`,
 			);
 			return c.json({ ok: true, url });
 		},

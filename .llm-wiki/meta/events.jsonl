@@ -59,3 +59,4 @@
 {"slug":"honosvelte-feature-addition-conventions","title":"Adding a feature module to honosvelte","category":"architecture","timestamp":"2026-08-12T03:11:29.386Z","kind":"retro"}
 {"slug":"obs-2026-08-12-settings-upgrade-modul-15-completed-media-repeater-script-fi","title":"Settings upgrade (Modul 15) completed — media/repeater/script fields + tests","relevance":"high","timestamp":"2026-08-12T03:47:23.341Z","kind":"observe"}
 {"slug":"record-task-before-starting-todo","title":"Record tasks in todo + wiki before starting","category":"process","timestamp":"2026-08-12T03:47:23.344Z","kind":"retro"}
+{"slug":"obs-2026-08-12-settings-logo-favicon-real-media-library-uploads-post-media-","title":"Settings logo/favicon = real media-library uploads (POST /media), not tus links","relevance":"high","timestamp":"2026-08-12T04:58:06.920Z","kind":"observe"}

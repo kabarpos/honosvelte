@@ -10,13 +10,13 @@ import { join } from "node:path";
 import type { createApp } from "../src/server/app";
 
 let app: Awaited<ReturnType<typeof createApp>>;
-let uploadDir: string;
+let mediaDir: string;
 
 beforeAll(async () => {
-	// UPLOAD_DIR must be set before the app modules are imported.
-	uploadDir = mkdtempSync(join(tmpdir(), "settings-test-"));
+	// MEDIA_DIR must be set before the app modules are imported.
+	mediaDir = mkdtempSync(join(tmpdir(), "settings-test-"));
 	process.env.DATABASE_PATH = ":memory:";
-	process.env.UPLOAD_DIR = uploadDir;
+	process.env.MEDIA_DIR = mediaDir;
 	process.env.NODE_ENV = "test";
 	process.env.RATE_LIMIT_AUTH_MAX = "1000";
 	const { createApp } = await import("../src/server/app");
@@ -27,7 +27,7 @@ afterAll(async () => {
 	const { db } = await import("../src/server/db");
 	db.close();
 	try {
-		rmSync(uploadDir, { recursive: true, force: true });
+		rmSync(mediaDir, { recursive: true, force: true });
 	} catch {
 		/* ignore */
 	}
@@ -187,11 +187,11 @@ describe("Modul 15 — Settings", () => {
 		const res = await call("/settings", {
 			method: "POST",
 			headers: { ...xhr, cookie },
+			// Inertia's useForm nests dotted keys (`app.name` → `{ app: { name } }`).
 			body: {
-				"app.name": "Acme Corp",
-				"app.tagline": "Built on Honosvelte.",
-				"regional.timezone": "Asia/Jakarta",
-				"script.head": '<meta name="robots" content="noindex">',
+				app: { name: "Acme Corp", tagline: "Built on Honosvelte." },
+				regional: { timezone: "Asia/Jakarta" },
+				script: { head: '<meta name="robots" content="noindex">' },
 			},
 		});
 		expect(res.status).toBe(303);
@@ -216,7 +216,7 @@ describe("Modul 15 — Settings", () => {
 		const res = await call("/settings", {
 			method: "POST",
 			headers: { ...xhr, cookie },
-			body: { "app.name": "Still Acme", "hacked.key": "nope" },
+			body: { app: { name: "Still Acme" }, hacked: { key: "nope" } },
 		});
 		expect(res.status).toBe(303);
 		expect(getSettings().size).toBe(before);
@@ -229,7 +229,7 @@ describe("Modul 15 — Settings", () => {
 		const res = await call("/settings", {
 			method: "POST",
 			headers: { ...xhr, cookie },
-			body: { "app.name": { nested: true } },
+			body: { app: { name: { nested: true } } },
 		});
 		expect(res.status).toBe(422);
 		const data = await res.json();
@@ -243,7 +243,7 @@ describe("Modul 15 — Settings", () => {
 		const res = await call("/settings", {
 			method: "POST",
 			headers: { ...xhr, cookie },
-			body: { "footer.text": "Made with Honosvelte" },
+			body: { footer: { text: "Made with Honosvelte" } },
 		});
 		expect(res.status).toBe(303);
 		const events = listActivityEvents.all().map((r) => r.event);
@@ -252,35 +252,30 @@ describe("Modul 15 — Settings", () => {
 
 	// ---- media-valued settings (logos / favicon) ----------------------------
 
-	const TUS = { "Tus-Resumable": "1.0.0" };
 	const PNG = new Uint8Array([
 		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01, 0x02, 0x03,
 	]);
+	const PDF = new TextEncoder().encode("%PDF-1.4 fake pdf body");
 
-	async function tusUpload(cookie: string, filetype: string): Promise<string> {
-		const create = await app.request(`${BASE}/uploads`, {
+	/** Upload a raw file to the media library (POST /media, Modul 8). */
+	async function uploadMedia(
+		cookie: string,
+		name: string,
+		mime: string,
+		bytes: Uint8Array<ArrayBuffer>,
+	): Promise<number> {
+		const res = await app.request(`${BASE}/media`, {
 			method: "POST",
 			headers: {
-				...TUS,
 				cookie,
-				"Upload-Length": String(PNG.byteLength),
-				"Upload-Metadata": `filename ${Buffer.from("logo.png").toString("base64")},filetype ${Buffer.from(filetype).toString("base64")}`,
+				"x-file-name": name,
+				"Content-Type": mime,
 			},
+			body: bytes,
 		});
-		expect(create.status).toBe(201);
-		const id = (create.headers.get("Location") ?? "").replace("/uploads/", "");
-		const patch = await app.request(`${BASE}/uploads/${id}`, {
-			method: "PATCH",
-			headers: {
-				...TUS,
-				cookie,
-				"Content-Type": "application/offset+octet-stream",
-				"Upload-Offset": "0",
-			},
-			body: PNG,
-		});
-		expect(patch.status).toBe(204);
-		return id;
+		expect(res.status).toBe(201);
+		const data = (await res.json()) as { media: { id: number } };
+		return data.media.id;
 	}
 
 	async function linkMedia(
@@ -294,48 +289,43 @@ describe("Modul 15 — Settings", () => {
 		});
 	}
 
-	it("links a completed image upload to a media-valued setting", async () => {
+	it("stores a media-library upload as a media-valued setting", async () => {
 		const { getSetting } = await import("../src/server/settings");
 		await seedUser("Media Admin", "settings-media@test.com", "admin");
 		const cookie = await loginAs("settings-media@test.com");
-		const id = await tusUpload(cookie, "image/png");
+		const id = await uploadMedia(cookie, "logo.png", "image/png", PNG);
 
-		const res = await linkMedia(cookie, {
-			key: "app.logo_light",
-			uploadId: id,
-		});
+		const res = await linkMedia(cookie, { key: "app.logo_light", mediaId: id });
 		expect(res.status).toBe(200);
 		const data = (await res.json()) as { ok: boolean; url: string };
 		expect(data.ok).toBe(true);
-		expect(data.url).toBe(`/uploads/${id}`);
-		expect(getSetting("app.logo_light")).toBe(`/uploads/${id}`);
+		expect(data.url).toBe(`/media/${id}`);
+		expect(getSetting("app.logo_light")).toBe(`/media/${id}`);
 	});
 
-	it("rejects unknown media keys, non-images, and foreign uploads", async () => {
+	it("rejects unknown keys, non-images, and missing media", async () => {
 		const { getSetting } = await import("../src/server/settings");
 		const cookie = await loginAs("settings-media@test.com");
 
 		// Unknown key.
-		const id = await tusUpload(cookie, "image/png");
-		const unknown = await linkMedia(cookie, { key: "app.name", uploadId: id });
+		const id = await uploadMedia(cookie, "logo.png", "image/png", PNG);
+		const unknown = await linkMedia(cookie, { key: "app.name", mediaId: id });
 		expect(unknown.status).toBe(422);
 
-		// Non-image filetype.
-		const html = await tusUpload(cookie, "text/html");
+		// Non-image media item (PDF is uploadable but not a raster image).
+		const pdf = await uploadMedia(cookie, "doc.pdf", "application/pdf", PDF);
 		const notImage = await linkMedia(cookie, {
 			key: "app.logo_dark",
-			uploadId: html,
+			mediaId: pdf,
 		});
 		expect(notImage.status).toBe(422);
 
-		// Upload owned by a different user.
-		await seedUser("Other Admin", "settings-media-other@test.com", "admin");
-		const otherCookie = await loginAs("settings-media-other@test.com");
-		const foreign = await linkMedia(otherCookie, {
+		// Nonexistent media id.
+		const missing = await linkMedia(cookie, {
 			key: "app.favicon",
-			uploadId: id,
+			mediaId: 999999,
 		});
-		expect(foreign.status).toBe(404);
+		expect(missing.status).toBe(404);
 
 		// Nothing was written by the rejected calls (logo_light kept its value
 		// from the earlier test — same in-memory DB); the untouched keys stay empty.
