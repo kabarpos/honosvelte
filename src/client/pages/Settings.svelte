@@ -58,6 +58,10 @@
   let fileInputRef = $state<HTMLInputElement | null>(null)
   let uploadingKey = $state('')
   let uploadError = $state('')
+  // Local preview of the just-selected file (object URL), keyed to the
+  // media field being uploaded. Revoked once the upload settles.
+  let previewKey = $state('')
+  let previewUrl = $state('')
 
   function pickMedia(key: string) {
     mediaTarget = key
@@ -78,6 +82,11 @@
     if (!file || !key) return
     uploadingKey = key
     uploadError = ''
+    // Show the locally selected image immediately (object URL), before
+    // the upload completes. Non-image files skip the preview.
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    previewKey = key
+    previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
     try {
       // 1. Store the file in the media library.
       const mediaRes = await fetch('/media', {
@@ -110,8 +119,13 @@
       uploadError = err instanceof Error ? err.message : String(err)
     } finally {
       uploadingKey = ''
+      // Upload settled (saved, failed, or aborted) — drop the local
+      // preview; the field falls back to the saved value.
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      previewUrl = ''
+      previewKey = ''
     }
-  }
+}
 </script>
 
 <svelte:head><title>Settings</title></svelte:head>
@@ -194,7 +208,13 @@
                   {:else if item.kind === 'media'}
                     <Field id={`s-${item.key}`} label={item.label}>
                       <div class="flex flex-wrap items-center gap-3">
-                        {#if form[item.key]}
+                        {#if previewKey === item.key && previewUrl}
+                          <img
+                            class={`${item.key === 'app.favicon' ? 'h-8 w-8' : 'h-10 max-w-[200px]'} object-contain ${uploadingKey === item.key ? 'opacity-60' : ''}`}
+                            src={previewUrl}
+                            alt={`${item.label} preview`}
+                          />
+                        {:else if form[item.key]}
                           <img
                             class={item.key === 'app.favicon' ? 'h-8 w-8 object-contain' : 'h-10 max-w-[200px] object-contain'}
                             src={form[item.key]}
