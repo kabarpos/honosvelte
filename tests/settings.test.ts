@@ -101,7 +101,7 @@ interface SettingsItemShape {
 	key: string;
 	label: string;
 	value: string;
-	kind: "text" | "textarea" | "select" | "repeater" | "media";
+	kind: "text" | "textarea" | "select" | "repeater" | "media" | "password";
 }
 
 interface SettingsGroupShape {
@@ -366,13 +366,15 @@ describe("settings are consumed by the app (no hardcode)", () => {
 		expect(html).toContain(
 			'<meta property="og:image" content="http://localhost:4000/media/99" />',
 		);
-		expect(html).toContain('<meta property="og:title" content="Acme Systems" />');
+		expect(html).toContain(
+			'<meta property="og:title" content="Acme Systems" />',
+		);
 		expect(html).toContain(
 			'<meta property="og:description" content="A boring admin panel." />',
 		);
-		expect(
-			html,
-		).toContain('<meta name="twitter:card" content="summary_large_image" />');
+		expect(html).toContain(
+			'<meta name="twitter:card" content="summary_large_image" />',
+		);
 		// Head snippets (generic + analytics keys) land inside <head>.
 		const head = html.slice(0, html.indexOf("</head>"));
 		expect(head).toContain('<meta name="theme-color" content="#ff0000">');

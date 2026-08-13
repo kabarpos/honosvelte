@@ -25,6 +25,16 @@ import { pageRoutes } from "./routes/pages.routes";
 import { permissionsRoutes } from "./routes/permissions.routes";
 import { settingsRoutes } from "./routes/settings.routes";
 import {
+	contactRoutes,
+	CONTACT_VALIDATION_MESSAGES,
+} from "./routes/contact.routes";
+import { emailRoutes, EMAIL_VALIDATION_MESSAGES } from "./routes/email.routes";
+import {
+	whatsappRoutes,
+	WHATSAPP_VALIDATION_MESSAGES,
+} from "./routes/whatsapp.routes";
+import { notificationRoutes } from "./routes/notifications.routes";
+import {
 	profileRoutes,
 	PROFILE_VALIDATION_MESSAGES,
 } from "./routes/profile.routes";
@@ -46,6 +56,9 @@ const COMPONENT_BY_PATH: Record<string, string> = {
 	"/reset-password": "ResetPassword",
 	"/profile": "Profile",
 	"/profile/password": "Profile",
+	"/contact": "Contact",
+	"/email": "Email",
+	"/whatsapp": "WhatsApp",
 };
 
 function componentForPath(pathname: string): string | undefined {
@@ -62,6 +75,15 @@ function componentForPath(pathname: string): string | undefined {
 	// page), so its validation errors must come back as plain JSON, not an
 	// Inertia envelope (mirrors /profile/avatar).
 	if (pathname === "/settings") return "Settings";
+	if (pathname === "/contact") return "Contact";
+	if (pathname === "/email" || pathname.startsWith("/email/templates"))
+		return "Email";
+	if (pathname === "/contact/inbox" || pathname.startsWith("/contact/inbox"))
+		return "ContactInbox";
+	if (pathname === "/notifications" || pathname.startsWith("/notifications"))
+		return "NotificationCenter";
+	if (pathname === "/whatsapp" || pathname.startsWith("/whatsapp/templates"))
+		return "WhatsApp";
 	return undefined;
 }
 
@@ -72,6 +94,9 @@ const VALIDATION_MESSAGES_ALL = {
 	...ROLES_VALIDATION_MESSAGES,
 	...PERMISSIONS_VALIDATION_MESSAGES,
 	...MEDIA_VALIDATION_MESSAGES,
+	...EMAIL_VALIDATION_MESSAGES,
+	...WHATSAPP_VALIDATION_MESSAGES,
+	...CONTACT_VALIDATION_MESSAGES,
 };
 
 const isUploadsPath = (pathname: string) =>
@@ -228,6 +253,10 @@ export function createApp(assets: InertiaAssets) {
 	app.route("/", billingRoutes());
 	app.route("/", activityRoutes());
 	app.route("/", settingsRoutes());
+	app.route("/", contactRoutes());
+	app.route("/", emailRoutes());
+	app.route("/", whatsappRoutes());
+	app.route("/", notificationRoutes());
 
 	return app;
 }

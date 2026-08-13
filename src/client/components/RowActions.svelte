@@ -14,8 +14,8 @@
   let open = $state(false)
   let trigger = $state<HTMLButtonElement | null>(null)
   let menu = $state<HTMLDivElement | null>(null)
-  let menuTop = 0
-  let menuLeft = 0
+  let menuTop = $state(0)
+  let menuLeft = $state(0)
 
   const GAP = 6
   const PAD = 8

@@ -27,11 +27,13 @@
     "@inertiajs/svelte": "^3.6.1",
     "@sinclair/typebox": "^0.34.52",
     "hono": "^4.13.0",
+    "nodemailer": "^9.0.5",
     "svelte": "^5.56.8"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
     "@types/bun": "^1.2.0",
+    "@types/nodemailer": "^8.0.1",
     "svelte-check": "^4.7.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.8.0"

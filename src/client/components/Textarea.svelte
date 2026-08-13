@@ -6,6 +6,7 @@
     hint = undefined,
     value = $bindable<string>(),
     rows = 4,
+    hideLabel = false,
     class: className = "",
     ...rest
   }: {
@@ -15,6 +16,7 @@
     hint?: string;
     value?: string;
     rows?: number;
+    hideLabel?: boolean;
     class?: string;
     [key: string]: unknown;
   } = $props();
@@ -27,7 +29,9 @@
 </script>
 
 <div class="mb-4">
-  <label for={id} class="block text-sm font-semibold mb-1.5">{label}</label>
+{#if !hideLabel}
+<label for={id} class="block text-sm font-semibold mb-1.5">{label}</label>
+{/if}
   <textarea {id} {rows} class={cls} bind:value {...rest}></textarea>
   {#if hint && !error}
     <p class="text-xs text-muted mt-1">{hint}</p>

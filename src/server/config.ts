@@ -6,7 +6,7 @@
  * Note: tests override env vars before importing modules, so config is
  * always derived fresh per process.
  */
-export type MailDriver = "log" | "resend" | "mailtrap";
+export type MailDriver = "log" | "resend" | "mailtrap" | "smtp";
 export type Role = "user" | "admin";
 
 const pick = <T>(value: T | undefined, fallback: T): T =>
@@ -17,17 +17,15 @@ const problems: string[] = [];
 const mailDriver = (
 	process.env.MAIL_DRIVER ?? "log"
 ).toLowerCase() as MailDriver;
-if (!["log", "resend", "mailtrap"].includes(mailDriver)) {
+if (!["log", "resend", "mailtrap", "smtp"].includes(mailDriver)) {
 	problems.push(
-		`MAIL_DRIVER must be one of log|resend|mailtrap (got "${mailDriver}")`,
+		`MAIL_DRIVER must be one of log|smtp|resend|mailtrap (got "${mailDriver}")`,
 	);
 }
 const resendApiKey = process.env.RESEND_API_KEY ?? "";
-if (mailDriver === "resend" && !resendApiKey)
-	problems.push("MAIL_DRIVER=resend requires RESEND_API_KEY");
 const mailtrapToken = process.env.MAILTRAP_API_TOKEN ?? "";
-if (mailDriver === "mailtrap" && !mailtrapToken)
-	problems.push("MAIL_DRIVER=mailtrap requires MAILTRAP_API_TOKEN");
+const dripsenderApiKey = process.env.DRIPSENDER_API_KEY ?? "";
+const dripsenderIntegrationUrl = process.env.DRIPSENDER_INTEGRATION_URL ?? "";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "";
@@ -76,5 +74,9 @@ export const config = {
 	rateLimit: {
 		authMax: Number(pick(process.env.RATE_LIMIT_AUTH_MAX, "10")),
 		authWindow: Number(pick(process.env.RATE_LIMIT_AUTH_WINDOW, "60")),
+	},
+	whatsapp: {
+		apiKey: dripsenderApiKey,
+		integrationUrl: dripsenderIntegrationUrl,
 	},
 };

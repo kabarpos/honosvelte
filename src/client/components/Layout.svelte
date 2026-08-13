@@ -43,62 +43,49 @@
     match: (path: string) => boolean
   }
 
-  const NAV_ITEMS: NavItem[] = [
+  type NavGroup = {
+    label: string
+    items: NavItem[]
+  }
+
+  const NAV_GROUPS: NavGroup[] = [
     {
-      href: '/dashboard',
-      label: 'Dashboard',
-      match: (p) => p === '/dashboard' || p.startsWith('/dashboard'),
+      label: 'Overview',
+      items: [
+        { href: '/dashboard', label: 'Dashboard', match: (p) => p === '/dashboard' || p.startsWith('/dashboard') },
+      ],
     },
     {
-      href: '/profile',
-      label: 'Profile',
-      match: (p) => p === '/profile' || p.startsWith('/profile'),
+      label: 'Content',
+      items: [
+        { href: '/media', label: 'Media', match: (p) => p === '/media' || p.startsWith('/media') },
+        { href: '/billing', label: 'Billing', match: (p) => p === '/billing' || p.startsWith('/billing') },
+      ],
     },
     {
-      href: '/media',
-      label: 'Media',
-      match: (p) => p === '/media' || p.startsWith('/media'),
+      label: 'Administration',
+      items: [
+        { href: '/admin', label: 'Admin console', roles: ['admin'], match: (p) => p === '/admin' || p.startsWith('/admin') },
+        { href: '/settings', label: 'Settings', roles: ['admin'], match: (p) => p === '/settings' || p.startsWith('/settings') },
+        { href: '/activity', label: 'Activity', roles: ['admin'], match: (p) => p === '/activity' || p.startsWith('/activity') },
+      ],
     },
     {
-      href: '/billing',
-      label: 'Billing',
-      match: (p) => p === '/billing' || p.startsWith('/billing'),
+      label: 'User Management',
+      items: [
+        { href: '/users', label: 'Users', roles: ['admin'], match: (p) => p === '/users' || p.startsWith('/users') },
+        { href: '/roles', label: 'Roles', roles: ['admin'], match: (p) => p === '/roles' || p.startsWith('/roles') },
+        { href: '/permissions', label: 'Permissions', roles: ['admin'], match: (p) => p === '/permissions' || p.startsWith('/permissions') },
+      ],
     },
     {
-      href: '/admin',
-      label: 'Admin',
-      roles: ['admin'],
-      match: (p) => p === '/admin' || p.startsWith('/admin'),
-    },
-    {
-      href: '/users',
-      label: 'Users',
-      roles: ['admin'],
-      match: (p) => p === '/users' || p.startsWith('/users'),
-    },
-    {
-      href: '/roles',
-      label: 'Roles',
-      roles: ['admin'],
-      match: (p) => p === '/roles' || p.startsWith('/roles'),
-    },
-    {
-      href: '/permissions',
-      label: 'Permissions',
-      roles: ['admin'],
-      match: (p) => p === '/permissions' || p.startsWith('/permissions'),
-    },
-    {
-      href: '/activity',
-      label: 'Activity',
-      roles: ['admin'],
-      match: (p) => p === '/activity' || p.startsWith('/activity'),
-    },
-    {
-      href: '/settings',
-      label: 'Settings',
-      roles: ['admin'],
-      match: (p) => p === '/settings' || p.startsWith('/settings'),
+      label: 'Messaging',
+      items: [
+        { href: '/whatsapp', label: 'WhatsApp', roles: ['admin'], match: (p) => p === '/whatsapp' || p.startsWith('/whatsapp') },
+        { href: '/email', label: 'Email', roles: ['admin'], match: (p) => p === '/email' || p.startsWith('/email') },
+        { href: '/notifications', label: 'Notifications', roles: ['admin'], match: (p) => p === '/notifications' || p.startsWith('/notifications') },
+        { href: '/contact/inbox', label: 'Contact', roles: ['admin'], match: (p) => p === '/contact/inbox' || p.startsWith('/contact/inbox') },
+      ],
     },
   ]
 
@@ -180,10 +167,26 @@
   })
 
   const currentPath = $derived(url?.split('?')[0] ?? '')
-  const items = $derived(
-    NAV_ITEMS.filter(
-      (i) => !i.roles || (user && i.roles.includes(user.role)),
-    ),
+  const groups = $derived(
+    NAV_GROUPS.map((g) => ({
+      ...g,
+      items: g.items.filter(
+        (i) => !i.roles || (user && i.roles.includes(user.role)),
+      ),
+    })).filter((g) => g.items.length > 0),
+  )
+
+  // Collapsible parent-child nav state. Each group (parent) starts expanded and
+  // auto-opens when one of its children is the active route.
+  let expanded = $state<Record<string, boolean>>({})
+  function toggleGroup(label: string) {
+    expanded[label] = !(expanded[label] ?? true)
+  }
+  const groupsView = $derived(
+    groups.map((g) => ({
+      ...g,
+      open: (expanded[g.label] ?? true) || g.items.some((i) => i.match(currentPath)),
+    })),
   )
 
   function toggleTheme() {
@@ -243,14 +246,38 @@
     </div>
 
     <nav class="flex-1 overflow-y-auto px-3 py-4">
-      <p
-        class="mx-3 my-2 text-xs font-bold uppercase tracking-wider text-muted"
-      >
-        Menu
-      </p>
-      <ul class="list-none m-0 p-0 flex flex-col gap-0.5">
-        {#each items as item (item.href)}
-          {@const active = item.match(currentPath)}
+      {#each groupsView as group, i (group.label)}
+        {#if i > 0}
+          <div class="mx-3 my-2 h-px bg-border"></div>
+        {/if}
+        <div class="mb-1">
+          <button
+            type="button"
+            class="flex items-center justify-between w-full px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-muted transition-colors hover:text-text hover:bg-primary-soft cursor-pointer"
+            aria-expanded={group.open}
+            aria-label={`Toggle ${group.label} menu`}
+            onclick={() => toggleGroup(group.label)}
+          >
+            <span>{group.label}</span>
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              class={`transition-transform duration-150${group.open ? ' rotate-180' : ''}`}
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+          {#if group.open}
+            <ul class="list-none m-0 p-0 flex flex-col gap-0.5 mt-0.5">
+              {#each group.items as item (item.href)}
+            {@const active = item.match(currentPath)}
           <li>
             <Link
               href={item.href}
@@ -386,6 +413,20 @@
                     <rect x="4" y="11" width="16" height="10" rx="2" />
                     <circle cx="12" cy="16" r="1.5" />
                   </svg>
+                {:else if item.href === '/activity'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
                 {:else if item.href === '/settings'}
                   <svg
                     viewBox="0 0 24 24"
@@ -401,13 +442,76 @@
                     <circle cx="12" cy="12" r="3" />
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
                   </svg>
+                {:else if item.href === '/email'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <path d="m3 7 9 6 9-6" />
+                  </svg>
+                {:else if item.href === '/whatsapp'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 11.5a8.4 8.4 0 0 1-12 7.6L3 21l1.9-6a8.4 8.4 0 1 1 16-3.5Z" />
+                    <path d="M8.5 9.5c0 4 2.5 6.5 6.5 6.5" />
+                  </svg>
+                {:else if item.href === '/contact/inbox'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 4h16v14H7l-3 3V4Z" />
+                    <path d="M8 9h8M8 13h5" />
+                  </svg>
+                {:else if item.href === '/notifications'}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+                  </svg>
                 {/if}
               </span>
               <span>{item.label}</span>
             </Link>
           </li>
-        {/each}
-      </ul>
+          {/each}
+            </ul>
+          {/if}
+        </div>
+      {/each}
     </nav>
 
     <div class="p-3 border-t border-border">

@@ -25,6 +25,8 @@ import { createUser, findUserByEmail, updateUserPassword } from "../db";
 import { recordActivity } from "../activity";
 import type { AppEnv } from "../inertia-middleware";
 import { sendMail } from "../mailer";
+import { pushLead, dispatchTrigger } from "../whatsapp";
+import { dispatchEmailTrigger } from "../mailer";
 import { rateLimit } from "../rate-limit";
 import { validateJson } from "../validation";
 
@@ -143,6 +145,25 @@ export const authRoutes = () => {
 		const session = createSession(user.id);
 		setSessionCookie(c, session.token, session.expiresAt);
 		recordActivity(c, user.id, "register", `Account created`);
+		// Best-effort: feed the new contact into the Dripsender WhatsApp audience
+		// via its integration webhook (Modul 12 lead capture). Never blocks or
+		// fails registration if Dripsender is unreachable.
+		if (body.whatsapp?.trim()) {
+			pushLead({ name: body.name, phone: body.whatsapp.trim() }).catch(
+				() => {},
+			);
+		}
+		// Best-effort: fire any WhatsApp templates bound to registration.
+		await dispatchTrigger("on_register", {
+			name: body.name,
+			phone: body.whatsapp?.trim() || undefined,
+			email: body.email,
+		}).catch(() => {});
+		// Best-effort: fire any email templates bound to registration.
+		await dispatchEmailTrigger("on_register", {
+			name: body.name,
+			email: body.email,
+		}).catch(() => {});
 		return page.redirect("/dashboard");
 	});
 
@@ -172,46 +193,56 @@ export const authRoutes = () => {
 		return c.var.inertia.redirect("/login");
 	});
 
-	app.post("/forgot-password", limitAuth, validateJson(forgotPasswordBody), async (c) => {
-		const body = c.req.valid("json") as ForgotPasswordBody;
-		// Always answer the same way (no user enumeration); the reset email
-		// is only sent when the account exists.
-		const user = findUserByEmail.get(body.email);
-		if (user) {
-			const token = createPasswordReset(user.email);
-			const link = `${config.appUrl}/reset-password?email=${encodeURIComponent(user.email)}&token=${token}`;
-			await sendMail({
-				to: user.email,
-				subject: "Reset your password",
-				text: `Reset your password:\n${link}\n\nThis link expires in 60 minutes.`,
-				html: `<p>We received a request to reset your password.</p><p><a href="${link}">Reset password</a></p><p>This link expires in 60 minutes. If you did not request this, you can ignore this email.</p>`,
-			}).catch((err) =>
-				console.error("[mail] failed to send reset email:", err),
-			);
-		}
-		return c.var.inertia.render("ForgotPassword", { status: "sent" });
-	});
+	app.post(
+		"/forgot-password",
+		limitAuth,
+		validateJson(forgotPasswordBody),
+		async (c) => {
+			const body = c.req.valid("json") as ForgotPasswordBody;
+			// Always answer the same way (no user enumeration); the reset email
+			// is only sent when the account exists.
+			const user = findUserByEmail.get(body.email);
+			if (user) {
+				const token = createPasswordReset(user.email);
+				const link = `${config.appUrl}/reset-password?email=${encodeURIComponent(user.email)}&token=${token}`;
+				await sendMail({
+					to: user.email,
+					subject: "Reset your password",
+					text: `Reset your password:\n${link}\n\nThis link expires in 60 minutes.`,
+					html: `<p>We received a request to reset your password.</p><p><a href="${link}">Reset password</a></p><p>This link expires in 60 minutes. If you did not request this, you can ignore this email.</p>`,
+				}).catch((err) =>
+					console.error("[mail] failed to send reset email:", err),
+				);
+			}
+			return c.var.inertia.render("ForgotPassword", { status: "sent" });
+		},
+	);
 
-	app.post("/reset-password", limitAuth, validateJson(resetPasswordBody), async (c) => {
-		const body = c.req.valid("json") as ResetPasswordBody;
-		const page = c.var.inertia;
-		if (body.password !== body.passwordConfirmation) {
-			return page.error("ResetPassword", {
-				password: "Password confirmation does not match.",
-			});
-		}
-		const valid = verifyPasswordReset(body.email, body.token);
-		const user = valid ? findUserByEmail.get(body.email) : null;
-		if (!user) {
-			return page.error("ResetPassword", {
-				token: "This reset link is invalid or has expired.",
-			});
-		}
-		const passwordHash = await hashPassword(body.password);
-		updateUserPassword.run(passwordHash, user.id);
-		clearPasswordResets(user.email);
-		return page.redirect("/login?notice=password_reset");
-	});
+	app.post(
+		"/reset-password",
+		limitAuth,
+		validateJson(resetPasswordBody),
+		async (c) => {
+			const body = c.req.valid("json") as ResetPasswordBody;
+			const page = c.var.inertia;
+			if (body.password !== body.passwordConfirmation) {
+				return page.error("ResetPassword", {
+					password: "Password confirmation does not match.",
+				});
+			}
+			const valid = verifyPasswordReset(body.email, body.token);
+			const user = valid ? findUserByEmail.get(body.email) : null;
+			if (!user) {
+				return page.error("ResetPassword", {
+					token: "This reset link is invalid or has expired.",
+				});
+			}
+			const passwordHash = await hashPassword(body.password);
+			updateUserPassword.run(passwordHash, user.id);
+			clearPasswordResets(user.email);
+			return page.redirect("/login?notice=password_reset");
+		},
+	);
 
 	return app;
 };

@@ -150,11 +150,12 @@ export interface SettingsItem {
 	label: string;
 	value: string;
 	/**
-	 * text / textarea — plain inputs; select — options picker;
-	 * repeater — multi-value editor (value is a JSON array of strings);
-	 * media — tus upload + preview (value is a served /uploads path).
+	 * text / textarea — plain inputs; password — masked secret input;
+	 * select — options picker; repeater — multi-value editor (value is a
+	 * JSON array of strings); media — tus upload + preview (value is a
+	 * served /uploads path).
 	 */
-	kind: "text" | "textarea" | "select" | "repeater" | "media";
+	kind: "text" | "textarea" | "select" | "repeater" | "media" | "password";
 	/** Choices for `select` fields. */
 	options?: SettingsSelectOption[];
 	/** Helper text shown under the field. */
@@ -166,4 +167,72 @@ export interface SettingsGroup {
 	category: string;
 	label: string;
 	items: SettingsItem[];
+}
+
+/** One visitor contact message submitted through the public form (Modul 9). */
+export interface ContactMessage {
+	id: number;
+	name: string;
+	email: string;
+	subject: string | null;
+	message: string;
+	status: "unread" | "read" | "replied" | "archived";
+	createdAt: string;
+}
+
+/** Reusable email template with {{placeholder}} substitution (Modul 11). */
+export interface EmailTemplate {
+	id: number;
+	name: string;
+	slug: string;
+	subject: string;
+	body: string;
+	/** Placeholder tokens, e.g. ["name", "email"]. */
+	placeholders: string[];
+	/** Event that auto-sends this template: manual | on_register | on_contact | on_order. */
+	trigger: "manual" | "on_register" | "on_contact" | "on_order";
+	/** Who receives it: customer (actor) or admin (configured address). */
+	recipient: "customer" | "admin";
+	/** Whether the trigger is active. */
+	enabled: boolean;
+	/** Minutes to wait before sending (reserved for the future job scheduler). */
+	delayMinutes: number;
+	createdAt: string;
+	updatedAt: string;
+}
+
+/** Reusable WhatsApp template with {{placeholder}} substitution (Modul 12). */
+export interface WhatsAppTemplate {
+	id: number;
+	name: string;
+	slug: string;
+	body: string;
+	/** Optional attachment link rendered into Dripsender's media_url. */
+	mediaUrl: string | null;
+	/** Placeholder tokens, e.g. ["name", "phone"]. */
+	placeholders: string[];
+	/** Event that auto-sends this template: manual | on_register | on_contact | on_order. */
+	trigger: "manual" | "on_register" | "on_contact" | "on_order";
+	/** Who receives it: customer (actor) or admin (configured number). */
+	recipient: "customer" | "admin";
+	/** Whether the trigger is active. */
+	enabled: boolean;
+	/** Minutes to wait before sending (reserved for the future job scheduler). */
+	delayMinutes: number;
+	createdAt: string;
+	updatedAt: string;
+}
+
+/** One in-app notification shown in the Notification Center (Modul 16). */
+export interface Notification {
+	id: number;
+	/** Owner; null marks an admin broadcast. */
+	userId: number | null;
+	/** Event family, e.g. "contact" | "whatsapp" | "info". */
+	type: string;
+	title: string;
+	body: string;
+	/** True once the user has opened/marked it read. */
+	read: boolean;
+	createdAt: string;
 }

@@ -9,7 +9,7 @@
   import Textarea from '../components/Textarea.svelte'
   import Select from '../components/Select.svelte'
   import Button from '../components/Button.svelte'
-  import type { SettingsGroup } from '../../shared/types'
+  import type { SettingsGroup, SettingsItem } from '../../shared/types'
 
   let { groups }: { groups: SettingsGroup[] } = $props()
 
@@ -29,6 +29,17 @@
   // construction, so later prop changes (there are none for this page) must
   // not reset user edits.
   let form = $state(untrack(() => useForm(initial)))
+
+  // Script tab collapses each tracking snippet (<script> textarea) into a
+  // FAQ-style accordion so the long list stays scannable. Each field expands
+  // independently; collapsed textareas keep their value in form state.
+  let openScripts = $state<Set<string>>(new Set())
+  function toggleScript(key: string) {
+    const next = new Set(openScripts)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
+    openScripts = next
+  }
 
   /** Parse the JSON-array WhatsApp value (falls back to a legacy plain value). */
   function parseNumbers(raw: string): string[] {
@@ -152,7 +163,54 @@
           {#each groups as group (group.category)}
             {#if group.category === active}
               <form onsubmit={save} novalidate>
-                {#each group.items as item (item.key)}
+                {#if group.category === 'script'}
+                  <p class="text-muted text-sm mb-3">
+                    Paste each analytics or ad snippet below. Expand a field to
+                    edit it — all values save together when you press Save.
+                  </p>
+                  <div class="flex flex-col gap-2">
+                    {#each group.items as item (item.key)}
+                      {@const open = openScripts.has(item.key)}
+                      <div class="border border-border rounded-lg overflow-hidden bg-surface">
+                        <button
+                          type="button"
+                          class="w-full flex items-center justify-between gap-2 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-primary-soft"
+                          aria-expanded={open}
+                          onclick={() => toggleScript(item.key)}
+                        >
+                          <span class="font-medium text-sm text-text">{item.label}</span>
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="18"
+                            height="18"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                            class={`text-muted transition-transform ${open ? 'rotate-180' : ''}`}
+                          >
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                        {#if open}
+                          <div class="px-4 pb-4 pt-1 border-t border-border">
+                            <Textarea
+                              id={`s-${item.key}`}
+                              label={item.label}
+                              hideLabel
+                              rows={6}
+                              hint={item.hint}
+                              bind:value={form[item.key]}
+                            />
+                          </div>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                {:else}
+                {#each group.items.filter((i) => i.kind !== 'media') as item (item.key)}
                   {#if item.kind === 'textarea'}
                     <Textarea
                       id={`s-${item.key}`}
@@ -205,45 +263,6 @@
                         <p class="text-xs text-muted mt-2">{item.hint}</p>
                       {/if}
                     </Field>
-                  {:else if item.kind === 'media'}
-                    <Field id={`s-${item.key}`} label={item.label}>
-                      <div class="flex flex-wrap items-center gap-3">
-                        {#if previewKey === item.key && previewUrl}
-                          <img
-                            class={`${item.key === 'app.favicon' ? 'h-8 w-8' : 'h-10 max-w-[200px]'} object-contain ${uploadingKey === item.key ? 'opacity-60' : ''}`}
-                            src={previewUrl}
-                            alt={`${item.label} preview`}
-                          />
-                        {:else if form[item.key]}
-                          <img
-                            class={item.key === 'app.favicon' ? 'h-8 w-8 object-contain' : 'h-10 max-w-[200px] object-contain'}
-                            src={form[item.key]}
-                            alt={item.label}
-                          />
-                        {:else}
-                          <span class="text-muted text-sm">No file uploaded yet.</span>
-                        {/if}
-                        <Button
-                          variant="secondary"
-                          type="button"
-                          disabled={uploadingKey !== ''}
-                          onclick={() => pickMedia(item.key)}
-                        >
-                          {uploadingKey === item.key ? 'Uploading…' : 'Upload'}
-                        </Button>
-                        {#if form[item.key]}
-                          <Button variant="ghost" type="button" onclick={() => removeMedia(item.key)}>
-                            Remove
-                          </Button>
-                        {/if}
-                      </div>
-                      {#if item.hint}
-                        <p class="text-xs text-muted mt-1">{item.hint}</p>
-                      {/if}
-                      {#if uploadError && uploadingKey === ''}
-                        <p class="text-danger-fg text-xs mt-2" role="alert">{uploadError}</p>
-                      {/if}
-                    </Field>
                   {:else}
                     <Field id={`s-${item.key}`} label={item.label}>
                       <Input id={`s-${item.key}`} bind:value={form[item.key]} />
@@ -253,6 +272,57 @@
                     </Field>
                   {/if}
                 {/each}
+                {/if}
+
+                {#snippet mediaField(item: SettingsItem)}
+                  <Field id={`s-${item.key}`} label={item.label}>
+                    <div class="flex flex-wrap items-center gap-3">
+                      {#if previewKey === item.key && previewUrl}
+                        <img
+                          class={`${item.key === 'app.favicon' ? 'h-8 w-8' : 'h-10 max-w-[200px]'} object-contain ${uploadingKey === item.key ? 'opacity-60' : ''}`}
+                          src={previewUrl}
+                          alt={`${item.label} preview`}
+                        />
+                      {:else if form[item.key]}
+                        <img
+                          class={item.key === 'app.favicon' ? 'h-8 w-8 object-contain' : 'h-10 max-w-[200px] object-contain'}
+                          src={form[item.key]}
+                          alt={item.label}
+                        />
+                      {:else}
+                        <span class="text-muted text-sm">No file uploaded yet.</span>
+                      {/if}
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        disabled={uploadingKey !== ''}
+                        onclick={() => pickMedia(item.key)}
+                      >
+                        {uploadingKey === item.key ? 'Uploading…' : 'Upload'}
+                      </Button>
+                      {#if form[item.key]}
+                        <Button variant="ghost" type="button" onclick={() => removeMedia(item.key)}>
+                          Remove
+                        </Button>
+                      {/if}
+                    </div>
+                    {#if item.hint}
+                      <p class="text-xs text-muted mt-1">{item.hint}</p>
+                    {/if}
+                    {#if uploadError && uploadingKey === ''}
+                      <p class="text-danger-fg text-xs mt-2" role="alert">{uploadError}</p>
+                    {/if}
+                  </Field>
+                {/snippet}
+
+                {#if group.items.some((i) => i.kind === 'media')}
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                    {#each group.items.filter((i) => i.kind === 'media') as item (item.key)}
+                      {@render mediaField(item)}
+                    {/each}
+                  </div>
+                {/if}
+
                 <div class="flex items-center justify-end gap-2 mt-4">
                   <Button variant="primary" type="submit" loading={form.processing}>
                     Save

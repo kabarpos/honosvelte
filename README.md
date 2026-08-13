@@ -143,6 +143,13 @@ roles, SSR, and test suite.
   allowlists the standard tracking vendors). Every page payload also
   carries the settings as shared props.
 - **Migrations**: versioned SQL files applied at startup in transactions.
+- **Messaging templates**: reusable WhatsApp and email message templates with
+  `{{placeholder}}` substitution, preview, and test-send. Each template can be
+  bound to an event (`on_register`, `on_contact`, `on_order`) and a recipient
+  (`customer` or `admin`) so it fires automatically — e.g. a welcome email on
+  signup or an admin alert on contact submission. Guarded by the
+  `email.read` / `email.update` and `whatsapp.read` / `whatsapp.update`
+  permissions.
 - **Ops**: batched request logging with correlation id, gzip compression,
   security headers (CSP, nosniff, frame denial), `/health`, graceful
   shutdown, Docker.
@@ -160,6 +167,8 @@ roles, SSR, and test suite.
 | `RESEND_API_KEY` | — | required when `MAIL_DRIVER=resend` |
 | `MAILTRAP_API_TOKEN` | — | required when `MAIL_DRIVER=mailtrap` |
 | `MAILTRAP_INBOX_ID` | — | use the sandbox endpoint when set |
+| `DRIPSENDER_API_KEY` | — | Dripsender.id API key; required when the WhatsApp provider is `dripsender` (the provider + key can also be set in the UI) |
+| `DRIPSENDER_INTEGRATION_URL` | — | Dripsender integration webhook; new contacts (name + phone) captured on registration are POSTed here |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
 | `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints |
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |

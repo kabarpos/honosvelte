@@ -5,7 +5,13 @@
  */
 import { Hono } from "hono";
 import { requireAuth, requireRole } from "../auth";
-import { countAllMedia, countUsers, listUsers, recentUsers, toPublicUser } from "../db";
+import {
+	countAllMedia,
+	countUsers,
+	listUsers,
+	recentUsers,
+	toPublicUser,
+} from "../db";
 import type { AppEnv } from "../inertia-middleware";
 import type { DashboardStats, Paginated, User } from "../../shared/types";
 
@@ -21,7 +27,14 @@ export const pageRoutes = () => {
 	const app = new Hono<AppEnv>();
 
 	app.get("/", (c) =>
-		c.var.inertia.redirect(c.var.user ? "/dashboard" : "/login", 302),
+		c.var.user
+			? c.var.inertia.redirect("/dashboard", 302)
+			: c.var.inertia.render("Landing", {}),
+	);
+	app.get("/about", (c) => c.var.inertia.render("About"));
+	app.get("/services", (c) => c.var.inertia.render("Services"));
+	app.get("/contact", (c) =>
+		c.var.inertia.render("Contact", { sent: c.req.query("sent") === "1" }),
 	);
 	app.get("/dashboard", requireAuth, (c) =>
 		c.var.inertia.render("Dashboard", { stats: dashboardStats() }),

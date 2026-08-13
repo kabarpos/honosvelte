@@ -84,10 +84,19 @@ async function registerUser(
 }
 
 describe("auth basics", () => {
-	it("redirects guests from / to /login", async () => {
+	it("serves the public landing page to guests", async () => {
 		const res = await call("/");
+		expect(res.status).toBe(200);
+		const html = await res.text();
+		expect(html).toContain('data-server-rendered="true"');
+		expect(html).toContain("Landing");
+	});
+
+	it("redirects authenticated users from / to /dashboard", async () => {
+		const cookie = await registerUser("landing-guest@example.com");
+		const res = await call("/", { headers: { cookie } });
 		expect(res.status).toBe(302);
-		expect(new URL(res.headers.get("location")!).pathname).toBe("/login");
+		expect(new URL(res.headers.get("location")!).pathname).toBe("/dashboard");
 	});
 
 	it("registers a user, creates a session cookie", async () => {
