@@ -46,7 +46,7 @@ src/
 │   └── routes/
 │       ├── auth.routes.ts         # /login /register /logout /forgot-password /reset-password (GET+POST)
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
-│       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
+│       ├── pages.routes.ts        # app-shell pages: /, /dashboard
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
 │       ├── settings.routes.ts     # /settings admin page + save (Modul 15)
 │       └── uploads.routes.ts      # /uploads* (tus protocol)
@@ -94,7 +94,7 @@ src/
 - **File = URL namespace.** `/posts*` routes live in `routes/posts.routes.ts`
   with page renders and form actions together. Given a URL, the file name
   follows from its first segment — that is the discoverability contract.
-- **`pages.routes.ts` is the app shell only** (/, /dashboard, /admin). New
+- **`pages.routes.ts` is the app shell only** (/, /dashboard). New
   feature pages do not go there.
 - **Infra endpoints** (`/health`, `/assets/*`) stay in `app.ts`, not route
   files.

@@ -263,46 +263,6 @@ describe("inertia protocol", () => {
 	});
 });
 
-describe("roles & admin", () => {
-	it("blocks non-admins from /admin", async () => {
-		const cookie = await registerUser("normal@example.com");
-		const res = await call("/admin", { headers: { cookie } });
-		expect(res.status).toBe(302);
-		expect(new URL(res.headers.get("location")!).pathname).toBe("/dashboard");
-	});
-
-	it("serves paginated users to admins", async () => {
-		const { createUserWithRole } = await import("../src/server/db");
-		const { hashPassword } = await import("../src/server/auth");
-		const hash = await hashPassword("password123");
-		createUserWithRole.get("Boss", "boss@example.com", hash, "admin");
-		const cookie = await registerUser("filler@example.com");
-
-		const login = await call("/login", {
-			method: "POST",
-			headers: xhr,
-			body: { email: "boss@example.com", password: "password123" },
-		});
-		const adminCookie = sessionCookie(login);
-
-		const res = await call("/admin", {
-			headers: { cookie: adminCookie, ...xhr },
-		});
-		expect(res.status).toBe(200);
-		const data = await page(res);
-		expect(data.component).toBe("Admin");
-		expect(data.props.users.meta.total).toBeGreaterThanOrEqual(2);
-		expect(data.props.users.meta.currentPage).toBe(1);
-		expect(
-			data.props.users.data.some((u: any) => u.email === "boss@example.com"),
-		).toBe(true);
-
-		// non-admin cookie is still bounced
-		const blocked = await call("/admin", { headers: { cookie } });
-		expect(blocked.status).toBe(302);
-	});
-});
-
 describe("password reset", () => {
 	it("answers identically for known and unknown emails (no enumeration)", async () => {
 		await registerUser("resetme@example.com");

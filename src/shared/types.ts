@@ -63,13 +63,6 @@ export interface SharedPageProps {
 	settings: Record<string, string>;
 }
 
-/** Props for the dashboard page. */
-export interface DashboardStats {
-	userCount: number;
-	recentUsers: User[];
-	mediaCount: number;
-}
-
 /** File categories in the media library, derived from the mime type. */
 export type MediaCategory =
 	| "image"

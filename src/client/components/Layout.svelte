@@ -81,7 +81,6 @@
        {
       label: 'Administration',
       items: [
-        { href: '/admin', label: 'Admin console', roles: ['admin'], match: (p) => p === '/admin' || p.startsWith('/admin') },
         { href: '/billing', label: 'Billing', match: (p) => p === '/billing' || p.startsWith('/billing') },
         { href: '/settings', label: 'Settings', roles: ['admin'], match: (p) => p === '/settings' || p.startsWith('/settings') },
         { href: '/activity', label: 'Activity', roles: ['admin'], match: (p) => p === '/activity' || p.startsWith('/activity') },
@@ -349,21 +348,6 @@
                   >
                     <rect x="2" y="5" width="20" height="14" rx="2" />
                     <path d="M2 10h20" />
-                  </svg>
-                {:else if item.href === '/admin'}
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="18"
-                    height="18"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z" />
-                    <path d="m9 12 2 2 4-4" />
                   </svg>
                 {:else if item.href === '/users'}
                   <svg

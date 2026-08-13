@@ -6,7 +6,6 @@
  */
 import type { Component } from "svelte";
 import Activity from "./pages/Activity.svelte";
-import Admin from "./pages/Admin.svelte";
 import About from "./pages/About.svelte";
 import Billing from "./pages/Billing.svelte";
 import Contact from "./pages/Contact.svelte";
@@ -35,7 +34,6 @@ type PageModule = { default: Component<any> };
 
 export const pages: Record<string, PageModule> = {
 	"./pages/Activity.svelte": { default: Activity },
-	"./pages/Admin.svelte": { default: Admin },
 	"./pages/About.svelte": { default: About },
 	"./pages/Billing.svelte": { default: Billing },
 	"./pages/Contact.svelte": { default: Contact },

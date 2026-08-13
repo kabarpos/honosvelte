@@ -108,8 +108,8 @@ roles, SSR, and test suite.
 - **Google OAuth** register-or-login (zero-dep, plain fetch; button hidden
   when not configured). The profile picture is downloaded and stored locally
   (the CSP blocks external images), so avatars always load from our origin.
-- **Roles**: `user` / `admin`, `requireRole('admin')` guard, `/admin` page
-  with paginated user list.
+- **Roles**: `user` / `admin`, `requireRole('admin')` guard, `/users` management
+  page with a paginated, searchable user list.
 - **Rate limiting** on auth endpoints (in-memory fixed window, per IP).
 - **Inertia v3**: full SSR on first load, SPA navigation after, asset-version
   negotiation (409 + reload), partial reloads, flash messages, shared props.
@@ -224,7 +224,7 @@ src/
 │   └── routes/
 │       ├── auth.routes.ts         # /login /register /logout /forgot/reset (GET+POST)
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
-│       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
+│       ├── pages.routes.ts        # app-shell pages: /, /dashboard
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
 │       ├── settings.routes.ts     # /settings admin page + save (Modul 15)
 │       └── uploads.routes.ts      # /uploads* (tus resumable upload)
