@@ -59,18 +59,9 @@
       label: 'Content',
       items: [
         { href: '/media', label: 'Media', match: (p) => p === '/media' || p.startsWith('/media') },
-        { href: '/billing', label: 'Billing', match: (p) => p === '/billing' || p.startsWith('/billing') },
       ],
     },
-    {
-      label: 'Administration',
-      items: [
-        { href: '/admin', label: 'Admin console', roles: ['admin'], match: (p) => p === '/admin' || p.startsWith('/admin') },
-        { href: '/settings', label: 'Settings', roles: ['admin'], match: (p) => p === '/settings' || p.startsWith('/settings') },
-        { href: '/activity', label: 'Activity', roles: ['admin'], match: (p) => p === '/activity' || p.startsWith('/activity') },
-      ],
-    },
-    {
+     {
       label: 'User Management',
       items: [
         { href: '/users', label: 'Users', roles: ['admin'], match: (p) => p === '/users' || p.startsWith('/users') },
@@ -85,6 +76,15 @@
         { href: '/email', label: 'Email', roles: ['admin'], match: (p) => p === '/email' || p.startsWith('/email') },
         { href: '/notifications', label: 'Notifications', roles: ['admin'], match: (p) => p === '/notifications' || p.startsWith('/notifications') },
         { href: '/contact/inbox', label: 'Contact', roles: ['admin'], match: (p) => p === '/contact/inbox' || p.startsWith('/contact/inbox') },
+      ],
+    },
+       {
+      label: 'Administration',
+      items: [
+        { href: '/admin', label: 'Admin console', roles: ['admin'], match: (p) => p === '/admin' || p.startsWith('/admin') },
+        { href: '/billing', label: 'Billing', match: (p) => p === '/billing' || p.startsWith('/billing') },
+        { href: '/settings', label: 'Settings', roles: ['admin'], match: (p) => p === '/settings' || p.startsWith('/settings') },
+        { href: '/activity', label: 'Activity', roles: ['admin'], match: (p) => p === '/activity' || p.startsWith('/activity') },
       ],
     },
   ]
@@ -514,7 +514,7 @@
       {/each}
     </nav>
 
-    <div class="p-3 border-t border-border">
+    <!-- <div class="p-3 border-t border-border">
 	      <div class="p-3.5 rounded-card bg-bg border border-border">
 	        <p class="m-0 text-sm font-bold">
 	          {settings['app.name'] || 'Honosvelte'}
@@ -523,7 +523,7 @@
 	          <p class="mt-0.5 text-xs text-muted">{settings['app.tagline']}</p>
 	        {/if}
 	      </div>
-    </div>
+    </div> -->
   </aside>
 
   <!-- Main column -->
@@ -681,9 +681,6 @@
                 <span class="text-sm font-semibold max-w-[140px] truncate">
                   {user.name}
                 </span>
-                <span class="text-xs text-muted capitalize">
-                  {user.role}
-                </span>
               </span>
               <span class="inline-flex text-muted max-md:hidden">
                 <svg
@@ -733,21 +730,12 @@
                 </div>
                 <div class="h-px bg-border my-1.5"></div>
                 <Link
-                  href="/dashboard"
+                  href="/profile"
                   class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-text text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
                   role="menuitem"
                 >
-                  Dashboard
+                  Profile
                 </Link>
-                {#if user.role === 'admin'}
-                  <Link
-                    href="/admin"
-                    class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-text text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
-                    role="menuitem"
-                  >
-                    Admin console
-                  </Link>
-                {/if}
                 <div class="h-px bg-border my-1.5"></div>
                 <button
                   type="button"
@@ -816,28 +804,7 @@
       {@render children()}
     </main>
 
-	    {#if contactAny}
-	      <div
-	        class="px-5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted text-xs border-t border-border max-md:px-4"
-	      >
-	        {#if settings['contact.email']}
-	          <a class="hover:text-text" href={`mailto:${settings['contact.email']}`}>
-	            {settings['contact.email']}
-	          </a>
-	        {/if}
-	        {#each whatsappNumbers as number}
-	          <a
-	            class="hover:text-text"
-	            href={`https://wa.me/${number.replace(/\D/g, '')}`}
-	          >
-	            WhatsApp: {number}
-	          </a>
-	        {/each}
-	        {#if settings['contact.address']}
-	          <span>{settings['contact.address']}</span>
-	        {/if}
-	      </div>
-	    {/if}
+	  
 
 	    <footer
 	      class="mt-auto px-5 py-3.5 flex items-center justify-between gap-3 text-muted text-xs border-t border-border max-md:px-4 max-md:py-3"
