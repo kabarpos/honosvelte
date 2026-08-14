@@ -959,6 +959,87 @@ describe("profile info & password", () => {
 		});
 	});
 
+	describe("tus interruption recovery (COR-06)", () => {
+		let cookie: string;
+		let uploadId: string;
+		const totalSize = 2048;
+		const chunkSize = 1024;
+		let first: Uint8Array<ArrayBuffer>;
+		let second: Uint8Array<ArrayBuffer>;
+
+		beforeAll(async () => {
+			cookie = await registerUser("tus-recovery@example.com");
+			const res = await tus("/uploads", {
+				method: "POST",
+				headers: { "Upload-Length": String(totalSize) },
+				cookie,
+			});
+			expect(res.status).toBe(201);
+			uploadId = res.headers.get("Location")!.replace("/uploads/", "");
+
+			// Normal PATCH of the first chunk: DB offset advances to chunkSize.
+			first = new Uint8Array(new ArrayBuffer(chunkSize));
+			for (let i = 0; i < first.length; i++) first[i] = (i * 7) % 251;
+			const patched = await tus(`/uploads/${uploadId}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/offset+octet-stream",
+					"Upload-Offset": "0",
+				},
+				body: first,
+				cookie,
+			});
+			expect(patched.status).toBe(204);
+
+			// Simulate a crash between appendBytes() and advanceOffset(): write
+			// the remaining bytes straight to the file, leaving the DB offset
+			// behind at chunkSize (the interrupted-write window).
+			const { appendFile } = await import("node:fs/promises");
+			const { uploadPath } = await import("../src/server/tus-storage");
+			second = new Uint8Array(new ArrayBuffer(totalSize - chunkSize));
+			for (let i = 0; i < second.length; i++) second[i] = (i * 13) % 251;
+			await appendFile(uploadPath(uploadId), second);
+		});
+
+		it("HEAD reports the on-disk size and persists the repair", async () => {
+			const head = await tus(`/uploads/${uploadId}`, {
+				method: "HEAD",
+				cookie,
+			});
+			expect(head.status).toBe(200);
+			expect(head.headers.get("Upload-Offset")).toBe(String(totalSize));
+			// The repair is durable: the DB now agrees with the disk.
+			const { findUpload } = await import("../src/server/db");
+			const row = findUpload.get(uploadId);
+			expect(row?.offset).toBe(totalSize);
+		});
+
+		it("PATCH resuming from the HEAD offset succeeds instead of 409-looping", async () => {
+			// A client that resumed from the HEAD-reported offset sends the
+			// final empty chunk; without the repair this 409s forever because
+			// clientOffset (2048) !== DB offset (1024).
+			const res = await tus(`/uploads/${uploadId}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/offset+octet-stream",
+					"Upload-Offset": String(totalSize),
+				},
+				body: new Uint8Array(0),
+				cookie,
+			});
+			expect(res.status).toBe(204);
+
+			// Byte-exact verification of the repaired file.
+			const get = await tus(`/uploads/${uploadId}`, { cookie });
+			expect(get.status).toBe(200);
+			const body = new Uint8Array(await get.arrayBuffer());
+			const expected = new Uint8Array(new ArrayBuffer(totalSize));
+			expected.set(first, 0);
+			expected.set(second, chunkSize);
+			expect(body).toEqual(expected);
+		});
+	});
+
 	describe("tus per-chunk bound (PERF-01)", () => {
 		let cookie: string;
 		let uploadId: string;

@@ -13,6 +13,8 @@ import { config } from "./config";
 import { getSetting } from "./settings";
 import { listWhatsAppTemplatesByTrigger } from "./db";
 import { assertPublicHost } from "./ssrf";
+import { addLatency, inc } from "./metrics";
+import { logErrorRaw } from "./logger";
 
 export interface WhatsAppMessage {
 	/** Recipient phone in international format without "+", e.g. 62813… */
@@ -44,33 +46,40 @@ export function resolveWhatsAppConfig(): ResolvedWhatsAppConfig {
 
 /** Send a WhatsApp message through the active provider. */
 export async function sendWhatsApp(message: WhatsAppMessage): Promise<void> {
-	const cfg = resolveWhatsAppConfig();
-	if (cfg.driver === "log") {
-		sentWhatsapp.push({
-			phone: message.phone,
-			text: message.text,
-			mediaUrl: message.mediaUrl,
+	const started = performance.now();
+	try {
+		const cfg = resolveWhatsAppConfig();
+		if (cfg.driver === "log") {
+			sentWhatsapp.push({
+				phone: message.phone,
+				text: message.text,
+				mediaUrl: message.mediaUrl,
+			});
+			console.log(formatWhatsApp(message));
+			return;
+		}
+		if (!cfg.apiKey) throw new Error("WhatsApp API key is not configured.");
+		await assertPublicHost("api.dripsender.id");
+		const res = await fetch("https://api.dripsender.id/send", {
+			method: "POST",
+			signal: AbortSignal.timeout(10_000),
+			redirect: "manual",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				api_key: cfg.apiKey,
+				phone: message.phone,
+				text: message.text,
+				...(message.mediaUrl ? { media_url: message.mediaUrl } : {}),
+			}),
 		});
-		console.log(formatWhatsApp(message));
-		return;
-	}
-	if (!cfg.apiKey) throw new Error("WhatsApp API key is not configured.");
-	await assertPublicHost("api.dripsender.id");
-	const res = await fetch("https://api.dripsender.id/send", {
-		method: "POST",
-		signal: AbortSignal.timeout(10_000),
-		redirect: "manual",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({
-			api_key: cfg.apiKey,
-			phone: message.phone,
-			text: message.text,
-			...(message.mediaUrl ? { media_url: message.mediaUrl } : {}),
-		}),
-	});
-	if (!res.ok) {
-		const detail = await res.text().catch(() => "");
-		throw new Error(`Dripsender error ${res.status}: ${detail.slice(0, 200)}`);
+		if (!res.ok) {
+			const detail = await res.text().catch(() => "");
+			throw new Error(
+				`Dripsender error ${res.status}: ${detail.slice(0, 200)}`,
+			);
+		}
+	} finally {
+		addLatency("provider.whatsapp", performance.now() - started); // OPS-02
 	}
 }
 
@@ -149,10 +158,11 @@ export async function pushLead(input: {
 		body: JSON.stringify({ name: input.name, phone }),
 	});
 	if (!res.ok) {
-		const detail = await res.text().then((text) => text.slice(0, 200)).catch(() => "");
-		throw new Error(
-			`Dripsender integration error ${res.status}: ${detail}`,
-		);
+		const detail = await res
+			.text()
+			.then((text) => text.slice(0, 200))
+			.catch(() => "");
+		throw new Error(`Dripsender integration error ${res.status}: ${detail}`);
 	}
 }
 
@@ -220,7 +230,8 @@ export async function dispatchTrigger(
 				mediaUrl: tpl.mediaUrl || undefined,
 			});
 		} catch (err) {
-			console.error(`[whatsapp] trigger ${trigger} send failed:`, err);
+			inc("provider.whatsapp.errors"); // OPS-02
+			logErrorRaw("whatsapp", err); // COR-07 structured
 		}
 	}
 }

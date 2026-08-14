@@ -274,11 +274,16 @@ export const requirePermission =
 	(...permissionSlugs: string[]) =>
 	async (c: Context<AppEnv>, next: Next) => {
 		if (!c.var.user) return redirectTo(c.req.raw, "/login");
-		const full = findUserById.get(c.var.user.id);
-		const allowed = full
-			? full.role === "super_admin" ||
-				permissionSlugs.some((slug) => permissionsForUser(full).has(slug))
-			: false;
+		if (c.var.user.role === "super_admin") return next();
+		// PERF-05: compute the effective permission set once per request and
+		// reuse it across every guard on the same request — no user re-lookup,
+		// no repeated role/override queries.
+		let permissions = c.get("permissions");
+		if (!permissions) {
+			permissions = permissionsForUser(c.var.user);
+			c.set("permissions", permissions);
+		}
+		const allowed = permissionSlugs.some((slug) => permissions.has(slug));
 		if (allowed) return next();
 		return redirectTo(c.req.raw, "/dashboard");
 	};

@@ -16,6 +16,7 @@ import { createApp } from "./server/app";
 import { config } from "./server/config";
 import { db } from "./server/db";
 import { sweepExpired } from "./server/routes/uploads.routes";
+import { reconcileMedia } from "./server/routes/media.routes";
 
 const isProd = config.isProd;
 if (!isProd || !manifestExists()) {
@@ -30,7 +31,11 @@ const server = Bun.serve({
 	fetch: createApp(assets).fetch,
 });
 const cleanupIntervalMs = 15 * 60 * 1000;
-const cleanupTimer = setInterval(sweepExpired, cleanupIntervalMs);
+const cleanupTimer = setInterval(() => {
+	sweepExpired();
+	// COR-05: reconcile media rows ↔ stored files (orphan sweep).
+	reconcileMedia();
+}, cleanupIntervalMs);
 cleanupTimer.unref?.();
 console.log(`Honosvelte boilerplate → http://localhost:${port}`);
 

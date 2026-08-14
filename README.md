@@ -180,6 +180,9 @@ roles, SSR, and test suite.
 | `TUS_MAX_SIZE` | `52428800` | max upload size in bytes (50 MiB default) |
 | `TUS_CHUNK_MAX` | `5242880` | max bytes per single tus PATCH chunk (5 MiB default) |
 | `TUS_EXPIRATION_SECONDS` | `86400` | unfinished upload TTL in seconds (24 hours default) |
+| `ACTIVITY_RETENTION_DAYS` | `90` | retention window for the activity log in days; `0` keeps everything |
+| `NOTIFICATION_RETENTION_DAYS` | `0` | retention window for in-app notifications in days; `0` keeps everything (contact-message retention is intentionally not configurable — inbox data is business-critical) |
+| `BACKUP_DIR` | `./data/backups` | backup destination for `bun run backup` |
 | `REQUEST_BODY_LIMIT` | `100000` | bounded JSON body for validated routes (bytes) |
 
 Invalid/incomplete config fails fast at startup with a clear message

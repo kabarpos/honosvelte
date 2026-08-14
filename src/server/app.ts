@@ -18,6 +18,7 @@ import { getSettings } from "./settings";
 import { Inertia, type InertiaAssets } from "./inertia";
 import { inertiaMiddleware, type AppEnv } from "./inertia-middleware";
 import { logError, requestLogger } from "./logger";
+import { snapshot as metricsSnapshot } from "./metrics";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
 import { activityRoutes } from "./routes/activity.routes";
 import { billingRoutes } from "./routes/billing.routes";
@@ -128,6 +129,7 @@ function inertiaFromContext(
 			flash: readFlash(sessionToken),
 			sessionToken,
 			settings: Object.fromEntries(getSettings()),
+			unreadNotifications: 0,
 		},
 		assets,
 	);
@@ -253,9 +255,7 @@ export function createApp(assets: InertiaAssets) {
 			checks.migrations = "down";
 		}
 		try {
-			const { mkdirSync, writeFileSync, rmSync } = await import(
-				"node:fs"
-			);
+			const { mkdirSync, writeFileSync, rmSync } = await import("node:fs");
 			mkdirSync(config.upload.dir, { recursive: true });
 			const probe = join(config.upload.dir, `.probe-${process.pid}`);
 			writeFileSync(probe, "ok");
@@ -274,6 +274,12 @@ export function createApp(assets: InertiaAssets) {
 	app.get("/health", (c) => {
 		pingDb.get();
 		return c.json({ status: "ok", uptime: process.uptime() });
+	});
+	// OPS-02: aggregate metrics for a scraping agent / monitoring sidecar.
+	// Counters only — no PII. Protect the path at the reverse proxy if the
+	// deployment wants it private (see docs/audit/backup-dr.md).
+	app.get("/health/metrics", (c) => {
+		return c.json(metricsSnapshot());
 	});
 	// Hono's tail wildcard produces no named param — derive the relative
 	// path from c.req.path (see uploads.routes.ts for the same pattern).

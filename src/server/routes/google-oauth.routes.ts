@@ -28,6 +28,8 @@ import type { AppEnv } from "../inertia-middleware";
 import { generateUploadId } from "../tus-protocol";
 import { detectMimeFromBytes, uploadPath, writeBytes } from "../tus-storage";
 import { safeUrl } from "../url";
+import { logErrorRaw } from "../logger";
+import { inc } from "../metrics";
 import { assertPublicHost } from "../ssrf";
 
 interface GoogleProfile {
@@ -230,14 +232,16 @@ export const googleOauthRoutes = () => {
 					const avatarUrl = await storeGoogleAvatar(profile.picture, user.id);
 					updateUserAvatar.run(avatarUrl, user.id);
 				} catch (err) {
-					console.error("[google-oauth] avatar download failed:", err);
+					inc("provider.google_avatar.errors"); // OPS-02
+					logErrorRaw("google-oauth", err); // COR-07 structured
 				}
 			}
 			const session = createSession(user.id);
 			setSessionCookie(c, session.token, session.expiresAt);
 			return Response.redirect(new URL("/dashboard", url).toString());
 		} catch (err) {
-			console.error("[google-oauth]", err);
+			inc("auth.google_failures"); // OPS-02
+			logErrorRaw("google-oauth", err); // COR-07 structured
 			return Response.redirect(
 				new URL("/login?notice=google_failed", url).toString(),
 			);

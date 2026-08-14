@@ -5,13 +5,8 @@
  */
 import { Type as t, type Static } from "@sinclair/typebox";
 import { randomUUID } from "node:crypto";
-import {
-	existsSync,
-	mkdirSync,
-	renameSync,
-	unlinkSync,
-	writeFileSync,
-} from "node:fs";
+import { readdirSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
+import { rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, extname, join } from "node:path";
 import { Hono } from "hono";
 import { requireAuth, requirePermission } from "../auth";
@@ -23,11 +18,13 @@ import {
 	insertMedia,
 	listMedia,
 	escapeLike,
+	listMediaFilenames,
 	listMediaPicker,
 	updateMediaMeta,
 } from "../db";
 import type { AppEnv } from "../inertia-middleware";
-import { validateJson } from "../validation";
+import { readBoundedBytes, validateJson } from "../validation";
+import { detectMimeFromBytes } from "../tus-storage";
 import { recordActivity } from "../activity";
 import type { Media, MediaCategory, User } from "../../shared/types";
 import type { Paginated } from "../../shared/types";
@@ -140,6 +137,31 @@ function paramId(value: string | undefined): number | null {
 	return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+/**
+ * Media upload body cap — same bound as the tus upload path (PERF-01/COR-05).
+ * The body is read in bounded chunks, never buffered unbounded.
+ */
+const mediaBodyCap = () =>
+	config.upload.maxSize > 0 ? config.upload.maxSize : Number.MAX_SAFE_INTEGER;
+
+/**
+ * Signature check for image uploads (COR-05): the declared image MIME must
+ * match the file's magic bytes. Blocks content-sniffing/stored-XSS tricks
+ * where "photo.png" is really HTML — the server then serves it with an
+ * image content-type that the browser cannot re-sniff (nosniff, below).
+ * Non-image declared types keep a permissive policy (signature detection
+ * currently covers images + PDF only).
+ */
+function signatureMatchesDeclared(
+	declaredMime: string,
+	bytes: Uint8Array,
+): boolean {
+	if (!declaredMime.startsWith("image/")) return true;
+	const detected = detectMimeFromBytes(bytes);
+	if (!detected) return false;
+	return detected === declaredMime;
+}
+
 function filePath(filename: string): string {
 	return join(config.media.dir, filename);
 }
@@ -209,15 +231,23 @@ export const mediaRoutes = () => {
 				.trim();
 			if (!rawMime)
 				return c.json({ error: "Content-Type header is required." }, 400);
-			const bytes = await c.req.raw.arrayBuffer();
-			if (!bytes.byteLength) return c.json({ error: "Empty file." }, 400);
-			if (config.upload.maxSize > 0 && bytes.byteLength > config.upload.maxSize)
+			// COR-05/PERF-01: bounded body read — a lying/absent Content-Length
+			// cannot force an unbounded buffer into memory.
+			const buf = await readBoundedBytes(c, mediaBodyCap());
+			if (buf === null)
 				return c.json(
 					{ error: "File exceeds the configured size limit." },
-					400,
+					413,
 				);
+			const bytes = new Uint8Array(buf);
+			if (!bytes.byteLength) return c.json({ error: "Empty file." }, 400);
 			if (isBlockedMime(rawMime))
 				return c.json({ error: "This file type is not allowed." }, 400);
+			if (!signatureMatchesDeclared(rawMime, bytes))
+				return c.json(
+					{ error: "File content does not match its declared type." },
+					400,
+				);
 
 			const category = categoryForMime(rawMime);
 			const filename = `${randomUUID()}${extname(originalName).toLowerCase()}`;
@@ -227,8 +257,11 @@ export const mediaRoutes = () => {
 			let fileCommitted = false;
 			let result: { id: number } | null = null;
 			try {
-				writeFileSync(tempPath, Buffer.from(bytes), { flag: "wx" });
-				renameSync(tempPath, writePath);
+				// COR-05: write to a temporary path first, then atomic rename
+				// once the bytes are fully on disk — a crash mid-write leaves
+				// no partially-visible media row behind.
+				await writeFile(tempPath, bytes, { flag: "wx" });
+				await rename(tempPath, writePath);
 				fileCommitted = true;
 				result = insertMedia.get(
 					user.id,
@@ -239,12 +272,13 @@ export const mediaRoutes = () => {
 					category,
 				);
 				if (!result) {
-					unlinkSync(writePath);
+					await unlink(writePath).catch(() => {});
 					return c.json({ error: "Could not store the file." }, 500);
 				}
 			} catch {
-				if (existsSync(tempPath)) unlinkSync(tempPath);
-				if (fileCommitted && existsSync(writePath)) unlinkSync(writePath);
+				if (existsSync(tempPath)) await unlink(tempPath).catch(() => {});
+				if (fileCommitted && existsSync(writePath))
+					await unlink(writePath).catch(() => {});
 				if (result) deleteMediaById.run(result.id);
 				return c.json({ error: "Could not store the file." }, 500);
 			}
@@ -296,6 +330,8 @@ export const mediaRoutes = () => {
 		return new Response(file, {
 			headers: {
 				"Content-Type": row.mimeType,
+				// SEC-06: never let the browser re-sniff an uploaded body.
+				"X-Content-Type-Options": "nosniff",
 				"Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${encodeURIComponent(row.originalName)}"`,
 				"Cache-Control": "private, max-age=31536000, immutable",
 			},
@@ -337,7 +373,7 @@ export const mediaRoutes = () => {
 		"/media/:id",
 		requireAuth,
 		requirePermission("media.delete"),
-		(c) => {
+		async (c) => {
 			const user = c.var.user;
 			const id = paramId(c.req.param("id"));
 			const row = id ? findMediaById.get(id) : null;
@@ -345,7 +381,7 @@ export const mediaRoutes = () => {
 			if (!canManage(user, row)) return c.json({ error: "Not allowed." }, 403);
 
 			const path = filePath(row.filename);
-			if (existsSync(path)) unlinkSync(path);
+			if (existsSync(path)) await unlink(path).catch(() => {});
 			deleteMediaById.get(row.id);
 			if (user)
 				recordActivity(
@@ -360,3 +396,71 @@ export const mediaRoutes = () => {
 
 	return app;
 };
+
+// ---------------------------------------------------------------------------
+// Media reconciliation (COR-05) — background job, invoked by the cleanup
+// timer in src/index.ts alongside sweepExpired().
+//
+// Restores the invariant "every media row has its file on disk and every
+// stored file has a row":
+//   - a row whose file is missing is removed (broken media is invisible);
+//   - a file with no row is removed (orphan bytes, incl. interrupted
+//     `.tmp-*` uploads that never reached the atomic rename).
+// Filesystem entries are only ever deleted when they match the server's own
+// stored-name pattern (UUID + optional lowercase extension) so an unrelated
+// file left in MEDIA_DIR can never be swept.
+// ---------------------------------------------------------------------------
+
+const STORED_FILENAME =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(\.[a-z0-9]{1,10})?(\.tmp-[0-9a-f-]+)?$/i;
+
+/** Remove a file best-effort (reconciliation must never throw). */
+function bestEffortUnlink(path: string): void {
+	try {
+		unlinkSync(path);
+	} catch {
+		/* ignore — file may already be gone */
+	}
+}
+
+/** Reconcile media rows ↔ stored files. Returns (rowsRemoved, filesRemoved). */
+export function reconcileMedia(): {
+	rowsRemoved: number;
+	filesRemoved: number;
+} {
+	const rows = listMediaFilenames.all();
+	const onDisk = new Set<string>();
+	let rowsRemoved = 0;
+	let filesRemoved = 0;
+
+	// Rows without their file: remove the dangling row.
+	for (const row of rows) {
+		if (existsSync(filePath(row.filename))) {
+			onDisk.add(row.filename);
+		} else {
+			deleteMediaById.run(row.id);
+			rowsRemoved += 1;
+		}
+	}
+
+	// Files without a row (or interrupted .tmp-* leftovers): remove them.
+	let entries: string[] = [];
+	try {
+		entries = readdirSync(config.media.dir);
+	} catch {
+		return { rowsRemoved, filesRemoved }; // directory not created yet
+	}
+	for (const entry of entries) {
+		if (!STORED_FILENAME.test(entry)) continue;
+		// A `.tmp-*` suffix means an interrupted upload: it references nothing
+		// unless its base name is itself a live stored file.
+		const base = entry.replace(/\.tmp-[0-9a-f-]+$/i, "");
+		const referenced = onDisk.has(entry) || onDisk.has(base);
+		if (!referenced) {
+			bestEffortUnlink(join(config.media.dir, entry));
+			filesRemoved += 1;
+		}
+	}
+
+	return { rowsRemoved, filesRemoved };
+}

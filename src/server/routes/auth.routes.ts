@@ -33,6 +33,8 @@ import { pushLead, dispatchTrigger } from "../whatsapp";
 import { dispatchEmailTrigger } from "../mailer";
 import { rateLimit } from "../rate-limit";
 import { validateJson } from "../validation";
+import { inc } from "../metrics";
+import { logErrorRaw } from "../logger";
 
 // `additionalProperties: false` keeps the strict-by-default behavior Elysia's
 // TypeBox wrapper had (plain @sinclair/typebox allows extra props).
@@ -196,6 +198,7 @@ export const authRoutes = () => {
 			? await verifyPassword(body.password, user.passwordHash)
 			: false;
 		if (!user || !passwordValid || user.status !== "active") {
+			inc("auth.login_failures"); // OPS-02: auth-failure metric
 			return page.error("Login", {
 				email: "These credentials do not match our records.",
 			});
@@ -234,9 +237,7 @@ export const authRoutes = () => {
 					subject: "Reset your password",
 					text: `Reset your password:\n${link}\n\nThis link expires in 60 minutes.`,
 					html: `<p>We received a request to reset your password.</p><p><a href="${link}">Reset password</a></p><p>This link expires in 60 minutes. If you did not request this, you can ignore this email.</p>`,
-				}).catch((err) =>
-					console.error("[mail] failed to send reset email:", err),
-				);
+				}).catch((err) => logErrorRaw("mail", err));
 			}
 			return c.var.inertia.render("ForgotPassword", { status: "sent" });
 		},

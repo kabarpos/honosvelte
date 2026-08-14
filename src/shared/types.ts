@@ -62,6 +62,8 @@ export interface SharedPageProps {
 		/** Effective permission slugs for the user; super_admin receives
 		 *  ['*'] (implicit access). Mirrors requireRole/requirePermission. */
 		can: string[];
+		/** Unread notification count for the bell badge (admins only). */
+		unreadNotifications: number;
 	};
 	errors: Record<string, string>;
 	/** App-wide settings (PRD Modul 15), merged into every page payload. */

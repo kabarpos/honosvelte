@@ -13,7 +13,7 @@ import type { Context } from "hono";
 import { getCookie } from "hono/cookie";
 import type { FlashData, User } from "../shared/types";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
-import { toPublicUser } from "./db";
+import { countUnreadNotifications, toPublicUser } from "./db";
 import { getPublicSettings } from "./settings";
 import { safeUrl } from "./url";
 import { Inertia, type InertiaAssets } from "./inertia";
@@ -26,6 +26,9 @@ export interface AppEnv {
 		sessionToken: string | null;
 		inertia: Inertia;
 		requestId: string;
+		/** Effective permission slugs, memoized per request (PERF-05: guards
+		 *  must not re-resolve the user / re-query role+override sets). */
+		permissions: Set<string> | null;
 	};
 }
 
@@ -44,6 +47,7 @@ export const inertiaMiddleware =
 			c.set("user", null);
 			c.set("flash", {});
 			c.set("sessionToken", null);
+			c.set("permissions", null);
 			c.set(
 				"inertia",
 				new Inertia(
@@ -54,6 +58,7 @@ export const inertiaMiddleware =
 						flash: {},
 						sessionToken: null,
 						settings: {},
+						unreadNotifications: 0,
 					},
 					assets,
 				),
@@ -70,6 +75,16 @@ export const inertiaMiddleware =
 		c.set("user", user);
 		c.set("flash", flash);
 		c.set("sessionToken", sessionToken);
+		c.set("permissions", null); // computed lazily by the first guard (PERF-05)
+		// UX-04: the header bell badge needs a real unread count. Only admins
+		// see the bell (notifications.read), so the extra indexed COUNT query
+		// is bounded to admin traffic only — regular users and guests pay
+		// nothing.
+		const isAdminSurface =
+			user !== null && (user.role === "super_admin" || user.role === "admin");
+		const unreadNotifications = isAdminSurface
+			? (countUnreadNotifications.get(user.id)?.n ?? 0)
+			: 0;
 		c.set(
 			"inertia",
 			new Inertia(
@@ -81,6 +96,7 @@ export const inertiaMiddleware =
 					sessionToken,
 					// App-wide settings for the shared props + HTML shell (cached).
 					settings: Object.fromEntries(getPublicSettings()),
+					unreadNotifications,
 				},
 				assets,
 			),

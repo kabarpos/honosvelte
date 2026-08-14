@@ -71,6 +71,18 @@ export const config = {
 		/\/+$/,
 		"",
 	),
+	/** Retention window for the activity log in days (0 = keep forever).
+	 *  Old entries are purged by the periodic cleanup sweep (PERF-06). */
+	activityRetentionDays: Number(
+		pick(process.env.ACTIVITY_RETENTION_DAYS, "90"),
+	),
+	/** Retention window for in-app notifications in days (0 = keep forever).
+	 *  Off by default — notification fan-out is a business decision.
+	 *  Contact-message retention is intentionally not configurable here:
+	 *  inbox data is business-critical and must not be auto-deleted. */
+	notificationRetentionDays: Number(
+		pick(process.env.NOTIFICATION_RETENTION_DAYS, "0"),
+	),
 	/** Networks trusted to set X-Forwarded-For (rate-limit client key). */
 	trustedProxies,
 	/** Bounded JSON body for validated routes (bytes). */

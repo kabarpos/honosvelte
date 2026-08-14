@@ -29,6 +29,7 @@ import { dispatchTrigger } from "../whatsapp";
 import { dispatchEmailTrigger } from "../mailer";
 import { validateJson } from "../validation";
 import type { AppEnv } from "../inertia-middleware";
+import { logErrorRaw } from "../logger";
 import type { ContactMessage, Paginated } from "../../shared/types";
 
 const contactBody = t.Object(
@@ -97,7 +98,7 @@ export const contactRoutes = () => {
 				]
 					.filter(Boolean)
 					.join("\n"),
-			}).catch((err) => console.error("[mail] contact notify failed:", err));
+			}).catch((err) => logErrorRaw("mail", err));
 		}
 
 		// Best-effort: fire any WhatsApp templates bound to contact submission.

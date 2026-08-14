@@ -93,3 +93,23 @@ Application stack:
 - Concurrent Tus PATCH requests write the same offset.
 - Admin configures an internal/private integration URL.
 - External provider hangs indefinitely.
+
+## Deployment assumptions (OPS-04)
+
+- **Single-instance.** The app is designed to run as one process against one
+  SQLite file: the tus per-upload in-process lock (COR-06), the in-memory
+  rate limiter (fixed-window), the in-memory settings cache, and the
+  background cleanup timer all assume a single replica. Horizontal scale-out
+  requires moving upload locking to a shared store and the rate limiter/
+  cache to an external one (Redis etc.) — out of scope for the boilerplate.
+- **Reverse proxy.** When deployed behind a proxy, set `TRUSTED_PROXY` to the
+  proxy's networks or per-IP rate limiting can be spoofed via
+  `X-Forwarded-For`. Without a proxy, leave it empty.
+- **HTTPS in production.** `NODE_ENV=production` marks session cookies
+  `Secure`. A TLS terminator (proxy or container) is required.
+- **Backups.** `bun run backup` produces consistent snapshots; see
+  `docs/audit/backup-dr.md` for RPO/RTO and restore steps.
+- **Logs are PII-free by construction.** The request logger emits
+  `method pathname -> status (ms)` only — no query strings, bodies, or
+  headers — and background job errors go through the structured
+  `logErrorRaw` channel.

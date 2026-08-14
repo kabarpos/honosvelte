@@ -20,15 +20,19 @@ import { resolveUser } from "../auth";
 import { config } from "../config";
 import {
 	advanceOffset,
+	deleteActivityBefore,
 	deleteExpiredPasswordResets,
 	deleteExpiredSessions,
+	deleteNotificationsBefore,
 	deleteUpload,
 	findUpload,
 	insertUpload,
 	listExpired,
+	setUploadOffset,
 } from "../db";
 import { rateLimit } from "../rate-limit";
 import { readBoundedBytes } from "../validation";
+import { inc } from "../metrics";
 import {
 	appendBytes,
 	appendStream,
@@ -176,19 +180,19 @@ export async function handlePost(
 		uploadPath(id),
 		isoExpires,
 	);
+	inc("uploads.created"); // OPS-02
 
 	// Creation-With-Upload: if the POST carries a body, append it immediately.
 	// PERF-02: a request stream is written to disk in bounded chunks (no
 	// full-body buffering); only a checksum-bearing POST falls back to the
 	// buffered path (checksum needs the complete chunk).
 	let initialOffset = 0;
-	if (body && typeof (body as ReadableStream<Uint8Array>).getReader === "function") {
+	if (
+		body &&
+		typeof (body as ReadableStream<Uint8Array>).getReader === "function"
+	) {
 		const stream = body as ReadableStream<Uint8Array>;
-		const { total, tooLarge } = await appendStream(
-			id,
-			stream,
-			uploadLength,
-		);
+		const { total, tooLarge } = await appendStream(id, stream, uploadLength);
 		if (tooLarge) {
 			removeFile(id);
 			deleteUpload.run(id);
@@ -204,6 +208,7 @@ export async function handlePost(
 			}
 			initialOffset = total;
 		}
+		inc("uploads.bytes", total); // OPS-02
 	} else if (body instanceof ArrayBuffer && body.byteLength > 0) {
 		const buf = new Uint8Array(body);
 		if (buf.byteLength > uploadLength) {
@@ -236,6 +241,25 @@ export async function handlePost(
 	return okResponse(201, null, extra);
 }
 
+/**
+ * COR-06 repair: the on-disk file is the source of truth for bytes already
+ * written. If a process died between appendBytes() and advanceOffset(), the
+ * DB offset lags the real file size. Reconcile the DB to the actual size
+ * (bounded by the declared upload length) and return the repaired row.
+ * Returns the row unchanged when there is nothing to repair.
+ */
+function repairUploadOffset(
+	row: ReturnType<typeof findUpload.get>,
+): ReturnType<typeof findUpload.get> {
+	if (!row) return null;
+	const actual = fileSize(row.id);
+	if (actual > row.offset && actual <= row.uploadLength) {
+		setUploadOffset.run(actual, row.id);
+		return { ...row, offset: actual };
+	}
+	return row;
+}
+
 // ---------------------------------------------------------------------------
 // HEAD — return current offset (and length if known).
 // ---------------------------------------------------------------------------
@@ -247,15 +271,16 @@ export function handleHead(req: Request, id: string): Response {
 			[H.tusVersion]: SUPPORTED_VERSIONS.join(","),
 		});
 
-	const row = findUpload.get(id);
+	let row = findUpload.get(id);
 	if (!row || row.userId !== userIdFromRequest(req)) {
 		return errorResponse(404, "Upload not found");
 	}
-	// Reconcile offset with the actual file size (defence in depth).
-	const actual = fileSize(id);
-	const offset = Math.max(row.offset, actual);
+	// Reconcile offset with the actual file size (defence in depth). When the
+	// file is ahead of the DB, persist the repair so the client can resume
+	// from the real offset without hitting a 409 loop (COR-06).
+	row = repairUploadOffset(row) ?? row;
 	return okResponse(200, null, {
-		[H.uploadOffset]: offset,
+		[H.uploadOffset]: row.offset,
 		[H.uploadLength]: row.uploadLength,
 	});
 }
@@ -276,10 +301,15 @@ export async function handlePatch(
 		});
 
 	return withUploadLock(id, async () => {
-		const row = findUpload.get(id);
+		let row = findUpload.get(id);
 		if (!row || row.userId !== userIdFromRequest(req)) {
 			return errorResponse(404, "Upload not found");
 		}
+		// COR-06 repair: a client resuming from a HEAD-reported offset may
+		// arrive with a clientOffset that equals the on-disk size while the DB
+		// still lags (interrupted write). Reconcile first so the append can
+		// proceed instead of returning a 409 that loops forever.
+		row = repairUploadOffset(row) ?? row;
 
 		const contentType = req.headers.get("content-type") ?? "";
 		if (contentType !== OFFSET_CONTENT_TYPE) {
@@ -315,6 +345,7 @@ export async function handlePatch(
 		if (!res || res.n !== 1) {
 			return errorResponse(409, "Offset conflict (concurrent write)");
 		}
+		inc("uploads.bytes", buf.byteLength); // OPS-02
 
 		return okResponse(204, null, {
 			[H.uploadOffset]: row.offset + buf.byteLength,
@@ -409,6 +440,22 @@ export function sweepExpired(): void {
 	// users who never return.
 	deleteExpiredSessions.run(now);
 	deleteExpiredPasswordResets.run(now);
+	// Retention (PERF-06): bounded tables per configured window. Contact
+	// messages are business-critical and intentionally never auto-deleted.
+	if (config.activityRetentionDays > 0) {
+		deleteActivityBefore.run(
+			new Date(
+				Date.now() - config.activityRetentionDays * 24 * 60 * 60 * 1000,
+			).toISOString(),
+		);
+	}
+	if (config.notificationRetentionDays > 0) {
+		deleteNotificationsBefore.run(
+			new Date(
+				Date.now() - config.notificationRetentionDays * 24 * 60 * 60 * 1000,
+			).toISOString(),
+		);
+	}
 }
 
 // ---------------------------------------------------------------------------

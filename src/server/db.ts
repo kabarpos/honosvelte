@@ -311,6 +311,16 @@ export const deleteExpiredPasswordResets = db.query<null, [string]>(
 	`DELETE FROM password_resets WHERE expires_at < ?`,
 );
 
+/** Retention purge (PERF-06): activity rows older than `before` (ISO). */
+export const deleteActivityBefore = db.query<null, [string]>(
+	`DELETE FROM activity_logs WHERE created_at < ?`,
+);
+
+/** Retention purge (PERF-06): notifications older than `before` (ISO). */
+export const deleteNotificationsBefore = db.query<null, [string]>(
+	`DELETE FROM notifications WHERE created_at < ?`,
+);
+
 // ---------------------------------------------------------------------------
 // Uploads (tus)
 // ---------------------------------------------------------------------------
@@ -342,6 +352,12 @@ export const findUpload = db.query<UploadRow, [string]>(
  *  Returns the number of rows updated (1 on success, 0 on conflict). */
 export const advanceOffset = db.query<{ n: number }, [number, string, number]>(
 	`UPDATE uploads SET offset = offset + ? WHERE id = ? AND offset = ? RETURNING 1 AS n`,
+);
+
+/** Repair the stored offset to an exact value (COR-06: the on-disk file is
+ *  the source of truth when a process interruption left the DB behind). */
+export const setUploadOffset = db.query<null, [number, string]>(
+	`UPDATE uploads SET offset = ? WHERE id = ?`,
 );
 
 export const deleteUpload = db.query<null, [string]>(
@@ -411,6 +427,12 @@ export const countMedia = db.query<
 export const countAllMedia = db.query<{ n: number }, []>(
 	`SELECT COUNT(*) AS n FROM media`,
 );
+
+/** Every stored filename — reconciliation checks rows against disk (COR-05). */
+export const listMediaFilenames = db.query<
+	{ id: number; filename: string },
+	[]
+>(`SELECT id, filename FROM media`);
 
 export const updateMediaMeta = db.query<
 	null,

@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-let app: Awaited<ReturnType<typeof createApp>>;
+let app: Awaited<ReturnType<typeof import("../src/server/app")["createApp"]>>;
 let mediaDir: string;
 
 beforeAll(async () => {
@@ -102,14 +102,16 @@ async function seedUser(
 	const { createUserWithRole } = await import("../src/server/db");
 	const { hashPassword } = await import("../src/server/auth");
 	const hash = await hashPassword("password123");
-	return createUserWithRole.get(name, email, hash, role).id;
+	const row = createUserWithRole.get(name, email, hash, role);
+	if (!row) throw new Error(`Could not seed user: ${email}`);
+	return row.id;
 }
 
-function upload(
+async function upload(
 	cookie: string,
 	name: string,
 	mime: string,
-	bytes: Uint8Array,
+	bytes: Uint8Array<ArrayBuffer>,
 ): Promise<Response> {
 	return app.request(`${BASE}/media`, {
 		method: "POST",
@@ -156,7 +158,10 @@ describe("media library", () => {
 	it("uploads a file and serves it back", async () => {
 		await seedUser("Boss", "boss@example.com", "admin");
 		const cookie = await loginAs("boss@example.com");
-		const bytes = new TextEncoder().encode("fake-png-bytes");
+		// Real PNG magic bytes (COR-05: image signatures are validated).
+		const bytes = new Uint8Array(new ArrayBuffer(16));
+		bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+		bytes.set(new TextEncoder().encode("png!"), 8);
 
 		const res = await upload(cookie, "photo.png", "image/png", bytes);
 		expect(res.status).toBe(201);
@@ -172,6 +177,8 @@ describe("media library", () => {
 		const served = await call(`/media/${mediaId}`, { headers: { cookie } });
 		expect(served.status).toBe(200);
 		expect(served.headers.get("content-type")).toBe("image/png");
+		// SEC-06: served bodies must not be re-sniffed by the browser.
+		expect(served.headers.get("x-content-type-options")).toBe("nosniff");
 		expect(new Uint8Array(await served.arrayBuffer())).toEqual(bytes);
 
 		const list = await call("/media", { headers: { ...xhr, cookie } });
@@ -184,7 +191,12 @@ describe("media library", () => {
 		await seedUser("Guard", "guard@example.com", "admin");
 		const cookie = await loginAs("guard@example.com");
 
-		const noName = await upload(cookie, "", "image/png", new TextEncoder().encode("x"));
+		const noName = await upload(
+			cookie,
+			"",
+			"image/png",
+			new TextEncoder().encode("x"),
+		);
 		expect(noName.status).toBe(400);
 
 		const empty = await upload(cookie, "a.png", "image/png", new Uint8Array());
@@ -207,6 +219,34 @@ describe("media library", () => {
 		expect(svg.status).toBe(400);
 	});
 
+	it("rejects an image whose bytes do not match its declared type", async () => {
+		await seedUser("Sig", "sig@example.com", "admin");
+		const cookie = await loginAs("sig@example.com");
+
+		// Declared image/png, real JPEG magic → signature mismatch.
+		const jpeg = new Uint8Array(new ArrayBuffer(12));
+		jpeg.set([0xff, 0xd8, 0xff, 0xe0]);
+		jpeg.set(new TextEncoder().encode("jpeg!"), 4);
+		const mismatch = await upload(cookie, "sneaky.png", "image/png", jpeg);
+		expect(mismatch.status).toBe(400);
+
+		// Declared image/png, but no recognizable image signature at all
+		// (e.g. HTML disguised as an image) → rejected.
+		const htmlAsPng = await upload(
+			cookie,
+			"photo.png",
+			"image/png",
+			new TextEncoder().encode("<script>alert(1)</script>"),
+		);
+		expect(htmlAsPng.status).toBe(400);
+
+		// Matching signature still uploads fine.
+		const ok = new Uint8Array(new ArrayBuffer(8));
+		ok.set([0xff, 0xd8, 0xff, 0xe0]);
+		const good = await upload(cookie, "real.jpg", "image/jpeg", ok);
+		expect(good.status).toBe(201);
+	});
+
 	it("scopes regular users to their own files", async () => {
 		await seedUser("Owner", "owner@example.com", "user");
 		const ownerCookie = await loginAs("owner@example.com");
@@ -221,10 +261,14 @@ describe("media library", () => {
 		await seedUser("Snoop", "snoop@example.com", "user");
 		const snoopCookie = await loginAs("snoop@example.com");
 
-		const peek = await call(`/media/${mediaId}`, { headers: { cookie: snoopCookie } });
+		const peek = await call(`/media/${mediaId}`, {
+			headers: { cookie: snoopCookie },
+		});
 		expect(peek.status).toBe(403);
 
-		const list = await call("/media", { headers: { ...xhr, cookie: snoopCookie } });
+		const list = await call("/media", {
+			headers: { ...xhr, cookie: snoopCookie },
+		});
 		const data = await page(list);
 		expect(data.props.media.meta.total).toBe(0);
 
@@ -249,7 +293,9 @@ describe("media library", () => {
 		await seedUser("Boss2", "boss2@example.com", "admin");
 		const adminCookie = await loginAs("boss2@example.com");
 
-		const list = await call("/media", { headers: { ...xhr, cookie: adminCookie } });
+		const list = await call("/media", {
+			headers: { ...xhr, cookie: adminCookie },
+		});
 		const data = await page(list);
 		expect(data.props.media.meta.total).toBeGreaterThanOrEqual(1);
 		expect(
@@ -309,12 +355,17 @@ describe("media library", () => {
 		const beforeTotal = (await page(before)).props.media.meta.total as number;
 
 		for (const name of ["one.png", "two.jpg", "three.gif"]) {
-			const res = await upload(
-				cookie,
-				name,
-				`image/${name.split(".")[1]}`,
-				new TextEncoder().encode(name),
-			);
+			const bytes = new Uint8Array(new ArrayBuffer(8));
+			const mime = name.endsWith(".png")
+				? "image/png"
+				: name.endsWith(".jpg")
+					? "image/jpeg"
+					: "image/gif";
+			if (name.endsWith(".png"))
+				bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+			else if (name.endsWith(".jpg")) bytes.set([0xff, 0xd8, 0xff, 0xe0]);
+			else bytes.set([0x47, 0x49, 0x46, 0x38]); // GIF87a
+			const res = await upload(cookie, name, mime, bytes);
 			expect(res.status).toBe(201);
 		}
 
@@ -352,7 +403,9 @@ describe("media library", () => {
 	it("exposes the picker API with search", async () => {
 		await seedUser("Boss4", "boss4@example.com", "admin");
 		const cookie = await loginAs("boss4@example.com");
-		await upload(cookie, "landscape.jpg", "image/jpeg", new TextEncoder().encode("jpg"));
+		const bytes = new Uint8Array(new ArrayBuffer(8));
+		bytes.set([0xff, 0xd8, 0xff, 0xe0]); // JPEG magic
+		await upload(cookie, "landscape.jpg", "image/jpeg", bytes);
 
 		const all = await call("/media/picker", { headers: { cookie } });
 		expect(all.status).toBe(200);
@@ -364,5 +417,60 @@ describe("media library", () => {
 
 		const none = await call("/media/picker?q=zzz", { headers: { cookie } });
 		expect((await page(none)).media.length).toBe(0);
+	});
+
+	describe("media reconciliation (COR-05)", () => {
+		it("removes rows whose file is missing and files without a row", async () => {
+			const { reconcileMedia } = await import(
+				"../src/server/routes/media.routes"
+			);
+			const { insertMedia, findMediaById } = await import("../src/server/db");
+			const { writeFileSync } = await import("node:fs");
+			const { randomUUID } = await import("node:crypto");
+
+			// 1. A live row (file exists) must survive.
+			await seedUser("Rec", "rec@example.com", "user");
+			const cookie = await loginAs("rec@example.com");
+			const liveBytes = new Uint8Array(new ArrayBuffer(8));
+			liveBytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+			const live = await upload(cookie, "live.png", "image/png", liveBytes);
+			expect(live.status).toBe(201);
+			const liveId = (await page(live)).media.id as number;
+
+			// 2. A row pointing at a missing file (e.g. file deleted out of
+			//    band) → the row is removed by reconciliation.
+			const { id: danglingId } = insertMedia.get(
+				null,
+				`${randomUUID()}.png`,
+				"dangling.png",
+				"image/png",
+				8,
+				"image",
+			)!;
+
+			// 3. Stray bytes on disk with no row → removed. Also a leftover
+			//    `.tmp-*` file from an interrupted upload → removed.
+			const stray = `${randomUUID()}.png`;
+			const tmpLeftover = `${randomUUID()}.png.tmp-${randomUUID()}`;
+			writeFileSync(join(mediaDir, stray), "stray");
+			writeFileSync(join(mediaDir, tmpLeftover), "partial");
+
+			// 4. A non-media file in the dir is never touched.
+			writeFileSync(join(mediaDir, "README.txt"), "do not delete");
+
+			const result = reconcileMedia();
+			expect(result.rowsRemoved).toBe(1);
+			expect(result.filesRemoved).toBe(2);
+
+			expect(findMediaById.get(danglingId)).toBeNull();
+			expect(findMediaById.get(liveId)).not.toBeNull();
+			expect(existsSync(join(mediaDir, stray))).toBe(false);
+			expect(existsSync(join(mediaDir, tmpLeftover))).toBe(false);
+			expect(existsSync(join(mediaDir, "README.txt"))).toBe(true);
+			// The live file stays.
+			const { findMediaById: find } = await import("../src/server/db");
+			const liveRow = find.get(liveId)!;
+			expect(existsSync(join(mediaDir, liveRow.filename))).toBe(true);
+		});
 	});
 });

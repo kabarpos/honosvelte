@@ -129,4 +129,31 @@ describe("user search", () => {
 		expect(payload.props.users.meta.total).toBe(0);
 		expect(payload.props.users.data).toEqual([]);
 	});
+
+	it("clamps invalid page/perPage instead of crashing or scanning (QA-03/PERF-04)", async () => {
+		await seedUser("Clamp Admin", "clamp-admin@example.com", "admin");
+		const cookie = await loginAs(app, "clamp-admin@example.com");
+
+		const huge = await call(app, "/users?page=99999&perPage=9999", {
+			headers: INERTIA_HEADERS,
+			cookie,
+		});
+		expect(huge.status).toBe(200);
+		const hugePayload = (await huge.json()) as {
+			props: { users: { meta: { currentPage: number; perPage: number } } };
+		};
+		expect(hugePayload.props.users.meta.currentPage).toBe(1000);
+		expect(hugePayload.props.users.meta.perPage).toBe(100);
+
+		const garbage = await call(app, "/users?page=abc&perPage=xyz", {
+			headers: INERTIA_HEADERS,
+			cookie,
+		});
+		expect(garbage.status).toBe(200);
+		const garbagePayload = (await garbage.json()) as {
+			props: { users: { meta: { currentPage: number; perPage: number } } };
+		};
+		expect(garbagePayload.props.users.meta.currentPage).toBe(1);
+		expect(garbagePayload.props.users.meta.perPage).toBe(10);
+	});
 });

@@ -9,6 +9,7 @@
 
   const page = usePage<SharedPageProps>()
   const user = $derived(page.props.auth.user)
+  const unreadNotifications = $derived(page.props.auth.unreadNotifications ?? 0)
   const flash = $derived(page.flash)
   const url = $derived(page.url)
 	// App-wide settings (PRD Modul 15) drive the brand, footer and contact
@@ -566,14 +567,21 @@
             <path d="M3 6h18M3 12h18M3 18h18" />
           </svg>
         </button>
-        <label
-          class="relative flex items-center w-full max-w-[360px] h-10 px-2.5 border border-border rounded-lg bg-bg text-muted transition-colors focus-within:border-primary focus-within:shadow-[0_0_0_3px_var(--primary-soft)] max-[960px]:hidden"
-        >
-          <span class="inline-flex text-muted shrink-0">
+        <!-- Global search is not implemented yet (UX-04): the decorative
+             control was removed instead of shipping a dead input. -->
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        {#if can('notifications.read')}
+          <Link
+            href="/notifications"
+            class="relative inline-flex items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 transition-colors hover:bg-primary-soft hover:no-underline"
+            aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
+          >
             <svg
               viewBox="0 0 24 24"
-              width="16"
-              height="16"
+              width="18"
+              height="18"
               fill="none"
               stroke="currentColor"
               stroke-width="2"
@@ -581,49 +589,17 @@
               stroke-linejoin="round"
               aria-hidden="true"
             >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m21 21-4.3-4.3" />
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
             </svg>
-          </span>
-          <input
-            type="search"
-            placeholder="Search…"
-            aria-label="Search"
-            class="flex-1 min-w-0 border-none outline-none bg-transparent text-text text-sm px-1 placeholder:text-muted"
-          />
-          <kbd
-            class="font-mono text-xs px-1 py-0.5 border border-border rounded text-muted bg-surface shrink-0"
-          >
-            ⌘K
-          </kbd>
-        </label>
-      </div>
-
-      <div class="flex items-center gap-2 shrink-0">
-        <button
-          type="button"
-          class="relative inline-flex items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 transition-colors hover:bg-primary-soft hover:no-underline"
-          aria-label="Notifications"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-          </svg>
-          <span
-            class="absolute top-2 right-[9px] w-1.5 h-1.5 rounded-full bg-primary border-2 border-surface"
-            aria-hidden="true"
-          ></span>
-        </button>
+            {#if unreadNotifications > 0}
+              <span
+                class="absolute top-2 right-[9px] w-1.5 h-1.5 rounded-full bg-primary border-2 border-surface"
+                aria-hidden="true"
+              ></span>
+            {/if}
+          </Link>
+        {/if}
 
         <button
           type="button"

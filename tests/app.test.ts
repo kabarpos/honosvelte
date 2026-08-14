@@ -388,6 +388,22 @@ describe("infrastructure", () => {
 		expect(body.checks.storage).toBe("ok");
 	});
 
+	it("exposes aggregate metrics without PII (OPS-02)", async () => {
+		const res = await call("/health/metrics");
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as {
+			uptimeSeconds: number;
+			counters: Record<string, number>;
+			latency: Record<string, unknown>;
+		};
+		expect(body.uptimeSeconds).toBeGreaterThanOrEqual(0);
+		// Requests made so far in this suite are counted by status class.
+		expect(body.counters["requests.total"] ?? 0).toBeGreaterThan(0);
+		expect(body.counters["requests.2xx"]).toBeGreaterThan(0);
+		// No PII in any counter name.
+		expect(JSON.stringify(body)).not.toContain("password");
+	});
+
 	it("skips session/settings resolution on asset + health paths (PERF-05)", async () => {
 		// A forged session cookie on /health and /assets must not trigger a
 		// DB session lookup — the middleware short-circuits these paths.

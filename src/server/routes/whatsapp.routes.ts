@@ -40,6 +40,7 @@ import type { AppEnv } from "../inertia-middleware";
 import type { WhatsAppTemplate } from "../../shared/types";
 import { validateJson } from "../validation";
 import { rateLimit } from "../rate-limit";
+import { inc } from "../metrics";
 
 const WEBHOOK_MAX_BODY_BYTES = 64 * 1024;
 const WEBHOOK_REPLAY_WINDOW_SECONDS = 5 * 60;
@@ -523,12 +524,19 @@ export const whatsappRoutes = () => {
 			trustedProxies: config.trustedProxies,
 		}),
 		async (c) => {
-			if (!validWebhookSecret(c.req.raw))
+			if (!validWebhookSecret(c.req.raw)) {
+				inc("webhook.rejected_secret"); // OPS-02
 				return c.json({ error: "Webhook authentication failed." }, 401);
+			}
 			const parsed = await readWebhookJson(c.req.raw);
-			if (parsed instanceof Response) return parsed;
-			if (!Value.Check(webhookBody, parsed))
+			if (parsed instanceof Response) {
+				inc("webhook.rejected_body"); // OPS-02
+				return parsed;
+			}
+			if (!Value.Check(webhookBody, parsed)) {
+				inc("webhook.rejected_schema"); // OPS-02
 				return c.json({ error: "Invalid webhook payload." }, 422);
+			}
 			const raw = parsed as WebhookBody;
 			const externalId = raw.id.trim();
 			const phone = raw.phone != null ? String(raw.phone).trim() : "";
@@ -565,7 +573,11 @@ export const whatsappRoutes = () => {
 				text,
 				String(raw.timestamp),
 			);
-			if (!inserted) return c.json({ ok: true, duplicate: true });
+			if (!inserted) {
+				inc("webhook.duplicates"); // OPS-02
+				return c.json({ ok: true, duplicate: true });
+			}
+			inc("webhook.accepted"); // OPS-02
 			recordActivity(
 				c,
 				null,

@@ -14,6 +14,8 @@ import { getSetting } from "./settings";
 import { listEmailTemplatesByTrigger } from "./db";
 import nodemailer from "nodemailer";
 import type { MailDriver } from "./config";
+import { logErrorRaw } from "./logger";
+import { inc } from "./metrics";
 
 export interface MailMessage {
 	to: string;
@@ -214,7 +216,8 @@ export async function dispatchEmailTrigger(
 				text: renderEmailTemplate(tpl.body, data),
 			});
 		} catch (err) {
-			console.error(`[mail] trigger ${trigger} send failed:`, err);
+			inc("provider.mail.errors"); // OPS-02
+			logErrorRaw("mail", err); // COR-07 structured
 		}
 	}
 }

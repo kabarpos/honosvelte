@@ -56,6 +56,9 @@ export interface InertiaContext {
 	flash: FlashData;
 	sessionToken: string | null;
 	settings: SharedPageProps["settings"];
+	/** Unread notification count for the bell badge (admins only; 0 for
+	 *  guests/regular users). Computed by the inertia middleware (UX-04). */
+	unreadNotifications: number;
 }
 
 /** Effective permission slugs exposed to the client. super_admin receives
@@ -137,6 +140,7 @@ export class Inertia {
 				auth: {
 					user: this.c.user,
 					can: capabilitiesForUser(this.c.user),
+					unreadNotifications: this.c.unreadNotifications ?? 0,
 				},
 				errors: errors ?? flashErrors ?? {},
 			} as unknown as Page["props"], // core types `errors` as Errors & ErrorBag (intersection)
