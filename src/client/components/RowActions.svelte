@@ -103,7 +103,7 @@
         <button
           type="button"
           role="menuitem"
-          class={`w-full flex items-center gap-2 px-3.5 py-2.5 text-left text-sm whitespace-nowrap transition-colors hover:bg-primary-soft ${item.danger ? 'text-danger' : 'text-text'}`}
+          class={`w-full flex items-center gap-2 px-3.5 py-2.5 text-left text-sm whitespace-nowrap cursor-pointer transition-colors hover:bg-primary-soft ${item.danger ? 'text-danger' : 'text-text'}`}
           onclick={() => run(item)}
         >
           {item.label}

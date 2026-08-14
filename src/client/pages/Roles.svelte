@@ -34,6 +34,20 @@
   let deleteForm = $state(useForm({ slug: '' }))
   let permSel = $state<Record<string, boolean>>({})
 
+  const permGroups = $derived.by(() => {
+    const map = new Map<string, Permission[]>()
+    for (const p of permissions) {
+      const group = p.slug.includes('.') ? (p.slug.split('.')[0] ?? 'other') : 'other'
+      const list = map.get(group) ?? []
+      list.push(p)
+      map.set(group, list)
+    }
+    return [...map.entries()].map(([key, items]) => ({
+      group: key.charAt(0).toUpperCase() + key.slice(1),
+      items,
+    }))
+  })
+
   function openCreate() {
     createForm.reset()
     createOpen = true
@@ -218,20 +232,36 @@
     {/if}
 
     {#if permRole}
-      <Modal open={permOpen} title={`Permissions — ${permRole.name}`} size="lg">
+      <Modal open={permOpen} title={`Permissions — ${permRole.name}`} size="xl">
         <form onsubmit={submitPerms} novalidate>
-          <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 max-md:grid-cols-1">
-            {#each permissions as p (p.id)}
-              <Checkbox
-                bind:checked={permSel[p.slug]}
-                label={`${p.name} (${p.slug})`}
-              />
+          <div class="max-h-[55vh] overflow-y-auto -mx-1 px-1 space-y-5">
+            {#each permGroups as g (g.group)}
+              <section>
+                <h3
+                  class="text-xs font-semibold uppercase tracking-wider text-muted mb-2"
+                >
+                  {g.group}
+                </h3>
+                <div
+                  class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5"
+                >
+                  {#each g.items as p (p.id)}
+                    <Checkbox
+                      bind:checked={permSel[p.slug]}
+                      label={p.name}
+                      description={p.description ?? undefined}
+                    />
+                  {/each}
+                </div>
+              </section>
             {/each}
           </div>
           {#if permForm.errors.permissionSlugs}
-            <p class="text-danger text-xs mt-2">{permForm.errors.permissionSlugs}</p>
+            <p class="text-danger text-xs mt-3">{permForm.errors.permissionSlugs}</p>
           {/if}
-          <div class="flex items-center justify-end gap-2 mt-4">
+          <div
+            class="flex items-center justify-end gap-2 mt-5 pt-4 border-t border-border"
+          >
             <Button variant="ghost" type="button" onclick={() => (permOpen = false)}>Cancel</Button>
             <Button variant="primary" type="submit" loading={permForm.processing}>Save permissions</Button>
           </div>
