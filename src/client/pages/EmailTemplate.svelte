@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { Link, useForm, usePage } from '@inertiajs/svelte'
+  import { Link, useForm } from '@inertiajs/svelte'
+  import { can } from '../capabilities'
+  import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Field from '../components/Field.svelte'
@@ -13,20 +15,20 @@
   let { template = null }: { template?: EmailTemplate | null } = $props()
 
   const isEdit = $derived(Boolean(template))
-  const page = usePage()
-  const currentUser = $derived(page.props.auth.user)
 
   const form = $state(
-    useForm({
-      name: template?.name ?? '',
-      slug: template?.slug ?? '',
-      subject: template?.subject ?? '',
-      body: template?.body ?? '',
-      placeholders: template ? template.placeholders.join(', ') : '',
-      trigger: template?.trigger ?? 'manual',
-      recipient: template?.recipient ?? 'customer',
-      enabled: template ? template.enabled : true,
-    }),
+    untrack(() =>
+      useForm({
+        name: template?.name ?? '',
+        slug: template?.slug ?? '',
+        subject: template?.subject ?? '',
+        body: template?.body ?? '',
+        placeholders: template ? template.placeholders.join(', ') : '',
+        trigger: template?.trigger ?? 'manual',
+        recipient: template?.recipient ?? 'customer',
+        enabled: template ? template.enabled : true,
+      }),
+    ),
   )
 
   const TRIGGER_OPTIONS = [
@@ -52,7 +54,7 @@
 
 <svelte:head><title>{isEdit && template ? `Edit ${template.name}` : 'New template'}</title></svelte:head>
 
-{#if currentUser && currentUser.role === 'admin'}
+{#if can('email.read')}
   <Layout>
     <div class="mb-3">
       <Link href="/email" class="text-sm text-muted hover:text-text">← Back to email</Link>

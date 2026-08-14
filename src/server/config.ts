@@ -41,6 +41,23 @@ if (Boolean(googleClientId) !== Boolean(googleClientSecret)) {
 	);
 }
 
+/**
+ * Comma-separated proxy networks (IP or IPv4 CIDR) trusted to set
+ * `X-Forwarded-For`. Empty (default) = header never trusted; set this when
+ * deploying behind a reverse proxy so rate limits key on the real client IP.
+ */
+const trustedProxyRaw = process.env.TRUSTED_PROXY ?? "";
+const trustedProxies = trustedProxyRaw
+	.split(",")
+	.map((s) => s.trim())
+	.filter(Boolean);
+const CIDR_OR_IP = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$|^[0-9a-fA-F:]+(\/\d{1,3})?$/;
+for (const entry of trustedProxies) {
+	if (!CIDR_OR_IP.test(entry)) {
+		problems.push(`TRUSTED_PROXY entry "${entry}" is not a valid IP or CIDR`);
+	}
+}
+
 if (problems.length > 0) {
 	throw new Error(`Invalid configuration:\n  - ${problems.join("\n  - ")}`);
 }
@@ -53,12 +70,18 @@ export const config = {
 		/\/+$/,
 		"",
 	),
+	/** Networks trusted to set X-Forwarded-For (rate-limit client key). */
+	trustedProxies,
+	/** Bounded JSON body for validated routes (bytes). */
+	requestBodyLimit: Number(pick(process.env.REQUEST_BODY_LIMIT, "100000")),
 	dbPath: pick(process.env.DATABASE_PATH, "./data/app.sqlite"),
 	upload: {
 		/** Directory where tus upload chunks are stored on disk. */
 		dir: pick(process.env.UPLOAD_DIR, "./data/uploads"),
 		/** Maximum total upload size in bytes (Tus-Max-Size). */
 		maxSize: Number(pick(process.env.TUS_MAX_SIZE, "52428800")),
+		/** Maximum bytes in a single tus PATCH chunk (per-chunk bound). */
+		chunkMax: Number(pick(process.env.TUS_CHUNK_MAX, "5242880")),
 		/** Seconds after which an unfinished upload may be swept (Expiration). */
 		expirationSeconds: Number(
 			pick(process.env.TUS_EXPIRATION_SECONDS, "86400"),
@@ -86,6 +109,8 @@ export const config = {
 		authWindow: Number(pick(process.env.RATE_LIMIT_AUTH_WINDOW, "60")),
 		webhookMax: Number(pick(process.env.RATE_LIMIT_WEBHOOK_MAX, "60")),
 		webhookWindow: Number(pick(process.env.RATE_LIMIT_WEBHOOK_WINDOW, "60")),
+		uploadMax: Number(pick(process.env.RATE_LIMIT_UPLOAD_MAX, "60")),
+		uploadWindow: Number(pick(process.env.RATE_LIMIT_UPLOAD_WINDOW, "60")),
 	},
 	whatsapp: {
 		apiKey: dripsenderApiKey,

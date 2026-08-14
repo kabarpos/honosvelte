@@ -14,7 +14,7 @@
  */
 import type { Page } from "@inertiajs/core";
 import type { FlashData, SharedPageProps } from "../shared/types";
-import { clearFlash } from "./auth";
+import { clearFlash, permissionsForUser } from "./auth";
 import { config } from "./config";
 
 /**
@@ -58,7 +58,17 @@ export interface InertiaContext {
 	settings: SharedPageProps["settings"];
 }
 
-const splitList = (value: string | undefined): string[] | undefined =>
+	/** Effective permission slugs exposed to the client. super_admin receives
+	 *  ['*'] — implicit access, mirroring requireRole/requirePermission. */
+	function capabilitiesForUser(
+		user: SharedPageProps["auth"]["user"],
+	): string[] {
+		if (!user) return [];
+		if (user.role === "super_admin") return ["*"];
+		return [...permissionsForUser(user)];
+	}
+
+	const splitList = (value: string | undefined): string[] | undefined =>
 	value
 		? value
 				.split(",")
@@ -126,7 +136,10 @@ export class Inertia {
 				// Shared props merged after the partial-reload filter so they
 				// survive X-Inertia-Partial-Only requests (like auth/errors).
 				settings: this.c.settings,
-				auth: { user: this.c.user },
+				auth: {
+					user: this.c.user,
+					can: capabilitiesForUser(this.c.user),
+				},
 				errors: errors ?? flashErrors ?? {},
 			} as unknown as Page["props"], // core types `errors` as Errors & ErrorBag (intersection)
 			url: this.currentUrl,

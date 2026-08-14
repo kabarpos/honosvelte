@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { Link, router, useForm, usePage } from '@inertiajs/svelte'
+  import { Link, router, useForm } from '@inertiajs/svelte'
+  import { can } from '../capabilities'
+  import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Tabs from '../components/Tabs.svelte'
@@ -21,13 +23,10 @@
     adminNotifyAddress,
   }: { mail: { driver: string; from: string; smtpHost: string; smtpPort: string; smtpUser: string; smtpSecure: string }; templates: EmailTemplate[]; adminNotifyAddress: string } = $props()
 
-  const page = usePage()
-  const currentUser = $derived(page.props.auth.user)
-
   let activeTab = $state('config')
 
   // --- Configuration: editable SMTP settings (saved via POST /email/config) -
-  let mailForm = $state({
+  let mailForm = $state(untrack(() => ({
     driver: mail.driver,
     from: mail.from,
     smtp_host: mail.smtpHost,
@@ -36,7 +35,7 @@
     smtp_pass: '',
     smtp_secure: mail.smtpSecure,
     admin_notify_address: adminNotifyAddress,
-  })
+  })))
   let mailStatus = $state<{ ok: boolean; message: string } | null>(null)
   let savingMail = $state(false)
 
@@ -180,7 +179,7 @@
 
 <svelte:head><title>Email</title></svelte:head>
 
-{#if currentUser && currentUser.role === 'admin'}
+{#if can('email.read')}
   <Layout>
     <h1 class="text-[1.6rem] m-0 mb-1 tracking-tight">Email</h1>
     <p class="text-muted mb-3">

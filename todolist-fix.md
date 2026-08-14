@@ -36,7 +36,15 @@
 - **2026-08-13 — PERF-03 partial:** migration `0020_query_support_indexes.sql` menambahkan index common filter/order; EXPLAIN, FTS, dan query budget masih pending.
 - **2026-08-13 — PERF-04 partial:** page number dibatasi maksimum 1000 pada lima route paginated; cursor pagination/count optimization masih pending.
 - **2026-08-13 — PERF-06 partial:** `sweepExpired()` dijadwalkan setiap 15 menit dan timer dibersihkan saat shutdown; session/reset cleanup, retention, queue, retry, dan dead-letter masih pending.
-- **Current verification:** build/typecheck PASS (0 error/38 warning); full suite **187 pass, 0 fail, 723 assertions** across 26 files.
+- **2026-08-14 — QA-01 partial:** 38 warning Svelte `state_referenced_locally` dihilangkan (pola `untrack()` sesuai `Settings.svelte`); `bun run typecheck` kini **0 error 0 warning**; lint/format script dan review `any` masih pending.
+- **2026-08-14 — SEC-09 complete:** `TRUSTED_PROXY` (IP/CIDR, fail-fast validasi) + `resolveClientKey` hanya mempercayai `X-Forwarded-For` dari proxy terpercaya (spoof ditolak, malformed ditolak, only first entry); auth rate limit kini account-aware (`client` + `client:email` bucket); upload/contact/webhook ikut `trustedProxies`; `tests/security/rate-limit-proxy.test.ts` + unit `resolveClientKey`/`ipInNetwork`; README + `.env.example` sinkron.
+- **2026-08-14 — SEC-08 complete:** capability payload `auth.can` (slug efektif, `['*']` untuk super_admin) dikirim ke client; `src/client/capabilities.ts` (`can()`/`isAdminSurface()`) jadi sumber policy UI; nav `Layout.svelte` + 7 halaman admin tidak lagi hardcoded `role === 'admin'` (super_admin kini melihat seluruh admin UI); mapping route→permission didokumentasikan di `docs/security/rbac.md`; test payload capability, super_admin render semua admin page, dan revoked-permission nav parity di `tests/rbac.test.ts`.
+- **2026-08-14 — COR-01/COR-02 complete:** test pagination + search (25 user, page 1/2/3), empty search (users + contact inbox), dan negative/wildcard search; wildcard injection nyata diperbaiki — `escapeLike()` + klausa `ESCAPE '\'` pada seluruh statement LIKE (users/media/activity/contact) sehingga `%`/`_` user tidak lagi jadi wildcard SQL.
+- **2026-08-14 — COR-06 partial:** concurrent PATCH test (4 worker race, read-then-write retry, byte-exact final) di `tests/tus.test.ts`; repair dan recovery-after-interruption masih pending.
+- **2026-08-14 — COR-07 partial:** client optimistic update kini memeriksa `res.ok` (NotificationCenter mark-read/mark-all, ContactInbox status); tidak ada `console.log` di request path; structured `logError` sudah request-scoped.
+- **2026-08-14 — PERF-01 partial:** per-request JSON body limit (`REQUEST_BODY_LIMIT`, bounded stream read → 413), per-chunk tus limit (`TUS_CHUNK_MAX`, `readBoundedBytes`), rate limit upload create/PATCH (`RATE_LIMIT_UPLOAD_*`); storage quota dan provider fetch timeout sudah tercakup SEC-07.
+- **2026-08-14 — PERF-06 partial:** `sweepExpired()` kini juga membersihkan session dan password-reset token kadaluarsa; retention, queue, retry, dead-letter masih pending.
+- **Current verification:** build/typecheck PASS (**0 error/0 warning**); full suite **209 pass, 0 fail, 816 assertions** across 27 files.
 
 ---
 
@@ -170,7 +178,7 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Ordinary admin create `super_admin` → 403/422.
 - [x] Ordinary admin self-promotion → 403.
 - [x] Ordinary admin promotion user lain → 403.
-- [ ] Super-admin protected mutation sesuai policy.
+- [x] Super-admin protected mutation sesuai policy.
 - [x] Last super-admin tidak dapat dihapus/didemote.
 
 ## SEC-03 — Jadikan `inactive` efektif
@@ -244,13 +252,13 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 
 ## SEC-08 — Konsistenkan RBAC permission
 
-- [ ] Mapping route → permission didokumentasikan.
+- [x] Mapping route → permission didokumentasikan.
 - [x] Contact inbox memakai permission read/update/reply/delete; bulk delete masih menggunakan guard gabungan dan perlu refinement.
 - [x] Notifications memiliki permission read/update.
 - [x] Email preview/test memakai `email.read`/`email.test`.
 - [x] WhatsApp preview/test memakai `whatsapp.read`/`whatsapp.test`.
-- [ ] Page guard, navigation guard, dan server guard memakai sumber policy yang sama.
-- [ ] `super_admin` tidak bergantung pada hardcoded UI check.
+- [x] Page guard, navigation guard, dan server guard memakai sumber policy yang sama.
+- [x] `super_admin` tidak bergantung pada hardcoded UI check.
 
 **Tests:** permission-deny untuk contact, notifications, email, dan WhatsApp terverifikasi di `tests/security/permission-guards.test.ts`; mapping documentation, bulk exact policy, dan UI policy masih pending.
 
@@ -260,9 +268,9 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Reject malformed Origin, jangan fallback diam-diam.
 - [x] Dokumentasikan policy missing Origin melalui threat model dan webhook secret policy.
 - [x] Gunakan explicit webhook authentication, bukan broad missing-Origin exception.
-- [ ] Tambahkan `trustedProxy` configuration.
-- [ ] Hanya trust `X-Forwarded-For` dari proxy yang dipercaya.
-- [ ] Rate limit key juga mempertimbangkan account/email pada auth endpoint.
+- [x] Tambahkan `trustedProxy` configuration.
+- [x] Hanya trust `X-Forwarded-For` dari proxy yang dipercaya.
+- [x] Rate limit key juga mempertimbangkan account/email pada auth endpoint.
 
 **Tests:** malformed, scheme-mismatch, dan exact-origin flows terverifikasi di `tests/security/csrf.test.ts`; trusted proxy dan account-aware rate limit masih pending.
 
@@ -276,8 +284,8 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] `countSearchUsers` menerima pattern name dan email.
 - [x] Tambahkan test search name.
 - [x] Tambahkan test search email.
-- [ ] Tambahkan test pagination dengan search.
-- [ ] Tambahkan test empty search.
+- [x] Tambahkan test pagination dengan search.
+- [x] Tambahkan test empty search.
 
 **Evidence:** `tests/correctness/user-search.test.ts` pass; pagination dan empty-search edge test masih pending.
 
@@ -285,8 +293,8 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 
 - [x] Search name/email/subject/message.
 - [x] Query count dan list memakai filter identik.
-- [ ] Escape wildcard bila product behavior memerlukannya.
-- [x] Tambahkan positive test; negative search test masih pending.
+- [x] Escape wildcard bila product behavior memerlukannya.
+- [x] Tambahkan positive test; negative search test juga sudah ditambahkan.
 
 **Evidence:** `tests/correctness/contact-search.test.ts` pass.
 
@@ -323,7 +331,7 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Per-upload in-process lock/mutex diterapkan untuk serialisasi PATCH.
 - [x] Append dan offset update sekarang berada dalam critical section yang sama pada single process.
 - [ ] Repair jika file size dan DB offset berbeda.
-- [ ] Tambahkan concurrent PATCH test.
+- [x] Tambahkan concurrent PATCH test.
 - [ ] Tambahkan recovery test setelah process interruption.
 
 **Evidence:** `tests/tus.test.ts` 40 pass setelah lock; concurrency race test dan recovery test masih pending. Lock ini hanya menjamin single-process deployment.
@@ -332,7 +340,7 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 
 - [x] Expected 4xx validation tidak dicatat sebagai stack-trace 5xx.
 - [ ] Semua JSON action memeriksa body malformed, status, dan schema.
-- [ ] Client memeriksa `res.ok` sebelum optimistic update.
+- [x] Client memeriksa `res.ok` sebelum optimistic update.
 - [ ] Semua external errors memiliki user-safe message dan structured server detail.
 - [ ] Hilangkan `console.log` production path; gunakan logger.
 
@@ -348,10 +356,10 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Finite media upload size menggunakan batas upload finite.
 - [ ] Per-user storage quota.
 - [ ] Global storage quota.
-- [ ] Per-request JSON body limit.
-- [ ] Per-chunk Tus limit.
-- [ ] Rate limit upload creation/PATCH.
-- [ ] Timeout provider fetch.
+- [x] Per-request JSON body limit.
+- [x] Per-chunk Tus limit.
+- [x] Rate limit upload creation/PATCH.
+- [x] Timeout provider fetch.
 
 ## PERF-02 — Streaming file operations
 
@@ -395,8 +403,8 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 ## PERF-06 — Background jobs dan cleanup
 
 - [x] Jadwalkan `sweepExpired()` setiap 15 menit dari `src/index.ts`.
-- [ ] Cleanup expired sessions.
-- [ ] Cleanup expired reset tokens.
+- [x] Cleanup expired sessions.
+- [x] Cleanup expired reset tokens.
 - [ ] Retention activity log.
 - [ ] Retention notifications/contact messages sesuai kebijakan bisnis.
 - [ ] Outbox/job untuk email dan WhatsApp.
@@ -522,7 +530,7 @@ Prioritas refactor:
 
 ## QA-01 — Zero-warning quality gate
 
-- [ ] `bun run typecheck` menghasilkan 0 error dan 0 warning.
+- [x] `bun run typecheck` menghasilkan 0 error dan 0 warning.
 - [ ] Tambahkan lint script.
 - [ ] Tambahkan format check.
 - [ ] Hilangkan explicit `any`.

@@ -60,4 +60,60 @@ describe("user search", () => {
 			"needle-email@example.com",
 		);
 	});
+
+	it("paginates a filtered search with stable metadata", async () => {
+		// 25 users matching the same pattern, small page size.
+		for (let i = 0; i < 25; i++) {
+			await seedUser(`Page Match ${i}`, `page-match-${i}@example.com`);
+		}
+		await seedUser("Page Admin", "page-admin@example.com", "admin");
+		const cookie = await loginAs(app, "page-admin@example.com");
+
+		const page1 = (await call(app, "/users?search=Page%20Match&perPage=10", {
+			headers: INERTIA_HEADERS,
+			cookie,
+		}).then((r) => r.json())) as {
+			props: {
+				users: {
+					data: Array<{ name: string }>;
+					meta: { currentPage: number; lastPage: number; total: number; perPage: number };
+				};
+			};
+		};
+		expect(page1.props.users.meta.total).toBe(25);
+		expect(page1.props.users.meta.currentPage).toBe(1);
+		expect(page1.props.users.data).toHaveLength(10);
+
+		const page2 = (await call(app, "/users?search=Page%20Match&perPage=10&page=2", {
+			headers: INERTIA_HEADERS,
+			cookie,
+		}).then((r) => r.json())) as typeof page1;
+		expect(page2.props.users.meta.currentPage).toBe(2);
+		expect(page2.props.users.data).toHaveLength(10);
+		expect(page2.props.users.data[0]?.name).not.toBe(
+			page1.props.users.data[0]?.name,
+		);
+
+		const page3 = (await call(app, "/users?search=Page%20Match&perPage=10&page=3", {
+			headers: INERTIA_HEADERS,
+			cookie,
+		}).then((r) => r.json())) as typeof page1;
+		expect(page3.props.users.data).toHaveLength(5); // 25 total → 10/10/5
+	});
+
+	it("returns an empty list (not an error) for a search with no matches", async () => {
+		await seedUser("Zero Admin", "zero-admin@example.com", "admin");
+		const cookie = await loginAs(app, "zero-admin@example.com");
+
+		const res = await call(app, "/users?search=no-such-user-anywhere", {
+			headers: INERTIA_HEADERS,
+			cookie,
+		});
+		expect(res.status).toBe(200);
+		const payload = (await res.json()) as {
+			props: { users: { data: Array<unknown>; meta: { total: number } } };
+		};
+		expect(payload.props.users.meta.total).toBe(0);
+		expect(payload.props.users.data).toEqual([]);
+	});
 });

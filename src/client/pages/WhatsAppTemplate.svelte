@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Link, useForm, usePage } from '@inertiajs/svelte'
+  import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Field from '../components/Field.svelte'
@@ -17,16 +18,18 @@
   const currentUser = $derived(page.props.auth.user)
 
   const form = $state(
-    useForm({
-      name: template?.name ?? '',
-      slug: template?.slug ?? '',
-      body: template?.body ?? '',
-      mediaUrl: template?.mediaUrl ?? '',
-      placeholders: template ? template.placeholders.join(', ') : '',
-      trigger: template?.trigger ?? 'manual',
-      recipient: template?.recipient ?? 'customer',
-      enabled: template ? template.enabled : true,
-    }),
+    untrack(() =>
+      useForm({
+        name: template?.name ?? '',
+        slug: template?.slug ?? '',
+        body: template?.body ?? '',
+        mediaUrl: template?.mediaUrl ?? '',
+        placeholders: template ? template.placeholders.join(', ') : '',
+        trigger: template?.trigger ?? 'manual',
+        recipient: template?.recipient ?? 'customer',
+        enabled: template ? template.enabled : true,
+      }),
+    ),
   )
 
   const TRIGGER_OPTIONS = [

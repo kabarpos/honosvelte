@@ -16,6 +16,7 @@ import {
 	findSettingByKey,
 	insertContactMessage,
 	listContactMessages,
+	escapeLike,
 	listContactMessagesSearch,
 	updateContactMessageStatus,
 } from "../db";
@@ -58,6 +59,7 @@ export const contactRoutes = () => {
 	const limit = rateLimit({
 		max: config.rateLimit.authMax,
 		windowSeconds: config.rateLimit.authWindow,
+		trustedProxies: config.trustedProxies,
 	});
 
 	app.post("/contact", limit, validateJson(contactBody), async (c) => {
@@ -141,7 +143,7 @@ export const contactRoutes = () => {
 			);
 			const status = String(c.req.query("status") ?? "");
 			const search = String(c.req.query("search") ?? "").trim();
-			const like = `%${search}%`;
+			const like = `%${escapeLike(search)}%`;
 			const total = search
 				? (countContactMessagesSearch.get(
 						status,

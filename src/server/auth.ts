@@ -251,7 +251,7 @@ export const requireRole =
  * per-user overrides (a deny in user_permissions removes a role permission;
  * a grant adds one). super_admin implicitly holds everything.
  */
-export function permissionsForUser(user: UserRow): Set<string> {
+export function permissionsForUser(user: { id: number; role: Role }): Set<string> {
 	if (user.role === "super_admin") return new Set<string>();
 	const result = new Set<string>();
 	const role = findRoleBySlug.get(user.role);

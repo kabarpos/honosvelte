@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { useForm, usePage } from '@inertiajs/svelte'
+  import { useForm } from '@inertiajs/svelte'
+  import { can } from '../capabilities'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Table from '../components/Table.svelte'
@@ -11,9 +12,6 @@
   import type { Permission } from '../../shared/types'
 
   let { permissions }: { permissions: Permission[] } = $props()
-
-  const page = usePage()
-  const currentUser = $derived(page.props.auth.user)
 
   let createOpen = $state(false)
   let editPerm = $state<Permission | null>(null)
@@ -72,7 +70,7 @@
 
 <svelte:head><title>Permissions</title></svelte:head>
 
-{#if currentUser && currentUser.role === 'admin'}
+{#if can('permissions.read')}
   <Layout>
     <div class="flex items-start justify-between gap-4 mb-3">
       <div>

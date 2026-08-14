@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { router, useForm, usePage } from '@inertiajs/svelte'
+  import { router, useForm } from '@inertiajs/svelte'
+  import { can } from '../capabilities'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Table from '../components/Table.svelte'
@@ -16,9 +17,6 @@
     roles: RoleRecord[]
     permissions: Permission[]
   } = $props()
-
-  const page = usePage()
-  const currentUser = $derived(page.props.auth.user)
 
   let createOpen = $state(false)
   let editRole = $state<RoleRecord | null>(null)
@@ -116,7 +114,7 @@
 
 <svelte:head><title>Roles</title></svelte:head>
 
-{#if currentUser && currentUser.role === 'admin'}
+{#if can('roles.read')}
   <Layout>
     <div class="flex items-start justify-between gap-4 mb-3">
       <div>

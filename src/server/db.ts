@@ -143,6 +143,12 @@ export const countUsers = db.query<{ n: number }, []>(
 export const countSuperAdmins = db.query<{ n: number }, []>(
 	`SELECT COUNT(*) AS n FROM users WHERE role = 'super_admin'`,
 );
+/** Escape SQL LIKE wildcards (`%`, `_`, `\`) in a user search term so it
+ *  matches literally. Pair with the `ESCAPE '\'` clauses on the LIKE
+ *  statements below (COR-02: user input must not act as a wildcard). */
+export const escapeLike = (term: string): string =>
+	term.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+
 export const listUsers = db.query<UserRow, [number, number]>(
 	`SELECT ${USER_COLUMNS} FROM users ORDER BY id DESC LIMIT ? OFFSET ?`,
 );
@@ -151,11 +157,11 @@ export const searchUsers = db.query<UserRow, [string, string, number, number]>(
      google_id AS googleId, avatar_url AS avatarUrl, status, whatsapp,
      created_at AS createdAt
    FROM users
-   WHERE name LIKE ? OR email LIKE ?
+   WHERE name LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\'
    ORDER BY id DESC LIMIT ? OFFSET ?`,
 );
 export const countSearchUsers = db.query<{ n: number }, [string, string]>(
-	`SELECT COUNT(*) AS n FROM users WHERE name LIKE ? OR email LIKE ?`,
+	`SELECT COUNT(*) AS n FROM users WHERE name LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\'`,
 );
 export const recentUsers = db.query<UserRow, [number]>(
 	`SELECT ${USER_COLUMNS} FROM users ORDER BY id DESC LIMIT ?`,
@@ -275,6 +281,9 @@ export const deleteOtherSessions = db.query<null, [number, string]>(
 export const deleteSessionsByUserId = db.query<null, [number]>(
 	`DELETE FROM sessions WHERE user_id = ?`,
 );
+export const deleteExpiredSessions = db.query<null, [string]>(
+	`DELETE FROM sessions WHERE expires_at < ?`,
+);
 export const updateSessionFlash = db.query<null, [string, string]>(
 	`UPDATE sessions SET flash = ? WHERE token_hash = ?`,
 );
@@ -293,6 +302,9 @@ export const consumePasswordReset = db.query<
 	`DELETE FROM password_resets
    WHERE token_hash = ? AND email = ? AND expires_at > ?
    RETURNING email`,
+);
+export const deleteExpiredPasswordResets = db.query<null, [string]>(
+	`DELETE FROM password_resets WHERE expires_at < ?`,
 );
 
 // ---------------------------------------------------------------------------
@@ -380,7 +392,7 @@ export const listMedia = db.query<
 	[string, string, string, string, string, string, number, number]
 >(
 	`SELECT ${MEDIA_COLUMNS} FROM media
-   WHERE (? = '' OR category = ?) AND (? = '' OR user_id = ?) AND (? = '' OR original_name LIKE ?)
+   WHERE (? = '' OR category = ?) AND (? = '' OR user_id = ?) AND (? = '' OR original_name LIKE ? ESCAPE '\\')
    ORDER BY id DESC LIMIT ? OFFSET ?`,
 );
 
@@ -389,7 +401,7 @@ export const countMedia = db.query<
 	[string, string, string, string, string, string]
 >(
 	`SELECT COUNT(*) AS n FROM media
-   WHERE (? = '' OR category = ?) AND (? = '' OR user_id = ?) AND (? = '' OR original_name LIKE ?)`,
+   WHERE (? = '' OR category = ?) AND (? = '' OR user_id = ?) AND (? = '' OR original_name LIKE ? ESCAPE '\\')`,
 );
 
 export const countAllMedia = db.query<{ n: number }, []>(
@@ -417,7 +429,7 @@ export const listMediaPicker = db.query<
 	`SELECT id, user_id AS userId, original_name AS originalName, mime_type AS mimeType, size, title, alt_text AS altText
    FROM media
    WHERE (? = '' OR user_id = ?)
-     AND (? = '' OR original_name LIKE ? OR COALESCE(title, '') LIKE ?)
+     AND (? = '' OR original_name LIKE ? ESCAPE '\\' OR COALESCE(title, '') LIKE ? ESCAPE '\\')
    ORDER BY id DESC LIMIT 20`,
 );
 
@@ -467,7 +479,7 @@ export const listActivity = db.query<
 	`SELECT ${ACTIVITY_COLUMNS}
    FROM activity_logs al LEFT JOIN users u ON u.id = al.user_id
    WHERE (? = '' OR al.event = ?)
-     AND (? = '' OR u.name LIKE ? OR al.event LIKE ? OR COALESCE(al.detail, '') LIKE ? OR COALESCE(al.url, '') LIKE ?)
+      AND (? = '' OR u.name LIKE ? ESCAPE '\\' OR al.event LIKE ? ESCAPE '\\' OR COALESCE(al.detail, '') LIKE ? ESCAPE '\\' OR COALESCE(al.url, '') LIKE ? ESCAPE '\\')
    ORDER BY al.id DESC LIMIT ? OFFSET ?`,
 );
 
@@ -478,7 +490,7 @@ export const countActivity = db.query<
 	`SELECT COUNT(*) AS n
    FROM activity_logs al LEFT JOIN users u ON u.id = al.user_id
    WHERE (? = '' OR al.event = ?)
-     AND (? = '' OR u.name LIKE ? OR al.event LIKE ? OR COALESCE(al.detail, '') LIKE ? OR COALESCE(al.url, '') LIKE ?)`,
+     AND (? = '' OR u.name LIKE ? ESCAPE '\\' OR al.event LIKE ? ESCAPE '\\' OR COALESCE(al.detail, '') LIKE ? ESCAPE '\\' OR COALESCE(al.url, '') LIKE ? ESCAPE '\\')`,
 );
 
 export const listActivityEvents = db.query<{ event: string }, []>(
@@ -555,7 +567,7 @@ export const listContactMessagesSearch = db.query<
 >(
 	`SELECT ${CONTACT_COLUMNS} FROM contact_messages
    WHERE (? = '' OR status = ?)
-     AND (? = '' OR name LIKE ? OR email LIKE ? OR COALESCE(subject, '') LIKE ? OR message LIKE ?)
+      AND (? = '' OR name LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\' OR COALESCE(subject, '') LIKE ? ESCAPE '\\' OR message LIKE ? ESCAPE '\\')
    ORDER BY id DESC LIMIT ? OFFSET ?`,
 );
 
@@ -565,7 +577,7 @@ export const countContactMessagesSearch = db.query<
 >(
 	`SELECT COUNT(*) AS n FROM contact_messages
    WHERE (? = '' OR status = ?)
-     AND (? = '' OR name LIKE ? OR email LIKE ? OR COALESCE(subject, '') LIKE ? OR message LIKE ?)`,
+     AND (? = '' OR name LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\' OR COALESCE(subject, '') LIKE ? ESCAPE '\\' OR message LIKE ? ESCAPE '\\')`,
 );
 
 /** One contact message by id, null when absent. */

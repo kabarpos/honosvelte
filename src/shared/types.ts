@@ -57,7 +57,12 @@ export interface FlashData {
 /** Props the server merges into every Inertia page response. */
 export interface SharedPageProps {
 	[key: string]: unknown;
-	auth: { user: User | null };
+	auth: {
+		user: User | null;
+		/** Effective permission slugs for the user; super_admin receives
+		 *  ['*'] (implicit access). Mirrors requireRole/requirePermission. */
+		can: string[];
+	};
 	errors: Record<string, string>;
 	/** App-wide settings (PRD Modul 15), merged into every page payload. */
 	settings: Record<string, string>;

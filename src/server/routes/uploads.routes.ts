@@ -20,11 +20,15 @@ import { resolveUser } from "../auth";
 import { config } from "../config";
 import {
 	advanceOffset,
+	deleteExpiredPasswordResets,
+	deleteExpiredSessions,
 	deleteUpload,
 	findUpload,
 	insertUpload,
 	listExpired,
 } from "../db";
+import { rateLimit } from "../rate-limit";
+import { readBoundedBytes } from "../validation";
 import {
 	appendBytes,
 	detectMime,
@@ -365,13 +369,20 @@ async function handleGetFile(req: Request, id: string): Promise<Response> {
 // ---------------------------------------------------------------------------
 
 export function sweepExpired(): void {
-	if (config.upload.expirationSeconds <= 0) return;
 	const now = new Date().toISOString();
-	const expired = listExpired.all(now);
-	for (const row of expired) {
-		removeFile(row.id);
-		deleteUpload.run(row.id);
+	// Expired unfinished uploads: remove bytes + row (PERF-06).
+	if (config.upload.expirationSeconds > 0) {
+		const expired = listExpired.all(now);
+		for (const row of expired) {
+			removeFile(row.id);
+			deleteUpload.run(row.id);
+		}
 	}
+	// Expired sessions and password-reset tokens (PERF-06): the lazy
+	// per-request cleanup covers active traffic; this bounds the tables for
+	// users who never return.
+	deleteExpiredSessions.run(now);
+	deleteExpiredPasswordResets.run(now);
 }
 
 // ---------------------------------------------------------------------------
@@ -416,26 +427,49 @@ export const uploadsRoutes = () => {
 	// OPTIONS /uploads — server capabilities (no auth, no Tus-Resumable).
 	app.options("/", () => handleOptions());
 	app.options("/*", () => handleOptions());
+
+	// Upload writes are bounded per client (PERF-01): creation + PATCH are
+	// rate limited, and every body is capped before buffering — PATCH chunks
+	// by chunkMax, creation-with-upload by the global maxSize (0 = unlimited).
+	const limitUpload = rateLimit({
+		max: config.rateLimit.uploadMax,
+		windowSeconds: config.rateLimit.uploadWindow,
+		trustedProxies: config.trustedProxies,
+	});
+	const uploadCap =
+		config.upload.maxSize > 0 ? config.upload.maxSize : Number.MAX_SAFE_INTEGER;
+	const chunkCap =
+		config.upload.chunkMax > 0 ? config.upload.chunkMax : Number.MAX_SAFE_INTEGER;
+
 	// POST /uploads — create a new upload resource (Creation extension).
-	app.post("/", async (c) =>
-		dispatch(c.req.raw, c.req.method, null, await c.req.arrayBuffer()),
-	);
+	app.post("/", limitUpload, async (c) => {
+		const bytes = await readBoundedBytes(c, uploadCap);
+		if (bytes === null)
+			return c.json({ error: "Upload body too large." }, 413);
+		return dispatch(c.req.raw, c.req.method, null, bytes);
+	});
 	// POST /uploads/:id — supports X-HTTP-Method-Override: PATCH/DELETE.
-	app.post("/*", async (c) =>
-		dispatch(c.req.raw, c.req.method, routeId(c), await c.req.arrayBuffer()),
-	);
+	app.post("/*", limitUpload, async (c) => {
+		const bytes = await readBoundedBytes(c, chunkCap);
+		if (bytes === null)
+			return c.json({ error: "Upload chunk too large." }, 413);
+		return dispatch(c.req.raw, c.req.method, routeId(c), bytes);
+	});
 	// /uploads/:id — HEAD / GET / PATCH / DELETE (HEAD arrives here via the
 	// automatic HEAD→GET conversion, with c.req.method still "HEAD").
 	app.get("/", (c) => dispatch(c.req.raw, c.req.method, null, undefined));
 	app.get("/*", (c) =>
 		dispatch(c.req.raw, c.req.method, routeId(c), undefined),
 	);
-	app.patch("/", async (c) =>
+	app.patch("/", limitUpload, async (c) =>
 		dispatch(c.req.raw, c.req.method, null, await c.req.arrayBuffer()),
 	);
-	app.patch("/*", async (c) =>
-		dispatch(c.req.raw, c.req.method, routeId(c), await c.req.arrayBuffer()),
-	);
+	app.patch("/*", limitUpload, async (c) => {
+		const bytes = await readBoundedBytes(c, chunkCap);
+		if (bytes === null)
+			return c.json({ error: "Upload chunk too large." }, 413);
+		return dispatch(c.req.raw, c.req.method, routeId(c), bytes);
+	});
 	app.delete("/", (c) => dispatch(c.req.raw, c.req.method, null, undefined));
 	app.delete("/*", (c) =>
 		dispatch(c.req.raw, c.req.method, routeId(c), undefined),

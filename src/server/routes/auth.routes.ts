@@ -101,6 +101,23 @@ export const authRoutes = () => {
 	const limitAuth = rateLimit({
 		max: config.rateLimit.authMax,
 		windowSeconds: config.rateLimit.authWindow,
+		trustedProxies: config.trustedProxies,
+		// Account-aware bucket: brute force against ONE account is blocked
+		// even when the attacker rotates IPs, and an IP spraying many
+		// accounts still trips the client bucket. Reads the email from a
+		// clone so the original body stays intact for validateJson.
+		accountKey: async (c) => {
+			try {
+				const body = (await c.req.raw.clone().json()) as {
+					email?: unknown;
+				};
+				return typeof body.email === "string" && body.email.trim()
+					? body.email.trim().toLowerCase()
+					: null;
+			} catch {
+				return null;
+			}
+		},
 	});
 
 	app.get("/login", guestOnly, (c) => {

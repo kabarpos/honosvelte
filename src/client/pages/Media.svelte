@@ -1,5 +1,6 @@
 <script lang="ts">
   import { router, useForm, usePage } from '@inertiajs/svelte'
+  import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Field from '../components/Field.svelte'
@@ -23,8 +24,8 @@
   const pageStore = usePage()
   const settings = $derived(pageStore.props.settings ?? {})
 
-  let searchForm = $state(useForm({ q: search }))
-  let page = $state(currentPage)
+  let searchForm = $state(untrack(() => useForm({ q: search })))
+  let page = $state(untrack(() => currentPage))
   let didInit = true
 
   let editOpen = $state(false)

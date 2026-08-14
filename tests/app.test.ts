@@ -371,6 +371,17 @@ describe("infrastructure", () => {
 		expect((await res.json()).status).toBe("ok");
 	});
 
+	it("rejects an oversized JSON body before parsing (PERF-01)", async () => {
+		// REQUEST_BODY_LIMIT defaults to 100 KB; a Content-Length above the
+		// bound must be rejected with 413 without ever hitting the schema.
+		const huge = "a".repeat(100_001);
+		const res = await call("/login", {
+			method: "POST",
+			body: { email: "x@example.com", password: huge },
+		});
+		expect(res.status).toBe(413);
+	});
+
 	it("serves built asset files from /assets/*", async () => {
 		const { mkdirSync, rmSync, writeFileSync } = await import("node:fs");
 		mkdirSync("dist/assets", { recursive: true });

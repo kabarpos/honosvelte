@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import type { createApp } from "../src/server/app";
 
 let app: Awaited<ReturnType<typeof createApp>>;
 
@@ -95,7 +96,7 @@ async function seedUser(
 	const { createUserWithRole } = await import("../src/server/db");
 	const { hashPassword } = await import("../src/server/auth");
 	const hash = await hashPassword("password123");
-	return createUserWithRole.get(name, email, hash, role).id;
+	return createUserWithRole.get(name, email, hash, role)!.id;
 }
 
 describe("rbac access control", () => {
@@ -284,7 +285,7 @@ describe("rbac roles", () => {
 
 	it("deletes a custom role", async () => {
 		const { findRoleBySlug, insertRole } = await import("../src/server/db");
-		const { id } = insertRole.get("tempRole", "Temp", null);
+		const { id } = insertRole.get("tempRole", "Temp", null)!;
 		const res = await call(`/roles/${id}`, {
 			method: "DELETE",
 			headers: { ...xhr, cookie: adminCookie },
@@ -408,5 +409,85 @@ describe("rbac permission guards", () => {
 			},
 		});
 		expect(res.status).toBe(303);
+	});
+
+	describe("shared capability payload (SEC-08 / UX-06)", () => {
+		it("exposes the effective permission slugs to an admin", async () => {
+			await seedUser("CapAdmin", "capadmin@example.com", "admin");
+			const cookie = await loginAs("capadmin@example.com");
+
+			const res = await call("/users", { headers: { ...xhr, cookie } });
+			expect(res.status).toBe(200);
+			const data = await page(res);
+			expect(Array.isArray(data.props.auth.can)).toBe(true);
+			// The admin role holds the full admin set; the specific slugs the
+			// UI gates on must be present so nav + page guards render.
+			for (const slug of [
+				"users.read",
+				"roles.read",
+				"permissions.read",
+				"settings.read",
+				"whatsapp.read",
+				"email.read",
+				"activity.read",
+			]) {
+				expect(data.props.auth.can).toContain(slug);
+			}
+			// Super-admin grant marker must NOT leak to a regular admin.
+			expect(data.props.auth.can).not.toContain("*");
+		});
+
+		it("grants super_admin the '*' marker (implicit access)", async () => {
+			await seedUser("CapRoot", "caproot@example.com", "super_admin");
+			const cookie = await loginAs("caproot@example.com");
+
+			const res = await call("/users", { headers: { ...xhr, cookie } });
+			expect(res.status).toBe(200);
+			const data = await page(res);
+			expect(data.props.auth.can).toEqual(["*"]);
+		});
+
+		it("lets a super_admin render every admin page (no blank page)", async () => {
+			await seedUser("UxRoot", "uxroot@example.com", "super_admin");
+			const cookie = await loginAs("uxroot@example.com");
+
+			for (const path of [
+				"/users",
+				"/roles",
+				"/permissions",
+				"/settings",
+				"/whatsapp",
+				"/email",
+				"/activity",
+				"/notifications",
+				"/contact/inbox",
+			]) {
+				const res = await call(path, { headers: { ...xhr, cookie } });
+				expect(res.status, path).toBe(200);
+				const data = await page(res);
+				expect(data.props.auth.user.role).toBe("super_admin");
+			}
+		});
+
+		it("denies an admin whose permission was revoked (nav parity)", async () => {
+			const id = await seedUser("RevokedAdmin", "revoked@example.com", "admin");
+			const cookie = await loginAs("revoked@example.com");
+			const { findPermissionBySlug, setUserPermission } = await import(
+				"../src/server/db"
+			);
+			setUserPermission.run(
+				id,
+				findPermissionBySlug.get("activity.read")!.id,
+				0,
+			);
+
+			// The server guard mirrors the nav gating: the revoked admin is
+			// redirected from /activity even though they are 'admin'.
+			const res = await call("/activity", { headers: { ...xhr, cookie } });
+			expect(res.status).toBe(302);
+			expect(new URL(res.headers.get("location")!).pathname).toBe(
+				"/dashboard",
+			);
+		});
 	});
 });

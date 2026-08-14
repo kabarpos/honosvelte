@@ -171,12 +171,16 @@ roles, SSR, and test suite.
 | `DRIPSENDER_INTEGRATION_URL` | — | Dripsender integration webhook; new contacts (name + phone) captured on registration are POSTed here |
 | `WHATSAPP_WEBHOOK_SECRET` | — | required shared secret for inbound `/whatsapp/webhook` requests |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
-| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints |
+| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints (per IP **and** per account) |
 | `RATE_LIMIT_WEBHOOK_MAX` / `RATE_LIMIT_WEBHOOK_WINDOW` | `60` / `60` | requests per window on the WhatsApp webhook |
+| `RATE_LIMIT_UPLOAD_MAX` / `RATE_LIMIT_UPLOAD_WINDOW` | `60` / `60` | tus upload create/PATCH per window per IP |
+| `TRUSTED_PROXY` | — | comma-separated proxy networks (IP or IPv4 CIDR) trusted to set `X-Forwarded-For` for rate limiting; leave empty unless behind a reverse proxy you control |
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
 | `MEDIA_DIR` | `./data/media` | media library files on disk |
 | `TUS_MAX_SIZE` | `52428800` | max upload size in bytes (50 MiB default) |
+| `TUS_CHUNK_MAX` | `5242880` | max bytes per single tus PATCH chunk (5 MiB default) |
 | `TUS_EXPIRATION_SECONDS` | `86400` | unfinished upload TTL in seconds (24 hours default) |
+| `REQUEST_BODY_LIMIT` | `100000` | bounded JSON body for validated routes (bytes) |
 
 Invalid/incomplete config fails fast at startup with a clear message
 (`src/server/config.ts`).

@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { Link, router, useForm, usePage } from '@inertiajs/svelte'
+  import { Link, router, useForm } from '@inertiajs/svelte'
+  import { can } from '../capabilities'
+  import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Tabs from '../components/Tabs.svelte'
@@ -22,18 +24,15 @@
   }: { whatsapp: { provider: string; hasApiKey: boolean; adminNotifyNumber: string; integrationUrl: string }; templates: WhatsAppTemplate[]; webhookUrl: string } =
     $props()
 
-  const page = usePage()
-  const currentUser = $derived(page.props.auth.user)
-
   let activeTab = $state('config')
 
   // --- Configuration: provider + API key (saved via POST /whatsapp/config) --
-  let cfgForm = $state({
+  let cfgForm = $state(untrack(() => ({
     provider: whatsapp.provider,
     api_key: '',
     integration_url: whatsapp.integrationUrl,
     admin_notify_number: whatsapp.adminNotifyNumber,
-  })
+  })))
   let cfgStatus = $state<{ ok: boolean; message: string } | null>(null)
   let savingCfg = $state(false)
   const PROVIDER_OPTIONS = [
@@ -169,7 +168,7 @@
 
 <svelte:head><title>WhatsApp</title></svelte:head>
 
-{#if currentUser && currentUser.role === 'admin'}
+{#if can('whatsapp.read')}
   <Layout>
     <h1 class="text-[1.6rem] m-0 mb-1 tracking-tight">WhatsApp</h1>
     <p class="text-muted mb-3">

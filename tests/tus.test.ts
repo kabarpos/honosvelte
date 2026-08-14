@@ -21,6 +21,7 @@ beforeAll(async () => {
 	process.env.NODE_ENV = "test";
 	process.env.RATE_LIMIT_AUTH_MAX = "1000";
 	process.env.TUS_MAX_SIZE = "0"; // unlimited
+	process.env.TUS_CHUNK_MAX = "1024"; // small per-chunk bound for tests
 	process.env.GOOGLE_CLIENT_ID = "test-client-id";
 	process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
 	const { createApp } = await import("../src/server/app");
@@ -885,5 +886,128 @@ describe("profile info & password", () => {
 			body: JSON.stringify({ email: EMAIL, password: "newpass123" }),
 		});
 		expect(newLogin.status).toBe(303);
+	});
+
+	describe("tus concurrency (COR-06)", () => {
+		let cookie: string;
+		let uploadId: string;
+		const totalSize = 4096;
+		const chunkSize = 1024;
+
+		beforeAll(async () => {
+			cookie = await registerUser("tus-race@example.com");
+			const res = await tus("/uploads", {
+				method: "POST",
+				headers: { "Upload-Length": String(totalSize) },
+				cookie,
+			});
+			expect(res.status).toBe(201);
+			uploadId = res.headers.get("Location")!.replace("/uploads/", "");
+		});
+
+		it("serializes concurrent PATCHes without lost bytes or offset desync", async () => {
+			const payload = new Uint8Array(totalSize);
+			for (let i = 0; i < payload.length; i++) payload[i] = (i * 31) % 251;
+
+			// Four workers race the same upload. Each reads the current
+			// offset via HEAD and appends the next slice, retrying on 409
+			// (another worker won the lock first). The per-upload in-process
+			// lock (COR-06) must guarantee append + offset update are atomic:
+			// final offset == totalSize and the streamed bytes are identical
+			// to the source payload — no duplication, no interleaving.
+			const workers = Array.from({ length: 4 }, () =>
+				(async () => {
+					for (let attempt = 0; attempt < 40; attempt++) {
+						const head = await tus(`/uploads/${uploadId}`, {
+							method: "HEAD",
+							cookie,
+						});
+						const offset = Number(head.headers.get("Upload-Offset"));
+						if (offset >= totalSize) return;
+						const res = await tus(`/uploads/${uploadId}`, {
+							method: "PATCH",
+							headers: {
+								"Content-Type": "application/offset+octet-stream",
+								"Upload-Offset": String(offset),
+							},
+							body: payload.slice(
+								offset,
+								Math.min(offset + chunkSize, totalSize),
+							),
+							cookie,
+						});
+						if (res.status === 204 || res.status === 409) continue;
+						throw new Error(`unexpected PATCH status ${res.status}`);
+					}
+					throw new Error("worker exhausted its retry budget");
+				})(),
+			);
+			await Promise.all(workers);
+
+			const head = await tus(`/uploads/${uploadId}`, {
+				method: "HEAD",
+				cookie,
+			});
+			expect(head.headers.get("Upload-Offset")).toBe(String(totalSize));
+
+			// Byte-exact verification through the streaming GET.
+			const get = await tus(`/uploads/${uploadId}`, { cookie });
+			expect(get.status).toBe(200);
+			const body = new Uint8Array(await get.arrayBuffer());
+			expect(body.length).toBe(totalSize);
+			expect(body).toEqual(payload);
+		});
+	});
+
+	describe("tus per-chunk bound (PERF-01)", () => {
+		let cookie: string;
+		let uploadId: string;
+
+		beforeAll(async () => {
+			cookie = await registerUser("tus-chunk@example.com");
+			const res = await tus("/uploads", {
+				method: "POST",
+				headers: { "Upload-Length": String(4096) },
+				cookie,
+			});
+			expect(res.status).toBe(201);
+			uploadId = res.headers.get("Location")!.replace("/uploads/", "");
+		});
+
+		it("rejects a PATCH chunk larger than TUS_CHUNK_MAX (413)", async () => {
+			const big = new Uint8Array(2048); // > TUS_CHUNK_MAX=1024
+			const res = await tus(`/uploads/${uploadId}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/offset+octet-stream",
+					"Upload-Offset": "0",
+				},
+				body: big,
+				cookie,
+			});
+			expect(res.status).toBe(413);
+
+			// Nothing was written: the upload still sits at offset 0.
+			const head = await tus(`/uploads/${uploadId}`, {
+				method: "HEAD",
+				cookie,
+			});
+			expect(head.headers.get("Upload-Offset")).toBe("0");
+		});
+
+		it("accepts a PATCH chunk within the bound", async () => {
+			const ok = new Uint8Array(512);
+			const res = await tus(`/uploads/${uploadId}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/offset+octet-stream",
+					"Upload-Offset": "0",
+				},
+				body: ok,
+				cookie,
+			});
+			expect(res.status).toBe(204);
+			expect(res.headers.get("Upload-Offset")).toBe("512");
+		});
 	});
 });

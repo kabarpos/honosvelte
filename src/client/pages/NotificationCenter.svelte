@@ -1,5 +1,6 @@
 <script lang="ts">
   import { router, usePage } from '@inertiajs/svelte'
+  import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Button from '../components/Button.svelte'
@@ -15,7 +16,7 @@
   const { currentPage, lastPage } = $derived(notifications.meta)
   const pageStore = usePage()
   const settings = $derived(pageStore.props.settings ?? {})
-  let page = $state(currentPage)
+  let page = $state(untrack(() => currentPage))
   let didInit = true
 
   $effect(() => {
@@ -31,8 +32,9 @@
   async function markRead(id: number) {
     marking = id
     try {
-      await fetch(`/notifications/${id}/read`, { method: 'POST' })
-      router.reload({ only: ['notifications', 'unread'] })
+      const res = await fetch(`/notifications/${id}/read`, { method: 'POST' })
+      // Only reload on success — a failed mark must not look applied.
+      if (res.ok) router.reload({ only: ['notifications', 'unread'] })
     } finally {
       marking = null
     }
@@ -42,8 +44,8 @@
   async function markAllRead() {
     markingAll = true
     try {
-      await fetch('/notifications/read-all', { method: 'POST' })
-      router.reload({ only: ['notifications', 'unread'] })
+      const res = await fetch('/notifications/read-all', { method: 'POST' })
+      if (res.ok) router.reload({ only: ['notifications', 'unread'] })
     } finally {
       markingAll = false
     }

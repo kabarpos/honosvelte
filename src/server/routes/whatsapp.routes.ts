@@ -520,6 +520,7 @@ export const whatsappRoutes = () => {
 		rateLimit({
 			max: config.rateLimit.webhookMax,
 			windowSeconds: config.rateLimit.webhookWindow,
+			trustedProxies: config.trustedProxies,
 		}),
 		async (c) => {
 			if (!validWebhookSecret(c.req.raw))

@@ -69,4 +69,53 @@ describe("contact inbox search", () => {
 			"searchable-contact@example.com",
 		);
 	});
+
+	it("returns an empty inbox (not an error) for a search with no matches", async () => {
+		await seedUser(
+			"Contact Zero Admin",
+			"contact-zero-admin@example.com",
+			"admin",
+		);
+		const cookie = await loginAs(app, "contact-zero-admin@example.com");
+
+		const res = await call(
+			app,
+			"/contact/inbox?search=definitely-not-a-message",
+			{ headers: INERTIA_HEADERS, cookie },
+		);
+		expect(res.status).toBe(200);
+		const payload = (await res.json()) as {
+			props: {
+				messages: { data: Array<unknown>; meta: { total: number } };
+			};
+		};
+		expect(payload.props.messages.meta.total).toBe(0);
+		expect(payload.props.messages.data).toEqual([]);
+	});
+
+	it("does not treat SQL wildcards as user-controlled pattern injection", async () => {
+		// The search term is bound as a LIKE parameter; a literal '%' in the
+		// query must match only messages that actually contain '%' (none), not
+		// act as a wildcard that returns everything.
+		await seedUser(
+			"Contact Wild Admin",
+			"contact-wild-admin@example.com",
+			"admin",
+		);
+		const cookie = await loginAs(app, "contact-wild-admin@example.com");
+
+		const res = await call(app, "/contact/inbox?search=%25%25%25", {
+			headers: INERTIA_HEADERS,
+			cookie,
+		});
+		expect(res.status).toBe(200);
+		const payload = (await res.json()) as {
+			props: {
+				messages: { data: Array<unknown>; meta: { total: number } };
+			};
+		};
+		// Literal '%%%' does not appear in any message → 0 results. If the
+		// search let '%' act as a wildcard this would return every message.
+		expect(payload.props.messages.meta.total).toBe(0);
+	});
 });

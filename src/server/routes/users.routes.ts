@@ -25,6 +25,7 @@ import {
 	searchUsers,
 	setUserStatus,
 	toPublicUser,
+	escapeLike,
 	updateUserAdmin,
 	updateUserPassword,
 } from "../db";
@@ -97,7 +98,7 @@ function usersPage(
 	perPage: number,
 	search: string,
 ): Paginated<User> {
-	const like = `%${search}%`;
+	const like = `%${escapeLike(search)}%`;
 	const total = search
 		? (countSearchUsers.get(like, like)?.n ?? 0)
 		: (countUsers.get()?.n ?? 0);

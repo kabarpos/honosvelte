@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Link, router, useForm, usePage } from '@inertiajs/svelte'
+  import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Button from '../components/Button.svelte'
@@ -28,8 +29,8 @@
   const pageStore = usePage()
   const settings = $derived(pageStore.props.settings ?? {})
 
-  let searchForm = $state(useForm({ q: search }))
-  let page = $state(currentPage)
+  let searchForm = $state(untrack(() => useForm({ q: search })))
+  let page = $state(untrack(() => currentPage))
   let didInit = true
 
   let detailOpen = $state(false)
@@ -126,8 +127,10 @@
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ status: s }),
     })
-      .then(() => {
-        if (detail) detail = { ...detail, status: s as ContactMessage['status'] }
+      .then((res) => {
+        // Only reflect the new status when the server accepted it.
+        if (!res.ok || !detail) return
+        detail = { ...detail, status: s as ContactMessage['status'] }
       })
       .catch(() => {})
   }

@@ -8,6 +8,7 @@ import { requireAuth, requirePermission } from "../auth";
 import {
 	countActivity,
 	findActivityById,
+	escapeLike,
 	listActivity,
 	listActivityEvents,
 } from "../db";
@@ -43,7 +44,7 @@ export const activityRoutes = () => {
 		);
 		const event = String(c.req.query("event") ?? "");
 		const search = String(c.req.query("search") ?? "");
-		const like = `%${search}%`;
+		const like = `%${escapeLike(search)}%`;
 		const total =
 			countActivity.get(event, event, like, like, like, like, like)?.n ?? 0;
 		const data: Paginated<ActivityLogEntry> = {

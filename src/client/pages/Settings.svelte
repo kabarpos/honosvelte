@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { router, useForm, usePage } from '@inertiajs/svelte'
+  import { router, useForm } from '@inertiajs/svelte'
+  import { can } from '../capabilities'
   import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
@@ -12,9 +13,6 @@
   import type { SettingsGroup, SettingsItem } from '../../shared/types'
 
   let { groups }: { groups: SettingsGroup[] } = $props()
-
-  const page = usePage()
-  const currentUser = $derived(page.props.auth.user)
 
   const initial = $derived(
     (() => {
@@ -141,7 +139,7 @@
 
 <svelte:head><title>Settings</title></svelte:head>
 
-{#if currentUser && currentUser.role === 'admin'}
+{#if can('settings.read')}
   <Layout>
     <h1 class="text-[1.6rem] m-0 mb-1 tracking-tight">Settings</h1>
     <p class="text-muted mb-3">

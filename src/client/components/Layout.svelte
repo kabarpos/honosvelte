@@ -1,7 +1,8 @@
 <script lang="ts">
   import { Link, router, usePage } from '@inertiajs/svelte'
   import type { Snippet } from 'svelte'
-  import type { Role, SharedPageProps } from '../../shared/types'
+  import type { SharedPageProps } from '../../shared/types'
+  import { can } from '../capabilities'
   import Brand from './Brand.svelte'
 
   let { children }: { children: Snippet } = $props()
@@ -39,7 +40,8 @@
   type NavItem = {
     href: string
     label: string
-    roles?: Role[]
+    /** Permission slug required to see the item (super_admin sees all). */
+    can?: string
     match: (path: string) => boolean
   }
 
@@ -64,26 +66,26 @@
      {
       label: 'User Management',
       items: [
-        { href: '/users', label: 'Users', roles: ['admin'], match: (p) => p === '/users' || p.startsWith('/users') },
-        { href: '/roles', label: 'Roles', roles: ['admin'], match: (p) => p === '/roles' || p.startsWith('/roles') },
-        { href: '/permissions', label: 'Permissions', roles: ['admin'], match: (p) => p === '/permissions' || p.startsWith('/permissions') },
+        { href: '/users', label: 'Users', can: 'users.read', match: (p) => p === '/users' || p.startsWith('/users') },
+        { href: '/roles', label: 'Roles', can: 'roles.read', match: (p) => p === '/roles' || p.startsWith('/roles') },
+        { href: '/permissions', label: 'Permissions', can: 'permissions.read', match: (p) => p === '/permissions' || p.startsWith('/permissions') },
       ],
     },
     {
       label: 'Messaging',
       items: [
-        { href: '/whatsapp', label: 'WhatsApp', roles: ['admin'], match: (p) => p === '/whatsapp' || p.startsWith('/whatsapp') },
-        { href: '/email', label: 'Email', roles: ['admin'], match: (p) => p === '/email' || p.startsWith('/email') },
-        { href: '/notifications', label: 'Notifications', roles: ['admin'], match: (p) => p === '/notifications' || p.startsWith('/notifications') },
-        { href: '/contact/inbox', label: 'Contact', roles: ['admin'], match: (p) => p === '/contact/inbox' || p.startsWith('/contact/inbox') },
+        { href: '/whatsapp', label: 'WhatsApp', can: 'whatsapp.read', match: (p) => p === '/whatsapp' || p.startsWith('/whatsapp') },
+        { href: '/email', label: 'Email', can: 'email.read', match: (p) => p === '/email' || p.startsWith('/email') },
+        { href: '/notifications', label: 'Notifications', can: 'notifications.read', match: (p) => p === '/notifications' || p.startsWith('/notifications') },
+        { href: '/contact/inbox', label: 'Contact', can: 'contact.read', match: (p) => p === '/contact/inbox' || p.startsWith('/contact/inbox') },
       ],
     },
        {
       label: 'Administration',
       items: [
         { href: '/billing', label: 'Billing', match: (p) => p === '/billing' || p.startsWith('/billing') },
-        { href: '/settings', label: 'Settings', roles: ['admin'], match: (p) => p === '/settings' || p.startsWith('/settings') },
-        { href: '/activity', label: 'Activity', roles: ['admin'], match: (p) => p === '/activity' || p.startsWith('/activity') },
+        { href: '/settings', label: 'Settings', can: 'settings.read', match: (p) => p === '/settings' || p.startsWith('/settings') },
+        { href: '/activity', label: 'Activity', can: 'activity.read', match: (p) => p === '/activity' || p.startsWith('/activity') },
       ],
     },
   ]
@@ -170,7 +172,7 @@
     NAV_GROUPS.map((g) => ({
       ...g,
       items: g.items.filter(
-        (i) => !i.roles || (user && i.roles.includes(user.role)),
+        (i) => !i.can || can(i.can),
       ),
     })).filter((g) => g.items.length > 0),
   )

@@ -22,6 +22,7 @@ import {
 	findMediaById,
 	insertMedia,
 	listMedia,
+	escapeLike,
 	listMediaPicker,
 	updateMediaMeta,
 } from "../db";
@@ -162,7 +163,7 @@ export const mediaRoutes = () => {
 			CATEGORIES.includes(categoryParam as MediaCategory) ? categoryParam : ""
 		) as MediaCategory;
 		const scope = scopeFilter(user);
-		const like = `%${search}%`;
+		const like = `%${escapeLike(search)}%`;
 		const total =
 			countMedia.get(category, category, scope, scope, like, like)?.n ?? 0;
 		const media: Paginated<Media> = {
@@ -269,7 +270,7 @@ export const mediaRoutes = () => {
 		requirePermission("media.read"),
 		(c) => {
 			const q = String(c.req.query("q") ?? "");
-			const like = `%${q}%`;
+			const like = `%${escapeLike(q)}%`;
 			const scope = scopeFilter(c.var.user);
 			const rows = listMediaPicker.all(scope, scope, like, like, like);
 			return c.json({

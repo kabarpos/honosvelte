@@ -1,5 +1,7 @@
 <script lang="ts">
   import { router, useForm, usePage } from '@inertiajs/svelte'
+  import { can } from '../capabilities'
+  import { untrack } from 'svelte'
   import Layout from '../components/Layout.svelte'
   import Card from '../components/Card.svelte'
   import Table from '../components/Table.svelte'
@@ -31,7 +33,7 @@
   let deleteOpen = $state(false)
   let editUser = $state<User | null>(null)
   let deleteUser = $state<User | null>(null)
-  let searchForm = $state(useForm({ q: search }))
+  let searchForm = $state(untrack(() => useForm({ q: search })))
 
   let createForm = $state(
     useForm({
@@ -127,7 +129,7 @@
 
 <svelte:head><title>Users</title></svelte:head>
 
-{#if currentUser && currentUser.role === 'admin'}
+{#if can('users.read')}
   <Layout>
     <div class="flex items-start justify-between gap-4 mb-3">
       <div>
