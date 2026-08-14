@@ -121,6 +121,7 @@
   let sidebarOpen = $state(false)
   let menuOpen = $state(false)
   let menuRef = $state<HTMLDivElement | null>(null)
+  let menuTrigger = $state<HTMLButtonElement | null>(null)
   let skipApply = $state(true)
 
   // Sync state from <html data-theme> before paint.
@@ -145,16 +146,42 @@
     }
   })
 
-  // Close dropdown on outside click.
+  // User menu: close on outside click; Escape / arrow keys navigate;
+  // focus moves into the menu on open and returns to the trigger on close.
   $effect(() => {
     if (!menuOpen) return
+    const items = () =>
+      Array.from(
+        menuRef?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [],
+      )
     const onDown = (e: MouseEvent) => {
-      if (menuRef && !menuRef.contains(e.target as Node)) menuOpen = false
+      if (menuRef && !menuRef.contains(e.target as Node)) {
+        menuOpen = false
+        menuTrigger?.focus()
+      }
     }
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && (menuOpen = false)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        menuOpen = false
+        menuTrigger?.focus()
+        return
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        const list = items()
+        if (list.length === 0) return
+        const current = list.indexOf(document.activeElement as HTMLElement)
+        const delta = e.key === 'ArrowDown' ? 1 : -1
+        const next = list[(current + delta + list.length) % list.length]
+        next?.focus()
+      }
+    }
+    const raf = requestAnimationFrame(() => items()[0]?.focus())
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
     return () => {
+      cancelAnimationFrame(raf)
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
     }
@@ -641,6 +668,7 @@
         {#if user}
           <div class="relative" bind:this={menuRef}>
             <button
+              bind:this={menuTrigger}
               type="button"
               class="flex items-center gap-2 h-10 px-2.5 py-1 border border-border rounded-full bg-surface text-text cursor-pointer transition-colors hover:bg-primary-soft max-md:p-1"
               aria-haspopup="menu"

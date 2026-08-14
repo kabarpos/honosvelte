@@ -243,7 +243,7 @@ export class Inertia {
 			? `<link rel="icon" href="${escapeHtml(s["app.favicon"])}" />`
 			: `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
 					'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#059669"/><path d="M12 9h2.2c5.6 0 9.3 3.1 9.3 7s-3.7 7-9.3 7H12V9Z" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="16" y="18.2" width="4.4" height="2.2" rx="1.1" fill="#059669"/></svg>',
-				)} />`;
+				)}" />`;
 		const description = s["app.description"]
 			? `<meta name="description" content="${escapeHtml(s["app.description"])}" />`
 			: "";

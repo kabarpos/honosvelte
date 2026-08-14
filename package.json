@@ -20,8 +20,10 @@
     "build": "bun run scripts/build.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
     "db:seed": "bun run scripts/seed.ts",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:server": "bun run scripts/e2e-server.ts",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json",
-    "test": "bun test --isolate"
+    "test": "bun test --isolate tests/"
   },
   "dependencies": {
     "@inertiajs/svelte": "^3.6.1",
@@ -31,9 +33,12 @@
     "svelte": "^5.56.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/cli": "^4.3.3",
     "@types/bun": "^1.2.0",
     "@types/nodemailer": "^8.0.1",
+    "playwright": "^1.62.1",
     "svelte-check": "^4.7.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.8.0"

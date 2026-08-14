@@ -10,3 +10,5 @@ data/media/
 *.png
 src/client/.tailwind.css
 .llm-wiki
+test-results/
+playwright-report/

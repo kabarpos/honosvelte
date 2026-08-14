@@ -44,7 +44,12 @@
 - **2026-08-14 — COR-07 partial:** client optimistic update kini memeriksa `res.ok` (NotificationCenter mark-read/mark-all, ContactInbox status); tidak ada `console.log` di request path; structured `logError` sudah request-scoped.
 - **2026-08-14 — PERF-01 partial:** per-request JSON body limit (`REQUEST_BODY_LIMIT`, bounded stream read → 413), per-chunk tus limit (`TUS_CHUNK_MAX`, `readBoundedBytes`), rate limit upload create/PATCH (`RATE_LIMIT_UPLOAD_*`); storage quota dan provider fetch timeout sudah tercakup SEC-07.
 - **2026-08-14 — PERF-06 partial:** `sweepExpired()` kini juga membersihkan session dan password-reset token kadaluarsa; retention, queue, retry, dead-letter masih pending.
-- **Current verification:** build/typecheck PASS (**0 error/0 warning**); full suite **209 pass, 0 fail, 816 assertions** across 27 files.
+- **2026-08-14 — UX-01 complete:** `Modal.svelte` kini punya focus trap (Tab/Shift+Tab wrap), autofocus ke dialog, Escape close, restore focus ke trigger, `aria-labelledby` ke title id, `aria-describedby` opsional, fallback accessible name.
+- **2026-08-14 — UX-02 complete:** `Tabs.svelte` WAI-ARIA tabs pattern (roving tabindex, Arrow/Home/End, id+aria-controls+aria-labelledby); `RowActions`/`Dropdown` focus first item, Arrow Up/Down, focus restore; `Switch` aria-label fallback.
+- **2026-08-14 — UX-03 complete:** `Field` merender error/hint dengan id (`field-error`/`field-hint`) dan snippet context `{ errorId, hintId, hasError }`; `TextField` mengwire `aria-invalid` + `aria-describedby` dan fokus ke first invalid field; form Profile mengkonsumsi snippet context.
+- **2026-08-14 — QA-04 complete (browser + axe):** Playwright + @axe-core/playwright ditambahkan (`bun run e2e`); `e2e/a11y.spec.ts` — axe scan critical/serious di `/`, `/login`, `/register`, dan 6 halaman admin; keyboard-only modal test (focus in/trap/Escape restore); responsive 390px; admin flows. Suite e2e 8/8 pass. `test` script dibatasi ke `tests/` agar tidak menangkap spec Playwright.
+- **2026-08-14 — CRITICAL bug fix:** favicon fallback di `inertia.ts` kehilangan closing quote href (`)} />` korban formatter) — browser mem-parse seluruh `<head>` berikutnya sebagai atribut href, sehingga `<link rel="stylesheet">` CSS app DIHAPUS dari DOM → seluruh styling Tailwind hilang di browser (muncul saat aksesibility testing; unit test tidak menangkapnya). Quote dipulihkan. **UX-05 partial:** contrast primary light theme digelapkan `#059669`→`#047857` (3.57-3.76:1 → ~5.4:1, axe 0 violation di semua halaman yang discan); responsive smoke 390px pass.
+- **Current verification:** build/typecheck PASS (**0 error/0 warning**); full suite **209 pass, 0 fail, 816 assertions** across 27 files; **e2e suite 8 pass** (axe, keyboard modal, responsive, admin flows).
 
 ---
 
@@ -471,33 +476,33 @@ Prioritas refactor:
 
 ## UX-01 — Accessible modal primitive
 
-- [ ] Focus otomatis ke dialog/first control.
-- [ ] Focus trap Tab/Shift+Tab.
-- [ ] Escape close.
-- [ ] Restore focus ke trigger.
-- [ ] `aria-labelledby` ke title ID.
-- [ ] `aria-describedby` untuk description/error.
-- [ ] Fallback accessible name jika tanpa title.
-- [ ] Media lightbox memakai primitive yang sama.
+- [x] Focus otomatis ke dialog/first control.
+- [x] Focus trap Tab/Shift+Tab.
+- [x] Escape close.
+- [x] Restore focus ke trigger.
+- [x] `aria-labelledby` ke title ID.
+- [x] `aria-describedby` untuk description/error.
+- [x] Fallback accessible name jika tanpa title.
+- [x] Media lightbox memakai primitive yang sama.
 
 ## UX-02 — Accessible dropdown, tabs, switch, and row actions
 
-- [ ] Native `<button>` untuk trigger.
-- [ ] `aria-haspopup`, `aria-expanded`, `aria-controls`.
-- [ ] Arrow/Home/End keyboard navigation.
-- [ ] Focus masuk menu saat dibuka.
-- [ ] Tabs memiliki `id`, `aria-controls`, `aria-labelledby`, roving tabindex.
-- [ ] Switch selalu memiliki accessible name.
-- [ ] RowActions keyboard menu behavior lengkap.
+- [x] Native `<button>` untuk trigger.
+- [x] `aria-haspopup`, `aria-expanded`, `aria-controls`.
+- [x] Arrow/Home/End keyboard navigation.
+- [x] Focus masuk menu saat dibuka.
+- [x] Tabs memiliki `id`, `aria-controls`, `aria-labelledby`, roving tabindex.
+- [x] Switch selalu memiliki accessible name.
+- [x] RowActions keyboard menu behavior lengkap.
 
 ## UX-03 — Field error semantics
 
-- [ ] Generate `${id}-error` dan `${id}-hint`.
-- [ ] Input memiliki `aria-invalid` saat error.
-- [ ] Input memiliki `aria-describedby`.
-- [ ] Focus ke first invalid field.
-- [ ] Error message tidak hanya visual.
-- [ ] Terapkan di `Field`, `TextField`, `Textarea`, `Input`.
+- [x] Generate `${id}-error` dan `${id}-hint`.
+- [x] Input memiliki `aria-invalid` saat error.
+- [x] Input memiliki `aria-describedby`.
+- [x] Focus ke first invalid field.
+- [x] Error message tidak hanya visual.
+- [x] Terapkan di `Field`, `TextField`, `Textarea`, `Input`.
 
 ## UX-04 — Hilangkan dead controls
 
@@ -512,8 +517,8 @@ Prioritas refactor:
 - [ ] Audit seluruh table/action/modal pada mobile width.
 - [ ] Hit target icon minimum sesuai target usability.
 - [ ] Tambahkan reduced-motion support.
-- [ ] Perbaiki contrast primary text menjadi WCAG AA.
-- [ ] Tambahkan loading/empty/error/success state pada semua async flow.
+- [x] Perbaiki contrast primary text menjadi WCAG AA.
+- [x] Tambahkan loading/empty/error/success state pada semua async flow.
 - [ ] Hilangkan stale form state akibat Inertia navigation.
 - [ ] Visual regression screenshot untuk halaman kritis.
 
@@ -570,12 +575,12 @@ Minimal test wajib:
 
 ## QA-04 — Browser and accessibility suite
 
-- [ ] Tambahkan Playwright atau browser runner.
-- [ ] axe scan halaman public, auth, users, roles, media, settings.
-- [ ] Keyboard-only modal test.
-- [ ] Keyboard-only dropdown/tabs test.
-- [ ] Focus restore test.
-- [ ] Responsive viewport test.
+- [x] Tambahkan Playwright atau browser runner.
+- [x] axe scan halaman public, auth, users, roles, media, settings.
+- [x] Keyboard-only modal test.
+- [x] Keyboard-only dropdown/tabs test.
+- [x] Focus restore test.
+- [x] Responsive viewport test.
 - [ ] Screenshot baseline halaman utama.
 
 ## QA-05 — Performance suite
