@@ -46,11 +46,21 @@ test.describe("axe scans", () => {
 
 	test("admin surface has no critical/serious violations", async ({ page }) => {
 		await login(page);
-		for (const path of ["/users", "/roles", "/permissions", "/media", "/settings", "/activity"]) {
+		for (const path of [
+			"/users",
+			"/roles",
+			"/permissions",
+			"/media",
+			"/settings",
+			"/activity",
+		]) {
 			await page.goto(path);
 			await page.waitForLoadState("domcontentloaded");
 			const violations = await seriousViolations(page);
-			expect(violations, summarize(violations.map((v) => ({ ...v, page: path })))).toEqual([]);
+			expect(
+				violations,
+				summarize(violations.map((v) => ({ ...v, page: path }))),
+			).toEqual([]);
 		}
 	});
 });
@@ -153,7 +163,9 @@ test.describe("responsive smoke (UX-05)", () => {
 		for (const path of ["/", "/login"]) {
 			await page.goto(path);
 			const overflow = await page.evaluate(
-				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+				() =>
+					document.documentElement.scrollWidth >
+					document.documentElement.clientWidth,
 			);
 			expect(overflow, `${path} overflows horizontally`).toBe(false);
 		}

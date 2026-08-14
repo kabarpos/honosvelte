@@ -43,7 +43,9 @@ mkdirSync(uploadDir, { recursive: true });
 mkdirSync(mediaDir, { recursive: true });
 
 const { hashPassword } = await import("../src/server/auth");
-const { createUserWithRole, findUserByEmail } = await import("../src/server/db");
+const { createUserWithRole, findUserByEmail } = await import(
+	"../src/server/db"
+);
 const adminEmail = process.env.E2E_ADMIN_EMAIL ?? "admin@example.com";
 const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? "admin123";
 if (!findUserByEmail.get(adminEmail)) {
