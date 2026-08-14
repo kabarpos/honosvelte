@@ -111,9 +111,7 @@ describe("rbac access control", () => {
 		for (const path of ["/users", "/roles", "/permissions"]) {
 			const res = await call(path, { headers: { ...xhr, cookie } });
 			expect(res.status).toBe(302);
-			expect(new URL(res.headers.get("location")!).pathname).toBe(
-				"/dashboard",
-			);
+			expect(new URL(res.headers.get("location")!).pathname).toBe("/dashboard");
 		}
 	});
 
@@ -217,7 +215,7 @@ describe("rbac access control", () => {
 			method: "DELETE",
 			headers: { ...xhr, cookie },
 		});
-				expect(del.status).toBe(303);
+		expect(del.status).toBe(303);
 		expect(findUserByEmail.get("doomed@example.com")).toBeNull();
 	});
 });
@@ -485,9 +483,7 @@ describe("rbac permission guards", () => {
 			// redirected from /activity even though they are 'admin'.
 			const res = await call("/activity", { headers: { ...xhr, cookie } });
 			expect(res.status).toBe(302);
-			expect(new URL(res.headers.get("location")!).pathname).toBe(
-				"/dashboard",
-			);
+			expect(new URL(res.headers.get("location")!).pathname).toBe("/dashboard");
 		});
 	});
 });

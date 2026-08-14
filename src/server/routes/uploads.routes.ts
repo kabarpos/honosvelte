@@ -439,13 +439,14 @@ export const uploadsRoutes = () => {
 	const uploadCap =
 		config.upload.maxSize > 0 ? config.upload.maxSize : Number.MAX_SAFE_INTEGER;
 	const chunkCap =
-		config.upload.chunkMax > 0 ? config.upload.chunkMax : Number.MAX_SAFE_INTEGER;
+		config.upload.chunkMax > 0
+			? config.upload.chunkMax
+			: Number.MAX_SAFE_INTEGER;
 
 	// POST /uploads — create a new upload resource (Creation extension).
 	app.post("/", limitUpload, async (c) => {
 		const bytes = await readBoundedBytes(c, uploadCap);
-		if (bytes === null)
-			return c.json({ error: "Upload body too large." }, 413);
+		if (bytes === null) return c.json({ error: "Upload body too large." }, 413);
 		return dispatch(c.req.raw, c.req.method, null, bytes);
 	});
 	// POST /uploads/:id — supports X-HTTP-Method-Override: PATCH/DELETE.

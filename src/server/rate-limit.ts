@@ -97,19 +97,26 @@ export function ipInNetwork(ip: string, network: string): boolean {
 	if (!baseBytes) return false;
 	if (prefixRaw === undefined) {
 		// Exact match (lengths must agree — 127.0.0.1 ≠ 127.0.0.1::1).
-		return ipBytes.length === baseBytes.length && ipBytes.every((b, i) => b === byte(baseBytes, i));
+		return (
+			ipBytes.length === baseBytes.length &&
+			ipBytes.every((b, i) => b === byte(baseBytes, i))
+		);
 	}
 	const prefix = Number(prefixRaw);
 	if (!Number.isInteger(prefix)) return false;
 	const bits = ipBytes.length * 8;
-	if (prefix < 0 || prefix > bits || ipBytes.length !== baseBytes.length) return false;
+	if (prefix < 0 || prefix > bits || ipBytes.length !== baseBytes.length)
+		return false;
 	const fullBytes = Math.floor(prefix / 8);
 	for (let i = 0; i < fullBytes; i++) {
 		if (byte(ipBytes, i) !== byte(baseBytes, i)) return false;
 	}
 	if (prefix % 8 !== 0) {
 		const mask = 0xff << (8 - (prefix % 8));
-		if ((byte(ipBytes, fullBytes) & mask) !== (byte(baseBytes, fullBytes) & mask)) {
+		if (
+			(byte(ipBytes, fullBytes) & mask) !==
+			(byte(baseBytes, fullBytes) & mask)
+		) {
 			return false;
 		}
 	}
@@ -161,7 +168,12 @@ function clientKey(
 	});
 }
 
-export function rateLimit({ max, windowSeconds, accountKey, trustedProxies = [] }: RateLimitOptions) {
+export function rateLimit({
+	max,
+	windowSeconds,
+	accountKey,
+	trustedProxies = [],
+}: RateLimitOptions) {
 	const buckets = new Map<string, Bucket>();
 
 	// Opportunistic pruning so the map cannot grow unbounded.
@@ -172,14 +184,19 @@ export function rateLimit({ max, windowSeconds, accountKey, trustedProxies = [] 
 		}
 	}
 
-	async function checkAndRecord(key: string, now: number): Promise<number | null> {
+	async function checkAndRecord(
+		key: string,
+		now: number,
+	): Promise<number | null> {
 		const bucket = buckets.get(key);
 		if (!bucket || bucket.resetAt <= now) {
 			buckets.set(key, { count: 1, resetAt: now + windowSeconds * 1000 });
 			return null;
 		}
 		bucket.count += 1;
-		return bucket.count > max ? Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)) : null;
+		return bucket.count > max
+			? Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))
+			: null;
 	}
 
 	return async (c: Context<AppEnv>, next: Next) => {

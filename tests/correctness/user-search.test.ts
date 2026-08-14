@@ -76,7 +76,12 @@ describe("user search", () => {
 			props: {
 				users: {
 					data: Array<{ name: string }>;
-					meta: { currentPage: number; lastPage: number; total: number; perPage: number };
+					meta: {
+						currentPage: number;
+						lastPage: number;
+						total: number;
+						perPage: number;
+					};
 				};
 			};
 		};
@@ -84,20 +89,28 @@ describe("user search", () => {
 		expect(page1.props.users.meta.currentPage).toBe(1);
 		expect(page1.props.users.data).toHaveLength(10);
 
-		const page2 = (await call(app, "/users?search=Page%20Match&perPage=10&page=2", {
-			headers: INERTIA_HEADERS,
-			cookie,
-		}).then((r) => r.json())) as typeof page1;
+		const page2 = (await call(
+			app,
+			"/users?search=Page%20Match&perPage=10&page=2",
+			{
+				headers: INERTIA_HEADERS,
+				cookie,
+			},
+		).then((r) => r.json())) as typeof page1;
 		expect(page2.props.users.meta.currentPage).toBe(2);
 		expect(page2.props.users.data).toHaveLength(10);
 		expect(page2.props.users.data[0]?.name).not.toBe(
 			page1.props.users.data[0]?.name,
 		);
 
-		const page3 = (await call(app, "/users?search=Page%20Match&perPage=10&page=3", {
-			headers: INERTIA_HEADERS,
-			cookie,
-		}).then((r) => r.json())) as typeof page1;
+		const page3 = (await call(
+			app,
+			"/users?search=Page%20Match&perPage=10&page=3",
+			{
+				headers: INERTIA_HEADERS,
+				cookie,
+			},
+		).then((r) => r.json())) as typeof page1;
 		expect(page3.props.users.data).toHaveLength(5); // 25 total → 10/10/5
 	});
 

@@ -58,17 +58,15 @@ export interface InertiaContext {
 	settings: SharedPageProps["settings"];
 }
 
-	/** Effective permission slugs exposed to the client. super_admin receives
-	 *  ['*'] — implicit access, mirroring requireRole/requirePermission. */
-	function capabilitiesForUser(
-		user: SharedPageProps["auth"]["user"],
-	): string[] {
-		if (!user) return [];
-		if (user.role === "super_admin") return ["*"];
-		return [...permissionsForUser(user)];
-	}
+/** Effective permission slugs exposed to the client. super_admin receives
+ *  ['*'] — implicit access, mirroring requireRole/requirePermission. */
+function capabilitiesForUser(user: SharedPageProps["auth"]["user"]): string[] {
+	if (!user) return [];
+	if (user.role === "super_admin") return ["*"];
+	return [...permissionsForUser(user)];
+}
 
-	const splitList = (value: string | undefined): string[] | undefined =>
+const splitList = (value: string | undefined): string[] | undefined =>
 	value
 		? value
 				.split(",")

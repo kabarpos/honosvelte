@@ -72,3 +72,4 @@
 {"slug":"obs-2026-08-13-dashboard-stats-extension-pattern-honosvelte","title":"Dashboard stats extension pattern (honosvelte)","relevance":"medium","timestamp":"2026-08-13T13:54:59.155Z","kind":"observe"}
 {"slug":"obs-2026-08-14-sequential-audit-remediation-started","title":"Sequential audit remediation started","relevance":"high","timestamp":"2026-08-14T05:35:29.439Z","kind":"observe"}
 {"slug":"obs-2026-08-14-audit-todolist-fix-md-target-9-5-10-belum-tercapai","title":"Audit todolist-fix.md: target 9.5/10 BELUM tercapai","relevance":"high","timestamp":"2026-08-14T11:12:04.378Z","kind":"observe"}
+{"slug":"obs-2026-08-14-19-item-todolist-fix-ditutup-zero-warning-rbac-parity-truste","title":"19 item todolist-fix ditutup: zero-warning, RBAC parity, trusted proxy, bounded resources","relevance":"high","timestamp":"2026-08-14T11:39:16.564Z","kind":"observe"}

@@ -12,7 +12,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { ipInNetwork, resolveClientKey } from "../../src/server/rate-limit";
 
-let app: Awaited<ReturnType<typeof import("../../src/server/app")["createApp"]>>;
+let app: Awaited<
+	ReturnType<typeof import("../../src/server/app")["createApp"]>
+>;
 
 beforeAll(async () => {
 	process.env.DATABASE_PATH = ":memory:";
@@ -109,9 +111,9 @@ describe("resolveClientKey — X-Forwarded-For trust boundary", () => {
 	});
 
 	it("falls back to 'local' when no peer IP is known", () => {
-		expect(
-			resolveClientKey({ peerIp: null, forwardedFor: "1.2.3.4" }),
-		).toBe("local");
+		expect(resolveClientKey({ peerIp: null, forwardedFor: "1.2.3.4" })).toBe(
+			"local",
+		);
 	});
 });
 

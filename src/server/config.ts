@@ -51,7 +51,8 @@ const trustedProxies = trustedProxyRaw
 	.split(",")
 	.map((s) => s.trim())
 	.filter(Boolean);
-const CIDR_OR_IP = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$|^[0-9a-fA-F:]+(\/\d{1,3})?$/;
+const CIDR_OR_IP =
+	/^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$|^[0-9a-fA-F:]+(\/\d{1,3})?$/;
 for (const entry of trustedProxies) {
 	if (!CIDR_OR_IP.test(entry)) {
 		problems.push(`TRUSTED_PROXY entry "${entry}" is not a valid IP or CIDR`);
