@@ -593,6 +593,34 @@ describe("profile page & avatar upload", () => {
 		expect(scriptSrc).toBe("'none'");
 	});
 
+	it("uses file signatures before rendering declared image MIME", async () => {
+		const create = await tus("/uploads", {
+			method: "POST",
+			headers: {
+				"Upload-Length": "4",
+				"Upload-Metadata": `filename ${Buffer.from("fake.png").toString("base64")},filetype ${Buffer.from("IMAGE/PNG").toString("base64")}`,
+			},
+			cookie,
+		});
+		const id = (create.headers.get("Location") ?? "").replace("/uploads/", "");
+		const patch = await tus(`/uploads/${id}`, {
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/offset+octet-stream",
+				"Upload-Offset": "0",
+			},
+			body: new Uint8Array([0x3c, 0x68, 0x74, 0x6d]),
+			cookie,
+		});
+		expect(patch.status).toBe(204);
+		const response = await tus(`/uploads/${id}`, { method: "GET", cookie });
+		expect(response.status).toBe(200);
+		expect(response.headers.get("content-type")).toBe(
+			"application/octet-stream",
+		);
+		expect(response.headers.get("content-disposition")).toContain("attachment");
+	});
+
 	it("rejects GET from another user's upload", async () => {
 		const id = await uploadImage(cookie, "image/png");
 		const res = await tus(`/uploads/${id}`, {
@@ -730,6 +758,38 @@ describe("google oauth stores a local avatar", () => {
 		expect(img.status).toBe(200);
 		expect(img.headers.get("content-type")).toBe("image/jpeg");
 		expect(new Uint8Array(await img.arrayBuffer())).toEqual(PICTURE);
+	});
+
+	it("rejects Google OAuth for an inactive linked user", async () => {
+		const { findUserByEmail, setUserStatus } = await import("../src/server/db");
+		const user = findUserByEmail.get("google-avatar@example.com");
+		expect(user).toBeTruthy();
+		if (!user) return;
+		setUserStatus.run("inactive", user.id);
+
+		const start = await tus("/auth/google");
+		const setCookie = start.headers.get("set-cookie") ?? "";
+		const state = decodeURIComponent(
+			(setCookie.match(/oauth_state=([^;]+)/) ?? [])[1] ?? "",
+		);
+		expect(state).not.toBe("");
+		const cb = await tus(
+			`/auth/google/callback?code=test-code&state=${encodeURIComponent(state)}`,
+			{ cookie: `oauth_state=${state}` },
+		);
+		expect(cb.status).toBe(302);
+		const location = cb.headers.get("location");
+		expect(location).toBeTruthy();
+		if (location) {
+			try {
+				const url = new URL(location);
+				expect(url.pathname).toBe("/login");
+				expect(url.searchParams.get("notice")).toBe("google_failed");
+			} catch {
+				throw new Error(`Invalid redirect location: ${location}`);
+			}
+		}
+		expect(cb.headers.get("set-cookie") ?? "").not.toContain("session=");
 	});
 });
 

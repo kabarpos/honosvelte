@@ -34,9 +34,9 @@ export const notificationRoutes = () => {
 		(c) => {
 			const user = c.var.user!;
 			const page = Math.min(
-			1000,
-			Math.max(1, Number(c.req.query("page") ?? 1) || 1),
-		);
+				1000,
+				Math.max(1, Number(c.req.query("page") ?? 1) || 1),
+			);
 			const perPage = Math.min(
 				100,
 				Math.max(1, Number(c.req.query("perPage") ?? 20) || 20),

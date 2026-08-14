@@ -27,6 +27,11 @@ const mailtrapToken = process.env.MAILTRAP_API_TOKEN ?? "";
 const dripsenderApiKey = process.env.DRIPSENDER_API_KEY ?? "";
 const dripsenderIntegrationUrl = process.env.DRIPSENDER_INTEGRATION_URL ?? "";
 const whatsappWebhookSecret = process.env.WHATSAPP_WEBHOOK_SECRET ?? "";
+const isProd = process.env.NODE_ENV === "production";
+const smtpInsecureTls = process.env.MAIL_TLS_INSECURE === "true";
+if (smtpInsecureTls && isProd) {
+	problems.push("MAIL_TLS_INSECURE cannot be enabled in production");
+}
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "";
@@ -41,7 +46,7 @@ if (problems.length > 0) {
 }
 
 export const config = {
-	isProd: process.env.NODE_ENV === "production",
+	isProd,
 	port: Number(pick(process.env.PORT, "4000")),
 	/** Absolute base URL — used for email links and OAuth redirect URIs. */
 	appUrl: pick(process.env.APP_URL, "http://localhost:4000").replace(
@@ -69,6 +74,8 @@ export const config = {
 		resendApiKey,
 		mailtrapToken,
 		mailtrapInboxId: process.env.MAILTRAP_INBOX_ID ?? "",
+		/** Development-only opt-in: allow self-signed SMTP certificates. */
+		smtpInsecureTls,
 	},
 	google: {
 		clientId: googleClientId || null,

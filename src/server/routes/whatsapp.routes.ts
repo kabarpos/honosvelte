@@ -13,6 +13,7 @@
  */
 import { createHash, timingSafeEqual } from "node:crypto";
 import { Type as t, type Static } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 import { Hono } from "hono";
 import { requirePermission, requireRole, setFlash } from "../auth";
 import {
@@ -42,6 +43,48 @@ import { rateLimit } from "../rate-limit";
 
 const WEBHOOK_MAX_BODY_BYTES = 64 * 1024;
 const WEBHOOK_REPLAY_WINDOW_SECONDS = 5 * 60;
+const AUTO_REPLY_MAX_PER_PHONE = 5;
+const AUTO_REPLY_WINDOW_MS = 10 * 60 * 1000;
+const AUTO_REPLY_FAILURE_LIMIT = 3;
+const AUTO_REPLY_CIRCUIT_MS = 60 * 1000;
+const autoReplyBuckets = new Map<string, { count: number; resetAt: number }>();
+let autoReplyFailures = 0;
+let autoReplyCircuitUntil = 0;
+
+/** Test-only hook: reset in-memory auto-reply state for deterministic suites. */
+export function __resetAutoReplyState(): void {
+	autoReplyBuckets.clear();
+	autoReplyFailures = 0;
+	autoReplyCircuitUntil = 0;
+}
+
+function allowAutoReply(phone: string): boolean {
+	const now = Date.now();
+	const bucket = autoReplyBuckets.get(phone);
+	if (!bucket || bucket.resetAt <= now) {
+		autoReplyBuckets.set(phone, {
+			count: 1,
+			resetAt: now + AUTO_REPLY_WINDOW_MS,
+		});
+		return true;
+	}
+	if (bucket.count >= AUTO_REPLY_MAX_PER_PHONE) return false;
+	bucket.count += 1;
+	return true;
+}
+const webhookBody = t.Object(
+	{
+		id: t.String({ minLength: 1, maxLength: 255 }),
+		phone: t.String({ minLength: 1, maxLength: 32 }),
+		jid: t.Optional(t.String({ maxLength: 255 })),
+		name: t.Optional(t.String({ maxLength: 160 })),
+		text: t.String({ minLength: 1, maxLength: 10_000 }),
+		timestamp: t.Union([t.String({ minLength: 1, maxLength: 32 }), t.Number()]),
+	},
+	{ additionalProperties: false },
+);
+
+type WebhookBody = Static<typeof webhookBody>;
 
 function validWebhookSecret(request: Request): boolean {
 	const expected = config.whatsapp.webhookSecret;
@@ -483,8 +526,10 @@ export const whatsappRoutes = () => {
 				return c.json({ error: "Webhook authentication failed." }, 401);
 			const parsed = await readWebhookJson(c.req.raw);
 			if (parsed instanceof Response) return parsed;
-			const raw = parsed;
-			const externalId = raw.id != null ? String(raw.id).trim() : "";
+			if (!Value.Check(webhookBody, parsed))
+				return c.json({ error: "Invalid webhook payload." }, 422);
+			const raw = parsed as WebhookBody;
+			const externalId = raw.id.trim();
 			const phone = raw.phone != null ? String(raw.phone).trim() : "";
 			const text = raw.text != null ? String(raw.text) : "";
 			const jid = raw.jid != null ? String(raw.jid) : null;
@@ -541,12 +586,26 @@ export const whatsappRoutes = () => {
 					};
 					const reply = renderTemplate(tpl.body, data);
 					if (reply.trim()) {
-						await sendWhatsApp({
-							phone: String(phone).replace(/\D/g, ""),
-							text: reply,
-							mediaUrl: tpl.mediaUrl || undefined,
-						}).catch(() => {});
-						return c.json({ ok: true, reply: true });
+						if (Date.now() < autoReplyCircuitUntil)
+							return c.json({ ok: true, reply: false, suppressed: "circuit" });
+						if (!allowAutoReply(phone))
+							return c.json({ ok: true, reply: false, suppressed: "quota" });
+						try {
+							await sendWhatsApp({
+								phone: String(phone).replace(/\D/g, ""),
+								text: reply,
+								mediaUrl: tpl.mediaUrl || undefined,
+							});
+							autoReplyFailures = 0;
+							return c.json({ ok: true, reply: true });
+						} catch {
+							autoReplyFailures += 1;
+							if (autoReplyFailures >= AUTO_REPLY_FAILURE_LIMIT) {
+								autoReplyCircuitUntil = Date.now() + AUTO_REPLY_CIRCUIT_MS;
+								autoReplyFailures = 0;
+							}
+							return c.json({ ok: true, reply: false, suppressed: "provider" });
+						}
 					}
 				}
 			}

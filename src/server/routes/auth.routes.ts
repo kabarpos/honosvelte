@@ -238,9 +238,7 @@ export const authRoutes = () => {
 				});
 			}
 			const user = findUserByEmail.get(body.email);
-			const valid = user
-				? consumePasswordReset(user.email, body.token)
-				: false;
+			const valid = user ? consumePasswordReset(user.email, body.token) : false;
 			if (!user || !valid) {
 				return page.error("ResetPassword", {
 					token: "This reset link is invalid or has expired.",
@@ -249,6 +247,7 @@ export const authRoutes = () => {
 			const passwordHash = await hashPassword(body.password);
 			updateUserPassword.run(passwordHash, user.id);
 			deleteSessionsByUserId.run(user.id);
+			recordActivity(c, user.id, "password.reset", "Password reset completed");
 
 			return page.redirect("/login?notice=password_reset");
 		},

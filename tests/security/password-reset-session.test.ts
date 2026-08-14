@@ -75,5 +75,11 @@ describe("password reset session lifecycle", () => {
 			},
 		});
 		expect(reused.status).toBe(422);
+		const { listActivity } = await import("../../src/server/db");
+		expect(
+			listActivity
+				.all("", "", "", "", "", "", "", 20, 0)
+				.some((entry) => entry.event === "password.reset"),
+		).toBe(true);
 	});
 });

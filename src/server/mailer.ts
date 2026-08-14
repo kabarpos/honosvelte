@@ -103,6 +103,9 @@ async function sendSmtp(
 		port: cfg.smtpPort,
 		secure: cfg.smtpSecure,
 		auth: cfg.smtpUser ? { user: cfg.smtpUser, pass: cfg.smtpPass } : undefined,
+		...(config.mail.smtpInsecureTls
+			? { tls: { rejectUnauthorized: false } }
+			: {}),
 	});
 	await transport.sendMail({
 		from: cfg.from,

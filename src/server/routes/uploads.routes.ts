@@ -25,7 +25,13 @@ import {
 	insertUpload,
 	listExpired,
 } from "../db";
-import { appendBytes, fileSize, removeFile, uploadPath } from "../tus-storage";
+import {
+	appendBytes,
+	detectMime,
+	fileSize,
+	removeFile,
+	uploadPath,
+} from "../tus-storage";
 import {
 	H,
 	OFFSET_CONTENT_TYPE,
@@ -335,7 +341,8 @@ async function handleGetFile(req: Request, id: string): Promise<Response> {
 		"image/x-icon",
 		"image/vnd.microsoft.icon",
 	]);
-	const inline = inlineTypes.has(declaredType);
+	const detectedType = await detectMime(id);
+	const inline = inlineTypes.has(declaredType) && detectedType === declaredType;
 	const size = fileSize(id);
 	if (size < row.uploadLength)
 		return errorResponse(404, "Upload file is missing");

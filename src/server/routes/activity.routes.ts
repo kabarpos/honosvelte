@@ -44,10 +44,21 @@ export const activityRoutes = () => {
 		const event = String(c.req.query("event") ?? "");
 		const search = String(c.req.query("search") ?? "");
 		const like = `%${search}%`;
-		const total = countActivity.get(event, event, like, like, like, like, like)?.n ?? 0;
+		const total =
+			countActivity.get(event, event, like, like, like, like, like)?.n ?? 0;
 		const data: Paginated<ActivityLogEntry> = {
 			data: listActivity
-				.all(event, event, like, like, like, like, like, perPage, (page - 1) * perPage)
+				.all(
+					event,
+					event,
+					like,
+					like,
+					like,
+					like,
+					like,
+					perPage,
+					(page - 1) * perPage,
+				)
 				.map((row) => ({
 					id: row.id,
 					userId: row.userId,

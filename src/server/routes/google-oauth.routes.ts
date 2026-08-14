@@ -26,8 +26,9 @@ import {
 } from "../db";
 import type { AppEnv } from "../inertia-middleware";
 import { generateUploadId } from "../tus-protocol";
-import { uploadPath, writeBytes } from "../tus-storage";
+import { detectMimeFromBytes, uploadPath, writeBytes } from "../tus-storage";
 import { safeUrl } from "../url";
+import { assertPublicHost } from "../ssrf";
 
 interface GoogleProfile {
 	id: string;
@@ -81,23 +82,68 @@ async function fetchProfile(accessToken: string): Promise<GoogleProfile> {
 /** Download the Google profile picture and store a local copy in the uploads
  *  store. The CSP (img-src 'self') blocks external images, so avatars must
  *  live on our own origin; returns the local URL (/uploads/<id>). */
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
 async function storeGoogleAvatar(
 	pictureUrl: string,
 	userId: number,
 ): Promise<string> {
+	let avatarUrl: URL;
+	try {
+		avatarUrl = new URL(pictureUrl);
+	} catch {
+		throw new Error("Avatar URL is not a valid URL.");
+	}
+	await assertPublicHost(avatarUrl.hostname);
 	const res = await fetch(pictureUrl, {
 		signal: AbortSignal.timeout(10_000),
+		redirect: "manual",
 	});
-	if (!res.ok) throw new Error(`Avatar download failed (${res.status})`);
-	const bytes = new Uint8Array(await res.arrayBuffer());
+	if (!res.ok || res.status >= 300)
+		throw new Error(`Avatar download failed (${res.status})`);
+	const declaredType =
+		res.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() ?? "";
+	if (!declaredType.startsWith("image/"))
+		throw new Error("Avatar is not an image.");
+	const declaredLength = Number(res.headers.get("content-length") ?? "");
+	if (Number.isFinite(declaredLength) && declaredLength > MAX_AVATAR_BYTES)
+		throw new Error("Avatar is too large.");
+
+	// Read at most MAX_AVATAR_BYTES + 1 bytes so oversize responses are rejected
+	// without buffering the whole body.
+	const reader = res.body?.getReader();
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	try {
+		if (reader) {
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				if (!value) continue;
+				total += value.byteLength;
+				if (total > MAX_AVATAR_BYTES) throw new Error("Avatar is too large.");
+				chunks.push(value);
+			}
+		}
+	} finally {
+		reader?.releaseLock();
+	}
+	const bytes = new Uint8Array(total);
+	let offset = 0;
+	for (const chunk of chunks) {
+		bytes.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+	const detected = detectMimeFromBytes(bytes);
+	if (!detected || !detected.startsWith("image/"))
+		throw new Error("Avatar signature is not a supported image.");
+
 	const id = generateUploadId();
-	const filetype =
-		res.headers.get("content-type")?.split(";")[0] || "image/jpeg";
 	await writeBytes(id, bytes);
 	insertUpload.run(
 		id,
 		bytes.byteLength,
-		JSON.stringify({ filetype }),
+		JSON.stringify({ filetype: detected }),
 		userId,
 		uploadPath(id),
 		null,

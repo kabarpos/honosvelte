@@ -38,6 +38,15 @@ describe("WhatsApp webhook security", () => {
 		expect(response.status).toBe(401);
 	});
 
+	it("rejects invalid payloads before persistence", async () => {
+		const response = await call(app, "/whatsapp/webhook", {
+			method: "POST",
+			headers: { "x-webhook-secret": secret },
+			body: { phone: "6281200000000", text: "missing id and timestamp" },
+		});
+		expect(response.status).toBe(422);
+	});
+
 	it("rejects replayed timestamps", async () => {
 		const response = await call(app, "/whatsapp/webhook", {
 			method: "POST",
@@ -62,6 +71,43 @@ describe("WhatsApp webhook security", () => {
 		expect(first.status).toBe(200);
 		expect(duplicate.status).toBe(200);
 		expect(await duplicate.json()).toEqual({ ok: true, duplicate: true });
+	});
+
+	it("suppresses auto-replies after the per-phone quota", async () => {
+		const { setSetting } = await import("../../src/server/settings");
+		const { insertWhatsAppTemplate } = await import("../../src/server/db");
+		setSetting("whatsapp.provider", "log");
+		setSetting("whatsapp.auto_reply", "true");
+		setSetting("whatsapp.auto_reply_slug", "quota-test");
+		insertWhatsAppTemplate.run(
+			"Quota Test",
+			"quota-test",
+			"Reply",
+			"",
+			"",
+			"manual",
+			"customer",
+			1,
+			0,
+		);
+		const responses: Array<Record<string, unknown>> = [];
+		for (let i = 0; i < 6; i += 1) {
+			const response = await call(app, "/whatsapp/webhook", {
+				method: "POST",
+				headers: { "x-webhook-secret": secret },
+				body: event(`quota-event-${i}`),
+			});
+			expect(response.status).toBe(200);
+			responses.push((await response.json()) as Record<string, unknown>);
+		}
+		expect(responses.slice(0, 5).every((item) => item.reply === true)).toBe(
+			true,
+		);
+		expect(responses[5]).toEqual({
+			ok: true,
+			reply: false,
+			suppressed: "quota",
+		});
 	});
 
 	it("rejects an oversized body before JSON processing completes", async () => {

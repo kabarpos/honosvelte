@@ -30,6 +30,26 @@ describe("secret projection", () => {
 		setSetting("mail.smtp_pass", "smtp-secret-for-test");
 		setSetting("whatsapp.api_key", "whatsapp-secret-for-test");
 
+		const publicHtmlResponse = await call(app, "/");
+		expect(publicHtmlResponse.status).toBe(200);
+		const publicHtml = await publicHtmlResponse.text();
+		expectBodyNotToContain(publicHtml, [
+			"mail.smtp_pass",
+			"whatsapp.api_key",
+			"smtp-secret-for-test",
+			"whatsapp-secret-for-test",
+		]);
+
+		const loginHtmlResponse = await call(app, "/login");
+		expect(loginHtmlResponse.status).toBe(200);
+		const loginHtml = await loginHtmlResponse.text();
+		expectBodyNotToContain(loginHtml, [
+			"mail.smtp_pass",
+			"whatsapp.api_key",
+			"smtp-secret-for-test",
+			"whatsapp-secret-for-test",
+		]);
+
 		const publicResponse = await call(app, "/", {
 			headers: INERTIA_HEADERS,
 		});

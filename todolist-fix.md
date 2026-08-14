@@ -15,13 +15,13 @@
 ### Progress log
 
 - **2026-08-13 — Phase 0:** threat model dibuat di `docs/security/threat-model.md`; evidence ledger dibuat di `docs/audit/evidence-ledger.md`; reusable security-test helper dibuat di `tests/security/helpers.ts`.
-- **2026-08-13 — SEC-01 partial:** public settings projection diterapkan; WhatsApp API key tidak lagi dikirim ke browser; `tests/security/secrets.test.ts` ditambahkan dan pass.
-- **2026-08-13 — SEC-02 partial:** protected-role guards, last-super-admin protection, role-change activity, dan `tests/security/protected-role.test.ts` ditambahkan; existing-data review dan full super-admin mutation tests masih pending.
-- **2026-08-13 — SEC-03 partial:** inactive login ditolak, session dicabut saat deactivation, dan reactivation terverifikasi di `tests/security/inactive-user.test.ts`; OAuth flow test masih pending.
-- **2026-08-13 — SEC-04 partial:** reset password sekarang mencabut seluruh session dan mengonsumsi token secara atomic; `tests/security/password-reset-session.test.ts` menutup old-session, old-password, new-login, dan token-reuse flow; password-change policy/security event masih pending.
-- **2026-08-13 — SEC-05 partial:** webhook memakai shared secret, bounded JSON body, timestamp replay window, rate limit, idempotency migration, field limits, dan response tanpa reply text; schema TypeBox, quota/circuit breaker, serta threshold tests masih pending.
-- **2026-08-13 — SEC-06 partial:** Tus GET menjadi private owner-scoped dan completed-only; unsafe non-image content menjadi attachment; test Tus diperbarui untuk ownership/incomplete/Google avatar.
-- **2026-08-13 — SEC-07 partial:** SMTP TLS certificate bypass dihapus, timeout 10 detik ditambahkan, dan integration URL dibatasi ke host Dripsender; DNS/private-IP, redirect/response limits, dan production TLS configuration test masih pending.
+- **2026-08-13 — SEC-01 partial:** public settings projection diterapkan; WhatsApp API key tidak lagi dikirim ke browser; SSR, `/login`, XHR, authenticated, dan admin payload tests pass di `tests/security/secrets.test.ts`; live credential rotation dan log/flash audit operator masih pending.
+- **2026-08-13 — SEC-02 partial:** protected-role guards, last-super-admin protection, role-change activity, dan `tests/security/protected-role.test.ts` ditambahkan; existing-data review selesai tanpa indikasi role escalation; full super-admin mutation tests masih pending.
+- **2026-08-13 — SEC-03 complete:** inactive login/session/reactivation dan inactive-linked-user Google OAuth rejection terverifikasi di `tests/security/inactive-user.test.ts` dan `tests/tus.test.ts`.
+- **2026-08-13 — SEC-04 complete:** reset password mencabut seluruh session, mengonsumsi token atomic, dan mencatat `password.reset`; password-change policy existing memelihara current session dan mencabut device lain; test lifecycle pass.
+- **2026-08-13 — SEC-05 complete:** webhook memakai shared secret, bounded TypeBox JSON body, timestamp replay window, rate limit, idempotency migration, field limits, safe response, per-phone auto-reply quota, dan provider circuit breaker; threshold/fixture tests pass.
+- **2026-08-13 — SEC-06 complete:** Tus GET private owner-scoped/completed-only, unsafe content attachment-only, dan bounded file-signature detection diterapkan; Tus tests menutup ownership/incomplete/mixed-case/signature mismatch/Google avatar.
+- **2026-08-13 — SEC-07 complete:** SMTP TLS bypass hanya via `MAIL_TLS_INSECURE` dev-only (fail-fast prod); timeout 10 detik; integration URL allowlist Dripsender; SSRF private-IP/DNS guard; redirect manual; avatar 2 MiB bounded + content-type/signature; integration response detail dibatasi.
 - **2026-08-13 — SEC-08 partial:** granular guards dan migration `0019_admin_action_permissions.sql` ditambahkan; `tests/security/permission-guards.test.ts` memverifikasi revoke pada contact/notifications/email/WhatsApp; policy mapping dan UI parity masih pending.
 - **2026-08-13 — SEC-09 partial:** CSRF comparison memakai full origin dan malformed origin ditolak; `tests/security/csrf.test.ts` ditambahkan; trusted proxy dan account-aware rate limiting masih pending.
 - **2026-08-13 — COR-01 partial:** mismatch placeholder user search diperbaiki; name/email search terverifikasi di `tests/correctness/user-search.test.ts`; pagination dan empty-search edge test masih pending.
@@ -36,7 +36,7 @@
 - **2026-08-13 — PERF-03 partial:** migration `0020_query_support_indexes.sql` menambahkan index common filter/order; EXPLAIN, FTS, dan query budget masih pending.
 - **2026-08-13 — PERF-04 partial:** page number dibatasi maksimum 1000 pada lima route paginated; cursor pagination/count optimization masih pending.
 - **2026-08-13 — PERF-06 partial:** `sweepExpired()` dijadwalkan setiap 15 menit dan timer dibersihkan saat shutdown; session/reset cleanup, retention, queue, retry, dan dead-letter masih pending.
-- **Current verification:** build/typecheck PASS (0 error/38 warning); full suite **176 pass, 0 fail, 662 assertions** across 23 files.
+- **Current verification:** build/typecheck PASS (0 error/38 warning); full suite **187 pass, 0 fail, 723 assertions** across 26 files.
 
 ---
 
@@ -141,12 +141,12 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Jangan kirim full WhatsApp API key ke browser.
 - [x] Gunakan `hasApiKey` atau masked value.
 - [ ] Audit SSR HTML, X-Inertia JSON, logs, dan flash messages.
-- [ ] Rotate credential yang pernah disimpan di versi vulnerable.
+- [ ] Rotate credential live yang pernah disimpan di versi vulnerable; prosedur operator ada di `docs/security/secret-rotation.md`.
 
 **Tests:**
 
 - [x] Guest `/` tidak mengandung nama/value secret.
-- [ ] Guest `/login` tidak mengandung nama/value secret.
+- [x] Guest `/login` tidak mengandung nama/value secret.
 - [x] Authenticated page tidak mengandung nama/value secret.
 - [x] Admin dapat mengganti secret tanpa membaca kembali nilai lama.
 
@@ -163,7 +163,7 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Hanya super-admin atau permission khusus yang dapat melakukan protected-role mutation.
 - [x] Cegah demote/delete last super-admin.
 - [x] Record audit event untuk seluruh role mutation.
-- [ ] Review data existing untuk role escalation.
+- [x] Review data existing untuk role escalation; database saat audit berisi 1 user dan 3 admin, tanpa `super_admin`, tanpa inactive user, dan tanpa role-change event.
 
 **Tests:**
 
@@ -182,17 +182,17 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Reactivation kembali mengizinkan login.
 - [x] Tambahkan security event untuk deactivation/reactivation melalui activity log.
 
-**Tests:** login baru, session lama, dan reactivation terverifikasi; OAuth flow test masih pending.
+**Tests:** login baru, session lama, reactivation, dan Google OAuth inactive-linked-user flow terverifikasi di `tests/tus.test.ts`.
 
 ## SEC-04 — Invalidate session setelah password reset
 
 - [x] Tambahkan `deleteSessionsByUserId` ke `db.ts`.
 - [x] Reset password menghapus seluruh session user.
-- [ ] Password-change authenticated mempertahankan policy yang terdokumentasi.
+- [x] Password-change authenticated mempertahankan policy: current session dipertahankan, session device lain dicabut.
 - [x] Reset token dikonsumsi atomic dan tidak dapat digunakan ulang.
-- [ ] Tambahkan notification/security event bila diperlukan.
+- [x] Tambahkan security event `password.reset`.
 
-**Test:** session sebelum reset, password lama, password baru, dan token reuse terverifikasi di `tests/security/password-reset-session.test.ts`.
+**Test:** session sebelum reset, password lama, password baru, token reuse, dan activity event terverifikasi di `tests/security/password-reset-session.test.ts`.
 
 ## SEC-05 — Amankan webhook WhatsApp
 
@@ -202,15 +202,15 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Tolak request tanpa secret valid sebelum insert.
 - [x] Tambahkan timestamp/replay protection.
 - [x] Simpan external message ID dengan unique constraint/idempotency.
-- [ ] TypeBox schema untuk payload.
+- [x] TypeBox schema untuk payload.
 - [x] Batas panjang phone, text, name, jid, timestamp, metadata.
 - [x] Batas request body sebelum JSON parsing.
 - [x] Rate limit khusus webhook.
 - [x] Auto-reply idempotent melalui external message ID.
-- [ ] Auto-reply quota/circuit breaker.
+- [x] Auto-reply per-phone quota dan provider circuit breaker.
 - [x] Jangan mengembalikan isi reply internal ke caller public.
 
-**Tests:** valid secret, invalid secret, replay, duplicate ID, dan oversize body terverifikasi di `tests/security/webhook.test.ts`; invalid schema, rate-limit threshold, dan auto-reply abuse masih pending.
+**Tests:** valid secret, invalid secret, invalid schema, replay, duplicate ID, oversize body, dan auto-reply quota terverifikasi di `tests/security/webhook.test.ts`; rate-limit threshold di `tests/security/webhook-rate-limit.test.ts` dan provider circuit di `tests/security/webhook-circuit.test.ts`.
 
 ## SEC-06 — Tetapkan dan implementasikan policy file serving
 
@@ -221,24 +221,26 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 - [x] Jika private: partial file tidak diserve.
 - [ ] Public visibility metadata/route public terpisah — tidak berlaku untuk policy private saat ini.
 - [x] Private response memakai `nosniff`, safe `Content-Disposition`, dan restrictive CSP.
-- [ ] MIME detection berbasis file signature server-side, bukan hanya metadata client.
+- [x] MIME detection berbasis bounded file signature server-side; client metadata hanya menjadi declared type.
 - [x] HTML/SVG/script/XML non-image tidak dirender inline dan dikirim sebagai attachment.
 
-**Tests:** owner image, cross-user GET, incomplete upload, HTML content, dan Google-avatar lifecycle terverifikasi di `tests/tus.test.ts`; mixed-case MIME/signature validation masih pending.
+**Tests:** owner image, cross-user GET, incomplete upload, HTML content, mixed-case declared MIME, signature mismatch, dan Google-avatar lifecycle terverifikasi di `tests/tus.test.ts`.
 
 ## SEC-07 — Perbaiki TLS dan outbound security
 
 - [x] Hapus unconditional `rejectUnauthorized: false`.
-- [ ] Insecure TLS hanya boleh dalam development explicit flag.
-- [ ] Validasi flag tidak dapat aktif di production.
+- [x] Insecure TLS hanya aktif bila `MAIL_TLS_INSECURE=true`.
+- [x] Validasi flag: config fail-fast jika `MAIL_TLS_INSECURE` aktif di production.
 - [x] Tambahkan `AbortSignal.timeout()` untuk provider, OAuth, avatar, mail, dan WhatsApp fetch.
-- [ ] Batasi response size Google avatar.
-- [ ] Validasi content type dan image signature.
+- [x] Batasi response size Google avatar (2 MiB, bounded read).
+- [x] Validasi content type dan image signature avatar (deteksi magic bytes).
 - [x] Untuk integration URL, allowlist host Dripsender diterapkan.
-- [ ] Blok private/loopback/link-local/metadata IP setelah DNS resolution.
-- [ ] Validasi redirect.
+- [x] Blok private/loopback/link-local/metadata IP via `assertPublicHost` termasuk resolusi DNS.
+- [x] Validasi redirect: `redirect: "manual"` dan 3xx diperlakukan sebagai kegagalan provider.
 - [x] Timeout integration fetch 10 detik.
-- [ ] Response-size limit.
+- [x] Response-size limit untuk integration URL (detail error dibatasi 200 byte).
+
+**Tests:** `tests/security/ssrf.test.ts` (private/public/loopback/link-local/metadata, `assertPublicHost`), `tests/security/webhook-circuit.test.ts` (redirect 3xx + provider circuit), dan Google-avatar signature flow di `tests/tus.test.ts`.
 
 ## SEC-08 — Konsistenkan RBAC permission
 

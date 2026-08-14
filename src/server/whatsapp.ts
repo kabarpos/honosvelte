@@ -12,6 +12,7 @@
 import { config } from "./config";
 import { getSetting } from "./settings";
 import { listWhatsAppTemplatesByTrigger } from "./db";
+import { assertPublicHost } from "./ssrf";
 
 export interface WhatsAppMessage {
 	/** Recipient phone in international format without "+", e.g. 62813… */
@@ -54,9 +55,11 @@ export async function sendWhatsApp(message: WhatsAppMessage): Promise<void> {
 		return;
 	}
 	if (!cfg.apiKey) throw new Error("WhatsApp API key is not configured.");
+	await assertPublicHost("api.dripsender.id");
 	const res = await fetch("https://api.dripsender.id/send", {
 		method: "POST",
 		signal: AbortSignal.timeout(10_000),
+		redirect: "manual",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({
 			api_key: cfg.apiKey,
@@ -109,7 +112,7 @@ export function isAllowedIntegrationUrl(value: string): boolean {
 		return (
 			(url.protocol === "https:" || url.protocol === "http:") &&
 			(url.hostname === "dripsender.id" ||
-			url.hostname.endsWith(".dripsender.id"))
+				url.hostname.endsWith(".dripsender.id"))
 		);
 	} catch {
 		return false;
@@ -131,16 +134,24 @@ export async function pushLead(input: {
 	}
 	if (!isAllowedIntegrationUrl(url))
 		throw new Error("Integration URL is not an allowed Dripsender host.");
+	let targetUrl: URL;
+	try {
+		targetUrl = new URL(url);
+	} catch {
+		throw new Error("Integration URL is not a valid URL.");
+	}
+	await assertPublicHost(targetUrl.hostname);
 	const res = await fetch(url, {
 		method: "POST",
 		signal: AbortSignal.timeout(10_000),
+		redirect: "manual",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ name: input.name, phone }),
 	});
 	if (!res.ok) {
-		const detail = await res.text().catch(() => "");
+		const detail = await res.text().then((text) => text.slice(0, 200)).catch(() => "");
 		throw new Error(
-			`Dripsender integration error ${res.status}: ${detail.slice(0, 200)}`,
+			`Dripsender integration error ${res.status}: ${detail}`,
 		);
 	}
 }
