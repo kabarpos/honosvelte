@@ -70,3 +70,4 @@
 {"slug":"obs-2026-08-13-whatsapp-api-key-now-sent-to-admin-client-with-reveal-toggle","title":"WhatsApp API key now sent to admin client with reveal toggle","relevance":"high","timestamp":"2026-08-13T09:29:34.829Z","kind":"observe"}
 {"slug":"obs-2026-08-13-whatsapp-templates-now-support-event-triggers-on-register-on","title":"WhatsApp templates now support event triggers (on_register/on_contact)","relevance":"high","timestamp":"2026-08-13T09:47:09.448Z","kind":"observe"}
 {"slug":"obs-2026-08-13-dashboard-stats-extension-pattern-honosvelte","title":"Dashboard stats extension pattern (honosvelte)","relevance":"medium","timestamp":"2026-08-13T13:54:59.155Z","kind":"observe"}
+{"slug":"obs-2026-08-14-sequential-audit-remediation-started","title":"Sequential audit remediation started","relevance":"high","timestamp":"2026-08-14T05:35:29.439Z","kind":"observe"}

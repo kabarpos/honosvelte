@@ -25,13 +25,7 @@ import {
 	insertUpload,
 	listExpired,
 } from "../db";
-import {
-	appendBytes,
-	fileSize,
-	readBytes,
-	removeFile,
-	uploadPath,
-} from "../tus-storage";
+import { appendBytes, fileSize, removeFile, uploadPath } from "../tus-storage";
 import {
 	H,
 	OFFSET_CONTENT_TYPE,
@@ -45,6 +39,27 @@ import {
 } from "../tus-protocol";
 
 const UPLOAD_PREFIX = "/uploads/";
+const uploadLocks = new Map<string, Promise<void>>();
+
+async function withUploadLock<T>(
+	id: string,
+	operation: () => Promise<T>,
+): Promise<T> {
+	const previous = uploadLocks.get(id) ?? Promise.resolve();
+	const gate: { release: () => void } = { release: () => {} };
+	const current = new Promise<void>((resolve) => {
+		gate.release = resolve;
+	});
+	const queued = previous.then(() => current);
+	uploadLocks.set(id, queued);
+	await previous;
+	try {
+		return await operation();
+	} finally {
+		gate.release();
+		if (uploadLocks.get(id) === queued) uploadLocks.delete(id);
+	}
+}
 
 /** Resolve the session cookie from a Request and return the user id (or null). */
 function userIdFromRequest(req: Request): number | null {
@@ -224,49 +239,50 @@ export async function handlePatch(
 			[H.tusVersion]: SUPPORTED_VERSIONS.join(","),
 		});
 
-	const row = findUpload.get(id);
-	if (!row || row.userId !== userIdFromRequest(req)) {
-		return errorResponse(404, "Upload not found");
-	}
+	return withUploadLock(id, async () => {
+		const row = findUpload.get(id);
+		if (!row || row.userId !== userIdFromRequest(req)) {
+			return errorResponse(404, "Upload not found");
+		}
 
-	const contentType = req.headers.get("content-type") ?? "";
-	if (contentType !== OFFSET_CONTENT_TYPE) {
-		return errorResponse(415, `Content-Type must be ${OFFSET_CONTENT_TYPE}`);
-	}
+		const contentType = req.headers.get("content-type") ?? "";
+		if (contentType !== OFFSET_CONTENT_TYPE) {
+			return errorResponse(415, `Content-Type must be ${OFFSET_CONTENT_TYPE}`);
+		}
 
-	const offsetHeader = req.headers.get(H.uploadOffset.toLowerCase());
-	if (offsetHeader === null)
-		return errorResponse(400, `Missing ${H.uploadOffset}`);
-	const clientOffset = Number(offsetHeader);
-	if (!Number.isFinite(clientOffset) || clientOffset < 0) {
-		return errorResponse(400, `Invalid ${H.uploadOffset}`);
-	}
-	if (clientOffset !== row.offset) {
-		return errorResponse(409, "Upload-Offset does not match current offset");
-	}
+		const offsetHeader = req.headers.get(H.uploadOffset.toLowerCase());
+		if (offsetHeader === null)
+			return errorResponse(400, `Missing ${H.uploadOffset}`);
+		const clientOffset = Number(offsetHeader);
+		if (!Number.isFinite(clientOffset) || clientOffset < 0) {
+			return errorResponse(400, `Invalid ${H.uploadOffset}`);
+		}
+		if (clientOffset !== row.offset) {
+			return errorResponse(409, "Upload-Offset does not match current offset");
+		}
 
-	const buf = body ? new Uint8Array(body) : new Uint8Array(0);
-	if (buf.byteLength === 0) {
-		return okResponse(204, null, { [H.uploadOffset]: row.offset });
-	}
-	if (row.offset + buf.byteLength > row.uploadLength) {
-		return errorResponse(413, "Chunk exceeds declared upload length");
-	}
+		const buf = body ? new Uint8Array(body) : new Uint8Array(0);
+		if (buf.byteLength === 0) {
+			return okResponse(204, null, { [H.uploadOffset]: row.offset });
+		}
+		if (row.offset + buf.byteLength > row.uploadLength) {
+			return errorResponse(413, "Chunk exceeds declared upload length");
+		}
 
-	const checksumHeader = req.headers.get(H.uploadChecksum.toLowerCase());
-	if (checksumHeader && !(await verifyChecksum(checksumHeader, buf))) {
-		return errorResponse(460, "Checksum mismatch");
-	}
+		const checksumHeader = req.headers.get(H.uploadChecksum.toLowerCase());
+		if (checksumHeader && !(await verifyChecksum(checksumHeader, buf))) {
+			return errorResponse(460, "Checksum mismatch");
+		}
 
-	await appendBytes(id, buf);
-	const res = advanceOffset.get(buf.byteLength, id, row.offset);
-	if (!res || res.n !== 1) {
-		// Concurrent PATCH raced us — tell the client to re-sync via HEAD.
-		return errorResponse(409, "Offset conflict (concurrent write)");
-	}
+		await appendBytes(id, buf);
+		const res = advanceOffset.get(buf.byteLength, id, row.offset);
+		if (!res || res.n !== 1) {
+			return errorResponse(409, "Offset conflict (concurrent write)");
+		}
 
-	return okResponse(204, null, {
-		[H.uploadOffset]: row.offset + buf.byteLength,
+		return okResponse(204, null, {
+			[H.uploadOffset]: row.offset + buf.byteLength,
+		});
 	});
 }
 
@@ -296,24 +312,43 @@ export function handleDelete(req: Request, id: string): Response {
 // effectively unguessable; content-type comes from the Upload-Metadata.
 // ---------------------------------------------------------------------------
 
-async function handleGetFile(id: string): Promise<Response> {
+async function handleGetFile(req: Request, id: string): Promise<Response> {
 	const row = findUpload.get(id);
-	if (!row) return errorResponse(404, "Upload not found");
-	let filetype = "application/octet-stream";
+	if (!row || row.userId !== userIdFromRequest(req))
+		return errorResponse(404, "Upload not found");
+	if (row.offset < row.uploadLength)
+		return errorResponse(409, "Upload is not complete");
+
+	let declaredType = "application/octet-stream";
 	try {
 		const meta = JSON.parse(row.metadata) as Record<string, string>;
 		if (typeof meta.filetype === "string" && meta.filetype)
-			filetype = meta.filetype;
+			declaredType = meta.filetype.split(";", 1)[0]!.trim().toLowerCase();
 	} catch {
 		/* metadata may be empty or malformed */
 	}
-	const bytes = await readBytes(id);
-	return new Response(new Uint8Array(bytes), {
+	const inlineTypes = new Set([
+		"image/png",
+		"image/jpeg",
+		"image/gif",
+		"image/webp",
+		"image/x-icon",
+		"image/vnd.microsoft.icon",
+	]);
+	const inline = inlineTypes.has(declaredType);
+	const size = fileSize(id);
+	if (size < row.uploadLength)
+		return errorResponse(404, "Upload file is missing");
+	return new Response(Bun.file(uploadPath(id)), {
 		status: 200,
 		headers: {
-			"content-type": filetype,
+			"content-type": inline ? declaredType : "application/octet-stream",
+			"content-disposition": `${inline ? "inline" : "attachment"}; filename="${id}"`,
 			"cache-control": "private, max-age=86400",
-			"content-length": String(bytes.byteLength),
+			"content-security-policy":
+				"default-src 'none'; script-src 'none'; sandbox",
+			"x-content-type-options": "nosniff",
+			"content-length": String(size),
 		},
 	});
 }
@@ -359,7 +394,7 @@ async function dispatch(
 	if (method === "OPTIONS") return handleOptions();
 	if (method === "POST" && !id) return handlePost(req, body);
 	if (method === "HEAD" && id) return handleHead(req, id);
-	if (method === "GET" && id) return handleGetFile(id);
+	if (method === "GET" && id) return handleGetFile(req, id);
 	if (method === "PATCH" && id) return handlePatch(req, id, body);
 	if (method === "DELETE" && id) return handleDelete(req, id);
 	return new Response(JSON.stringify({ error: "Method not allowed" }), {

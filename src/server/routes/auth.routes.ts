@@ -7,7 +7,6 @@
 import { Type as t, type Static } from "@sinclair/typebox";
 import { Hono } from "hono";
 import {
-	clearPasswordResets,
 	clearSessionCookie,
 	createPasswordReset,
 	createSession,
@@ -18,10 +17,15 @@ import {
 	setFlash,
 	setSessionCookie,
 	verifyPassword,
-	verifyPasswordReset,
+	consumePasswordReset,
 } from "../auth";
 import { config } from "../config";
-import { createUser, findUserByEmail, updateUserPassword } from "../db";
+import {
+	createUser,
+	deleteSessionsByUserId,
+	findUserByEmail,
+	updateUserPassword,
+} from "../db";
 import { recordActivity } from "../activity";
 import type { AppEnv } from "../inertia-middleware";
 import { sendMail } from "../mailer";
@@ -171,7 +175,10 @@ export const authRoutes = () => {
 		const body = c.req.valid("json") as LoginBody;
 		const page = c.var.inertia;
 		const user = findUserByEmail.get(body.email);
-		if (!user || !(await verifyPassword(body.password, user.passwordHash))) {
+		const passwordValid = user
+			? await verifyPassword(body.password, user.passwordHash)
+			: false;
+		if (!user || !passwordValid || user.status !== "active") {
 			return page.error("Login", {
 				email: "These credentials do not match our records.",
 			});
@@ -230,16 +237,19 @@ export const authRoutes = () => {
 					password: "Password confirmation does not match.",
 				});
 			}
-			const valid = verifyPasswordReset(body.email, body.token);
-			const user = valid ? findUserByEmail.get(body.email) : null;
-			if (!user) {
+			const user = findUserByEmail.get(body.email);
+			const valid = user
+				? consumePasswordReset(user.email, body.token)
+				: false;
+			if (!user || !valid) {
 				return page.error("ResetPassword", {
 					token: "This reset link is invalid or has expired.",
 				});
 			}
 			const passwordHash = await hashPassword(body.password);
 			updateUserPassword.run(passwordHash, user.id);
-			clearPasswordResets(user.email);
+			deleteSessionsByUserId.run(user.id);
+
 			return page.redirect("/login?notice=password_reset");
 		},
 	);

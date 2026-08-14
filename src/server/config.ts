@@ -26,6 +26,7 @@ const resendApiKey = process.env.RESEND_API_KEY ?? "";
 const mailtrapToken = process.env.MAILTRAP_API_TOKEN ?? "";
 const dripsenderApiKey = process.env.DRIPSENDER_API_KEY ?? "";
 const dripsenderIntegrationUrl = process.env.DRIPSENDER_INTEGRATION_URL ?? "";
+const whatsappWebhookSecret = process.env.WHATSAPP_WEBHOOK_SECRET ?? "";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "";
@@ -51,10 +52,12 @@ export const config = {
 	upload: {
 		/** Directory where tus upload chunks are stored on disk. */
 		dir: pick(process.env.UPLOAD_DIR, "./data/uploads"),
-		/** Maximum total upload size in bytes (Tus-Max-Size). 0 = unlimited. */
-		maxSize: Number(pick(process.env.TUS_MAX_SIZE, "0")),
-		/** Seconds after which an unfinished upload may be swept (Expiration). 0 = no expiry. */
-		expirationSeconds: Number(pick(process.env.TUS_EXPIRATION_SECONDS, "0")),
+		/** Maximum total upload size in bytes (Tus-Max-Size). */
+		maxSize: Number(pick(process.env.TUS_MAX_SIZE, "52428800")),
+		/** Seconds after which an unfinished upload may be swept (Expiration). */
+		expirationSeconds: Number(
+			pick(process.env.TUS_EXPIRATION_SECONDS, "86400"),
+		),
 	},
 	media: {
 		/** Directory where media library files are stored on disk. */
@@ -74,9 +77,12 @@ export const config = {
 	rateLimit: {
 		authMax: Number(pick(process.env.RATE_LIMIT_AUTH_MAX, "10")),
 		authWindow: Number(pick(process.env.RATE_LIMIT_AUTH_WINDOW, "60")),
+		webhookMax: Number(pick(process.env.RATE_LIMIT_WEBHOOK_MAX, "60")),
+		webhookWindow: Number(pick(process.env.RATE_LIMIT_WEBHOOK_WINDOW, "60")),
 	},
 	whatsapp: {
 		apiKey: dripsenderApiKey,
 		integrationUrl: dripsenderIntegrationUrl,
+		webhookSecret: whatsappWebhookSecret,
 	},
 };

@@ -185,19 +185,13 @@ export function createApp(assets: InertiaAssets) {
 	app.use(inertiaMiddleware(assets));
 
 	app.onError(async (err, c) => {
-		logError(c, err);
 		const pathname = safeUrl(c.req.url).pathname;
 
 		if (err instanceof HTTPException) return err.getResponse();
 
-		// tus endpoints speak JSON + tus headers, never Inertia pages.
-		if (isUploadsPath(pathname)) {
-			c.header("content-type", "application/json");
-			c.header("Tus-Resumable", "1.0.0");
-			return c.json({ error: "Internal Server Error" }, 500);
-		}
-
 		// Schema validation (TypeBox) → 422 with field errors, Inertia-aware.
+		// Validation failures are expected client errors, not server failures;
+		// keep them out of the error stack log.
 		if (err instanceof ValidationFailed) {
 			const component =
 				COMPONENT_BY_PATH[pathname] ?? componentForPath(pathname);
@@ -209,6 +203,14 @@ export function createApp(assets: InertiaAssets) {
 			}
 			if (!component) return c.json({ errors }, 422);
 			return inertiaFromContext(c, assets).error(component, errors);
+		}
+
+		logError(c, err);
+		// tus endpoints speak JSON + tus headers, never Inertia pages.
+		if (isUploadsPath(pathname)) {
+			c.header("content-type", "application/json");
+			c.header("Tus-Resumable", "1.0.0");
+			return c.json({ error: "Internal Server Error" }, 500);
 		}
 
 		return c.text("Internal Server Error", 500);

@@ -11,6 +11,7 @@
  * Page renders (GET) and form actions (POST/PATCH/DELETE) live together, one
  * file per URL (AGENTS.md "Route conventions").
  */
+import { createHash, timingSafeEqual } from "node:crypto";
 import { Type as t, type Static } from "@sinclair/typebox";
 import { Hono } from "hono";
 import { requirePermission, requireRole, setFlash } from "../auth";
@@ -24,6 +25,7 @@ import {
 	updateWhatsAppTemplate,
 } from "../db";
 import {
+	isAllowedIntegrationUrl,
 	resolveWhatsAppConfig,
 	sendWhatsApp,
 	resolveIntegrationUrl,
@@ -36,6 +38,93 @@ import { config } from "../config";
 import type { AppEnv } from "../inertia-middleware";
 import type { WhatsAppTemplate } from "../../shared/types";
 import { validateJson } from "../validation";
+import { rateLimit } from "../rate-limit";
+
+const WEBHOOK_MAX_BODY_BYTES = 64 * 1024;
+const WEBHOOK_REPLAY_WINDOW_SECONDS = 5 * 60;
+
+function validWebhookSecret(request: Request): boolean {
+	const expected = config.whatsapp.webhookSecret;
+	const provided = request.headers.get("x-webhook-secret");
+	if (!expected || !provided) return false;
+	const expectedHash = createHash("sha256").update(expected).digest();
+	const providedHash = createHash("sha256").update(provided).digest();
+	return timingSafeEqual(expectedHash, providedHash);
+}
+
+async function readWebhookJson(
+	request: Request,
+): Promise<Record<string, unknown> | Response> {
+	const declaredLength = Number(request.headers.get("content-length") ?? "");
+	if (
+		Number.isFinite(declaredLength) &&
+		declaredLength > WEBHOOK_MAX_BODY_BYTES
+	)
+		return new Response(
+			JSON.stringify({ error: "Request body is too large." }),
+			{
+				status: 413,
+				headers: { "content-type": "application/json" },
+			},
+		);
+	if (!request.body)
+		return new Response(
+			JSON.stringify({ error: "Request body is required." }),
+			{
+				status: 400,
+				headers: { "content-type": "application/json" },
+			},
+		);
+
+	const reader = request.body.getReader();
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			if (!value) continue;
+			total += value.byteLength;
+			if (total > WEBHOOK_MAX_BODY_BYTES) {
+				await reader.cancel();
+				return new Response(
+					JSON.stringify({ error: "Request body is too large." }),
+					{ status: 413, headers: { "content-type": "application/json" } },
+				);
+			}
+			chunks.push(value);
+		}
+	} finally {
+		reader.releaseLock();
+	}
+
+	const bytes = new Uint8Array(total);
+	let offset = 0;
+	for (const chunk of chunks) {
+		bytes.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+	try {
+		const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+		return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+			? (parsed as Record<string, unknown>)
+			: new Response(JSON.stringify({ error: "JSON object is required." }), {
+					status: 400,
+					headers: { "content-type": "application/json" },
+				});
+	} catch {
+		return new Response(JSON.stringify({ error: "Malformed JSON." }), {
+			status: 400,
+			headers: { "content-type": "application/json" },
+		});
+	}
+}
+
+function webhookTimestamp(value: unknown): number | null {
+	const raw = Number(value);
+	if (!Number.isFinite(raw)) return null;
+	return raw > 1_000_000_000_000 ? raw / 1000 : raw;
+}
 
 /** Sample value for a placeholder, used in preview/test rendering. */
 function sampleValue(key: string): string {
@@ -124,7 +213,7 @@ export const whatsappRoutes = () => {
 				// submit still preserves the stored secret (see POST /whatsapp/config).
 				whatsapp: {
 					provider: cfg.driver,
-					apiKey: cfg.apiKey,
+					hasApiKey: Boolean(cfg.apiKey),
 					adminNotifyNumber: getSetting("whatsapp.admin_notify_number") ?? "",
 					integrationUrl: resolveIntegrationUrl(),
 				},
@@ -154,9 +243,9 @@ export const whatsappRoutes = () => {
 			const adminNotifyNumber = String(raw.admin_notify_number ?? "").trim();
 			if (!["dripsender", "log"].includes(provider))
 				return c.json({ error: "Invalid provider." }, 422);
-			if (integrationUrl !== "" && !/^https?:\/\//i.test(integrationUrl))
+			if (integrationUrl !== "" && !isAllowedIntegrationUrl(integrationUrl))
 				return c.json(
-					{ error: "Integration URL must start with http(s)." },
+					{ error: "Integration URL must use an allowed Dripsender host." },
 					422,
 				);
 			if (adminNotifyNumber !== "" && !/^\+?\d{6,}$/.test(adminNotifyNumber))
@@ -322,109 +411,148 @@ export const whatsappRoutes = () => {
 	);
 
 	// Preview: render the template with sample placeholder data (fetch, JSON).
-	app.get("/whatsapp/templates/:id/preview", requireRole("admin"), (c) => {
-		const row = findWhatsAppTemplateById.get(Number(c.req.param("id")));
-		if (!row) return c.json({ error: "Template not found." }, 404);
-		const data: Record<string, string> = {};
-		for (const key of parsePlaceholders(row.placeholders))
-			data[key] = sampleValue(key);
-		return c.json({
-			body: renderTemplate(row.body, data),
-			mediaUrl: row.mediaUrl || "",
-		});
-	});
+	app.get(
+		"/whatsapp/templates/:id/preview",
+		requireRole("admin"),
+		requirePermission("whatsapp.read"),
+		(c) => {
+			const row = findWhatsAppTemplateById.get(Number(c.req.param("id")));
+			if (!row) return c.json({ error: "Template not found." }, 404);
+			const data: Record<string, string> = {};
+			for (const key of parsePlaceholders(row.placeholders))
+				data[key] = sampleValue(key);
+			return c.json({
+				body: renderTemplate(row.body, data),
+				mediaUrl: row.mediaUrl || "",
+			});
+		},
+	);
 
 	// Test-send a template to a phone with sample data (fetch, JSON).
-	app.post("/whatsapp/templates/:id/test", requireRole("admin"), async (c) => {
-		const row = findWhatsAppTemplateById.get(Number(c.req.param("id")));
-		if (!row) return c.json({ ok: false, error: "Template not found." }, 404);
-		const body = (await c.req.json().catch(() => null)) as {
-			phone?: string;
-		} | null;
-		const phone = body?.phone?.trim() ?? "";
-		if (!/^\d{8,}$/.test(phone.replace(/\D/g, ""))) {
-			return c.json(
-				{ ok: false, error: "A valid recipient phone is required." },
-				422,
-			);
-		}
-		const data: Record<string, string> = {};
-		for (const key of parsePlaceholders(row.placeholders))
-			data[key] = sampleValue(key);
-		try {
-			await sendWhatsApp({
-				phone: phone.replace(/\D/g, ""),
-				text: renderTemplate(row.body, data),
-				mediaUrl: row.mediaUrl || undefined,
-			});
-			return c.json({ ok: true });
-		} catch (err) {
-			return c.json(
-				{
-					ok: false,
-					error: err instanceof Error ? err.message : "Send failed.",
-				},
-				502,
-			);
-		}
-	});
+	app.post(
+		"/whatsapp/templates/:id/test",
+		requireRole("admin"),
+		requirePermission("whatsapp.test"),
+		async (c) => {
+			const row = findWhatsAppTemplateById.get(Number(c.req.param("id")));
+			if (!row) return c.json({ ok: false, error: "Template not found." }, 404);
+			const body = (await c.req.json().catch(() => null)) as {
+				phone?: string;
+			} | null;
+			const phone = body?.phone?.trim() ?? "";
+			if (!/^\d{8,}$/.test(phone.replace(/\D/g, ""))) {
+				return c.json(
+					{ ok: false, error: "A valid recipient phone is required." },
+					422,
+				);
+			}
+			const data: Record<string, string> = {};
+			for (const key of parsePlaceholders(row.placeholders))
+				data[key] = sampleValue(key);
+			try {
+				await sendWhatsApp({
+					phone: phone.replace(/\D/g, ""),
+					text: renderTemplate(row.body, data),
+					mediaUrl: row.mediaUrl || undefined,
+				});
+				return c.json({ ok: true });
+			} catch (err) {
+				return c.json(
+					{
+						ok: false,
+						error: err instanceof Error ? err.message : "Send failed.",
+					},
+					502,
+				);
+			}
+		},
+	);
 
 	// Dripsender webhook receiver (public, no session). Dripsender POSTs JSON
 	// { phone, id, jid, text, name, timestamp } on inbound messages. It carries
 	// no browser Origin, so the CSRF origin check in security.ts lets it through.
 	// Optionally auto-replies with a configured template when enabled.
-	app.post("/whatsapp/webhook", async (c) => {
-		const raw = (await c.req.json().catch(() => null)) as Record<
-			string,
-			unknown
-		> | null;
-		if (!raw || typeof raw !== "object")
-			return c.json({ error: "Malformed JSON." }, 400);
-		const phone = raw.phone != null ? String(raw.phone) : "";
-		const text = raw.text != null ? String(raw.text) : "";
-		if (!phone || !text)
-			return c.json({ error: "phone and text are required." }, 400);
+	app.post(
+		"/whatsapp/webhook",
+		rateLimit({
+			max: config.rateLimit.webhookMax,
+			windowSeconds: config.rateLimit.webhookWindow,
+		}),
+		async (c) => {
+			if (!validWebhookSecret(c.req.raw))
+				return c.json({ error: "Webhook authentication failed." }, 401);
+			const parsed = await readWebhookJson(c.req.raw);
+			if (parsed instanceof Response) return parsed;
+			const raw = parsed;
+			const externalId = raw.id != null ? String(raw.id).trim() : "";
+			const phone = raw.phone != null ? String(raw.phone).trim() : "";
+			const text = raw.text != null ? String(raw.text) : "";
+			const jid = raw.jid != null ? String(raw.jid) : null;
+			const name = raw.name != null ? String(raw.name) : null;
+			const timestamp = webhookTimestamp(raw.timestamp);
+			if (!externalId || !phone || !text || timestamp === null)
+				return c.json(
+					{ error: "id, phone, text and timestamp are required." },
+					422,
+				);
+			if (
+				phone.length > 32 ||
+				text.length > 10_000 ||
+				externalId.length > 255 ||
+				(jid && jid.length > 255) ||
+				(name && name.length > 160)
+			)
+				return c.json({ error: "Webhook field is too long." }, 422);
+			if (
+				Math.abs(Date.now() / 1000 - timestamp) > WEBHOOK_REPLAY_WINDOW_SECONDS
+			)
+				return c.json(
+					{ error: "Webhook timestamp is outside the replay window." },
+					401,
+				);
 
-		insertWhatsAppMessage.run(
-			raw.id != null ? String(raw.id) : null,
-			String(phone),
-			raw.jid != null ? String(raw.jid) : null,
-			raw.name != null ? String(raw.name) : null,
-			text,
-			raw.timestamp != null ? String(raw.timestamp) : null,
-		);
-		recordActivity(
-			c,
-			null,
-			"whatsapp.inbound",
-			`Inbound WhatsApp from ${raw.name ? String(raw.name) : phone}`,
-		);
+			const inserted = insertWhatsAppMessage.get(
+				externalId,
+				phone,
+				jid,
+				name,
+				text,
+				String(raw.timestamp),
+			);
+			if (!inserted) return c.json({ ok: true, duplicate: true });
+			recordActivity(
+				c,
+				null,
+				"whatsapp.inbound",
+				`Inbound WhatsApp from ${raw.name ? String(raw.name) : phone}`,
+			);
 
-		// Optional auto-reply from a configured template (Settings:
-		// whatsapp.auto_reply + whatsapp.auto_reply_slug).
-		const autoSlug = getSetting("whatsapp.auto_reply_slug");
-		if (getSetting("whatsapp.auto_reply") === "true" && autoSlug) {
-			const tpl = findWhatsAppTemplateBySlug.get(autoSlug);
-			if (tpl) {
-				const data: Record<string, string> = {
-					name: raw.name != null ? String(raw.name) : "",
-					phone: String(phone),
-					message: text,
-					text,
-				};
-				const reply = renderTemplate(tpl.body, data);
-				if (reply.trim()) {
-					await sendWhatsApp({
-						phone: String(phone).replace(/\D/g, ""),
-						text: reply,
-						mediaUrl: tpl.mediaUrl || undefined,
-					}).catch(() => {});
-					return c.json({ reply: true, text: reply });
+			// Optional auto-reply from a configured template (Settings:
+			// whatsapp.auto_reply + whatsapp.auto_reply_slug).
+			const autoSlug = getSetting("whatsapp.auto_reply_slug");
+			if (getSetting("whatsapp.auto_reply") === "true" && autoSlug) {
+				const tpl = findWhatsAppTemplateBySlug.get(autoSlug);
+				if (tpl) {
+					const data: Record<string, string> = {
+						name: raw.name != null ? String(raw.name) : "",
+						phone: String(phone),
+						message: text,
+						text,
+					};
+					const reply = renderTemplate(tpl.body, data);
+					if (reply.trim()) {
+						await sendWhatsApp({
+							phone: String(phone).replace(/\D/g, ""),
+							text: reply,
+							mediaUrl: tpl.mediaUrl || undefined,
+						}).catch(() => {});
+						return c.json({ ok: true, reply: true });
+					}
 				}
 			}
-		}
-		return c.json({ ok: true });
-	});
+			return c.json({ ok: true });
+		},
+	);
 
 	return app;
 };

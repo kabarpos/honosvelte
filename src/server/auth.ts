@@ -11,10 +11,9 @@ import type { Context, Next } from "hono";
 import { generateCookie } from "hono/cookie";
 import type { FlashData, Role } from "../shared/types";
 import {
+	consumePasswordReset as consumePasswordResetRow,
 	deleteOtherSessions,
-	deletePasswordResetsByEmail,
 	deleteSession,
-	findPasswordReset,
 	findRoleBySlug,
 	findSession,
 	findUserById,
@@ -73,7 +72,12 @@ export function resolveUser(token: string | null | undefined): UserRow | null {
 		deleteSessionByToken(token); // lazy cleanup of expired sessions
 		return null;
 	}
-	return findUserById.get(session.userId) ?? null;
+	const user = findUserById.get(session.userId);
+	if (!user || user.status !== "active") {
+		deleteSessionByToken(token);
+		return null;
+	}
+	return user;
 }
 
 /** Delete a session by its raw (cookie) token — hashes before hitting the DB. */
@@ -132,15 +136,15 @@ export function createPasswordReset(email: string): string {
 	return token;
 }
 
-/** Verify a raw reset token for `email` (consumes nothing; caller deletes). */
-export function verifyPasswordReset(email: string, token: string): boolean {
-	const row = findPasswordReset.get(hashToken(token));
-	if (!row || row.email.toLowerCase() !== email.toLowerCase()) return false;
-	return Date.now() <= new Date(row.expiresAt).getTime();
-}
-
-export function clearPasswordResets(email: string): void {
-	deletePasswordResetsByEmail.run(email);
+/** Atomically consume a valid reset token for `email`. */
+export function consumePasswordReset(email: string, token: string): boolean {
+	return Boolean(
+		consumePasswordResetRow.get(
+			hashToken(token),
+			email,
+			new Date().toISOString(),
+		),
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -252,7 +256,8 @@ export function permissionsForUser(user: UserRow): Set<string> {
 	const result = new Set<string>();
 	const role = findRoleBySlug.get(user.role);
 	if (role) {
-		for (const row of listRolePermissionSlugs.all(role.id)) result.add(row.slug);
+		for (const row of listRolePermissionSlugs.all(role.id))
+			result.add(row.slug);
 	}
 	for (const row of listUserPermissionRows.all(user.id)) {
 		if (row.granted) result.add(row.slug);

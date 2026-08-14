@@ -343,51 +343,61 @@ export const emailRoutes = () => {
 	);
 
 	// Preview: render the template with sample placeholder data (fetch, JSON).
-	app.get("/email/templates/:id/preview", requireRole("admin"), (c) => {
-		const row = findEmailTemplateById.get(Number(c.req.param("id")));
-		if (!row) return c.json({ error: "Template not found." }, 404);
-		const data: Record<string, string> = {};
-		for (const key of parsePlaceholders(row.placeholders))
-			data[key] = sampleValue(key);
-		return c.json({
-			subject: renderTemplate(row.subject, data),
-			body: renderTemplate(row.body, data),
-		});
-	});
+	app.get(
+		"/email/templates/:id/preview",
+		requireRole("admin"),
+		requirePermission("email.read"),
+		(c) => {
+			const row = findEmailTemplateById.get(Number(c.req.param("id")));
+			if (!row) return c.json({ error: "Template not found." }, 404);
+			const data: Record<string, string> = {};
+			for (const key of parsePlaceholders(row.placeholders))
+				data[key] = sampleValue(key);
+			return c.json({
+				subject: renderTemplate(row.subject, data),
+				body: renderTemplate(row.body, data),
+			});
+		},
+	);
 
 	// Test-send a template to an address with sample data (fetch, JSON).
-	app.post("/email/templates/:id/test", requireRole("admin"), async (c) => {
-		const row = findEmailTemplateById.get(Number(c.req.param("id")));
-		if (!row) return c.json({ ok: false, error: "Template not found." }, 404);
-		const body = (await c.req.json().catch(() => null)) as {
-			to?: string;
-		} | null;
-		if (!body?.to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.to)) {
-			return c.json(
-				{ ok: false, error: "A valid recipient email is required." },
-				422,
-			);
-		}
-		const data: Record<string, string> = {};
-		for (const key of parsePlaceholders(row.placeholders))
-			data[key] = sampleValue(key);
-		try {
-			await sendMail({
-				to: body.to,
-				subject: renderTemplate(row.subject, data),
-				text: renderTemplate(row.body, data),
-			});
-			return c.json({ ok: true });
-		} catch (err) {
-			return c.json(
-				{
-					ok: false,
-					error: err instanceof Error ? err.message : "Send failed.",
-				},
-				502,
-			);
-		}
-	});
+	app.post(
+		"/email/templates/:id/test",
+		requireRole("admin"),
+		requirePermission("email.test"),
+		async (c) => {
+			const row = findEmailTemplateById.get(Number(c.req.param("id")));
+			if (!row) return c.json({ ok: false, error: "Template not found." }, 404);
+			const body = (await c.req.json().catch(() => null)) as {
+				to?: string;
+			} | null;
+			if (!body?.to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.to)) {
+				return c.json(
+					{ ok: false, error: "A valid recipient email is required." },
+					422,
+				);
+			}
+			const data: Record<string, string> = {};
+			for (const key of parsePlaceholders(row.placeholders))
+				data[key] = sampleValue(key);
+			try {
+				await sendMail({
+					to: body.to,
+					subject: renderTemplate(row.subject, data),
+					text: renderTemplate(row.body, data),
+				});
+				return c.json({ ok: true });
+			} catch (err) {
+				return c.json(
+					{
+						ok: false,
+						error: err instanceof Error ? err.message : "Send failed.",
+					},
+					502,
+				);
+			}
+		},
+	);
 
 	return app;
 };

@@ -15,6 +15,7 @@ import {
 } from "../auth";
 import { config } from "../config";
 import {
+	advanceOffset,
 	createGoogleUser,
 	findUserByEmail,
 	findUserByGoogleId,
@@ -38,6 +39,7 @@ interface GoogleProfile {
 async function exchangeCode(code: string): Promise<string> {
 	const res = await fetch("https://oauth2.googleapis.com/token", {
 		method: "POST",
+		signal: AbortSignal.timeout(10_000),
 		headers: { "content-type": "application/x-www-form-urlencoded" },
 		body: new URLSearchParams({
 			code,
@@ -57,6 +59,7 @@ async function exchangeCode(code: string): Promise<string> {
 async function fetchProfile(accessToken: string): Promise<GoogleProfile> {
 	const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
 		headers: { authorization: `Bearer ${accessToken}` },
+		signal: AbortSignal.timeout(10_000),
 	});
 	if (!res.ok) throw new Error(`Google profile fetch failed (${res.status})`);
 	const data = (await res.json()) as {
@@ -82,7 +85,9 @@ async function storeGoogleAvatar(
 	pictureUrl: string,
 	userId: number,
 ): Promise<string> {
-	const res = await fetch(pictureUrl);
+	const res = await fetch(pictureUrl, {
+		signal: AbortSignal.timeout(10_000),
+	});
 	if (!res.ok) throw new Error(`Avatar download failed (${res.status})`);
 	const bytes = new Uint8Array(await res.arrayBuffer());
 	const id = generateUploadId();
@@ -97,6 +102,7 @@ async function storeGoogleAvatar(
 		uploadPath(id),
 		null,
 	);
+	advanceOffset.get(bytes.byteLength, id, 0);
 	return `/uploads/${id}`;
 }
 
@@ -170,6 +176,7 @@ export const googleOauthRoutes = () => {
 			const accessToken = await exchangeCode(code);
 			const profile = await fetchProfile(accessToken);
 			const user = await findOrCreateGoogleUser(profile);
+			if (user.status !== "active") throw new Error("Account is inactive");
 			// Store a local copy of the Google picture (CSP blocks external
 			// images); also upgrades legacy external avatar URLs on re-login.
 			if (profile.picture && !user.avatarUrl?.startsWith("/uploads/")) {

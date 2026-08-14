@@ -15,8 +15,9 @@ import {
 import { createApp } from "./server/app";
 import { config } from "./server/config";
 import { db } from "./server/db";
+import { sweepExpired } from "./server/routes/uploads.routes";
 
-const isProd = process.env.NODE_ENV === "production";
+const isProd = config.isProd;
 if (!isProd || !manifestExists()) {
 	await buildClientAssets();
 }
@@ -28,10 +29,14 @@ const server = Bun.serve({
 	port,
 	fetch: createApp(assets).fetch,
 });
+const cleanupIntervalMs = 15 * 60 * 1000;
+const cleanupTimer = setInterval(sweepExpired, cleanupIntervalMs);
+cleanupTimer.unref?.();
 console.log(`Honosvelte boilerplate → http://localhost:${port}`);
 
 function shutdown(signal: string): void {
 	console.log(`\n${signal} received — shutting down`);
+	clearInterval(cleanupTimer);
 	server.stop(true); // graceful: wait for in-flight requests
 	db.close();
 	process.exit(0);

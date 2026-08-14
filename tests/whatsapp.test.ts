@@ -12,6 +12,7 @@ beforeAll(async () => {
 	process.env.DATABASE_PATH = ":memory:";
 	process.env.NODE_ENV = "test";
 	process.env.RATE_LIMIT_AUTH_MAX = "1000";
+	process.env.WHATSAPP_WEBHOOK_SECRET = "test-webhook-secret";
 	const { createApp } = await import("../src/server/app");
 	app = createApp({ version: "test-version", js: "app.js", css: "app.css" });
 });
@@ -99,7 +100,15 @@ describe("whatsapp management", () => {
 	it("redirects non-admins away from /whatsapp", async () => {
 		const res = await call("/whatsapp", { headers: xhr });
 		expect(res.status).toBe(302);
-		expect(new URL(res.headers.get("location")!).pathname).toBe("/login");
+		const location = res.headers.get("location");
+		expect(location).toBeTruthy();
+		if (location) {
+			try {
+				expect(new URL(location).pathname).toBe("/login");
+			} catch {
+				throw new Error(`Invalid redirect location: ${location}`);
+			}
+		}
 	});
 
 	it("creates a template and stores it", async () => {
@@ -210,9 +219,10 @@ describe("whatsapp management", () => {
 				jid: "6281351941000@s.whatsapp.net",
 				text: "Sample Text",
 				name: "Abdullah",
-				timestamp: 1650957541,
+				timestamp: Math.floor(Date.now() / 1000),
 			},
 			"",
+			{ "x-webhook-secret": "test-webhook-secret" },
 		);
 		expect(res.status).toBe(200);
 		const { listWhatsAppMessages } = await import("../src/server/db");

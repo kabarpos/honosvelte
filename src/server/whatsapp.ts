@@ -56,6 +56,7 @@ export async function sendWhatsApp(message: WhatsAppMessage): Promise<void> {
 	if (!cfg.apiKey) throw new Error("WhatsApp API key is not configured.");
 	const res = await fetch("https://api.dripsender.id/send", {
 		method: "POST",
+		signal: AbortSignal.timeout(10_000),
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({
 			api_key: cfg.apiKey,
@@ -100,6 +101,21 @@ export function resolveIntegrationUrl(): string {
 	);
 }
 
+/** Only Dripsender integration hosts are valid server-side fetch targets. */
+export function isAllowedIntegrationUrl(value: string): boolean {
+	if (!value) return true;
+	try {
+		const url = new URL(value);
+		return (
+			(url.protocol === "https:" || url.protocol === "http:") &&
+			(url.hostname === "dripsender.id" ||
+			url.hostname.endsWith(".dripsender.id"))
+		);
+	} catch {
+		return false;
+	}
+}
+
 /** Push a captured lead (name + phone) to the Dripsender integration webhook. */
 export async function pushLead(input: {
 	name: string;
@@ -113,8 +129,11 @@ export async function pushLead(input: {
 		pushedLeads.push({ name: input.name, phone });
 		return;
 	}
+	if (!isAllowedIntegrationUrl(url))
+		throw new Error("Integration URL is not an allowed Dripsender host.");
 	const res = await fetch(url, {
 		method: "POST",
+		signal: AbortSignal.timeout(10_000),
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ name: input.name, phone }),
 	});

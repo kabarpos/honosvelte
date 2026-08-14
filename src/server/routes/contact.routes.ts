@@ -7,14 +7,16 @@
  */
 import { Type as t, type Static } from "@sinclair/typebox";
 import { Hono } from "hono";
-import { requireRole } from "../auth";
+import { requirePermission, requireRole } from "../auth";
 import {
 	countContactMessages,
+	countContactMessagesSearch,
 	deleteContactMessage,
 	findContactMessageById,
 	findSettingByKey,
 	insertContactMessage,
 	listContactMessages,
+	listContactMessagesSearch,
 	updateContactMessageStatus,
 } from "../db";
 import { config } from "../config";
@@ -124,19 +126,53 @@ export const contactRoutes = () => {
 		};
 	}
 
-	app.get("/contact/inbox", requireRole("admin"), (c) => {
-		const page = Math.max(1, Number(c.req.query("page") ?? 1) || 1);
-		const perPage = Math.min(
-			100,
-			Math.max(1, Number(c.req.query("perPage") ?? 20) || 20),
+	app.get(
+		"/contact/inbox",
+		requireRole("admin"),
+		requirePermission("contact.read"),
+		(c) => {
+			const page = Math.min(
+			1000,
+			Math.max(1, Number(c.req.query("page") ?? 1) || 1),
 		);
-		const status = String(c.req.query("status") ?? "");
-		const search = String(c.req.query("search") ?? "");
-		const total = countContactMessages.get(status, status)?.n ?? 0;
-		const messages: Paginated<ContactMessage> = {
-			data: listContactMessages
-				.all(status, status, perPage, (page - 1) * perPage)
-				.map((row) => ({
+			const perPage = Math.min(
+				100,
+				Math.max(1, Number(c.req.query("perPage") ?? 20) || 20),
+			);
+			const status = String(c.req.query("status") ?? "");
+			const search = String(c.req.query("search") ?? "").trim();
+			const like = `%${search}%`;
+			const total = search
+				? (countContactMessagesSearch.get(
+						status,
+						status,
+						like,
+						like,
+						like,
+						like,
+						like,
+					)?.n ?? 0)
+				: (countContactMessages.get(status, status)?.n ?? 0);
+			const messages: Paginated<ContactMessage> = {
+				data: (search
+					? listContactMessagesSearch.all(
+							status,
+							status,
+							like,
+							like,
+							like,
+							like,
+							like,
+							perPage,
+							(page - 1) * perPage,
+						)
+					: listContactMessages.all(
+							status,
+							status,
+							perPage,
+							(page - 1) * perPage,
+						)
+				).map((row) => ({
 					id: row.id,
 					name: row.name,
 					email: row.email,
@@ -145,124 +181,145 @@ export const contactRoutes = () => {
 					status: row.status as ContactMessage["status"],
 					createdAt: row.createdAt,
 				})),
-			meta: pageMeta(total, page, perPage),
-		};
-		const counts: Record<string, number> = {};
-		for (const s of STATUSES)
-			counts[s] = countContactMessages.get(s, s)?.n ?? 0;
-		return c.var.inertia.render("ContactInbox", {
-			messages,
-			statuses: STATUSES,
-			status,
-			search,
-			counts,
-		});
-	});
+				meta: pageMeta(total, page, perPage),
+			};
+			const counts: Record<string, number> = {};
+			for (const s of STATUSES)
+				counts[s] = countContactMessages.get(s, s)?.n ?? 0;
+			return c.var.inertia.render("ContactInbox", {
+				messages,
+				statuses: STATUSES,
+				status,
+				search,
+				counts,
+			});
+		},
+	);
 
 	// JSON detail; opening a message marks it read (unless already replied/archived).
-	app.get("/contact/inbox/:id", requireRole("admin"), (c) => {
-		const id = Number(c.req.param("id"));
-		const row = findContactMessageById.get(id);
-		if (!row) return c.json({ error: "Message not found." }, 404);
-		if (row.status === "unread") {
-			updateContactMessageStatus.run("read", id);
-			recordActivity(
-				c,
-				null,
-				"contact.read",
-				`Opened message from ${row.name}`,
-			);
-		}
-		return c.json({
-			message: {
-				id: row.id,
-				name: row.name,
-				email: row.email,
-				subject: row.subject,
-				message: row.message,
-				status: row.status as ContactMessage["status"],
-				createdAt: row.createdAt,
-			},
-		});
-	});
+	app.get(
+		"/contact/inbox/:id",
+		requireRole("admin"),
+		requirePermission("contact.read"),
+		(c) => {
+			const id = Number(c.req.param("id"));
+			const row = findContactMessageById.get(id);
+			if (!row) return c.json({ error: "Message not found." }, 404);
+			if (row.status === "unread") {
+				updateContactMessageStatus.run("read", id);
+				recordActivity(
+					c,
+					null,
+					"contact.read",
+					`Opened message from ${row.name}`,
+				);
+			}
+			return c.json({
+				message: {
+					id: row.id,
+					name: row.name,
+					email: row.email,
+					subject: row.subject,
+					message: row.message,
+					status: row.status as ContactMessage["status"],
+					createdAt: row.createdAt,
+				},
+			});
+		},
+	);
 
 	// Change a single message's status (read / replied / archived).
-	app.post("/contact/inbox/:id/status", requireRole("admin"), async (c) => {
-		const id = Number(c.req.param("id"));
-		const row = findContactMessageById.get(id);
-		if (!row) return c.json({ error: "Message not found." }, 404);
-		const raw = (await c.req.json().catch(() => null)) as Record<
-			string,
-			unknown
-		> | null;
-		const status = String(raw?.status ?? "");
-		if (!(STATUSES as readonly string[]).includes(status))
-			return c.json({ error: "Invalid status." }, 422);
-		updateContactMessageStatus.run(status, id);
-		return c.json({ ok: true, status });
-	});
+	app.post(
+		"/contact/inbox/:id/status",
+		requireRole("admin"),
+		requirePermission("contact.update"),
+		async (c) => {
+			const id = Number(c.req.param("id"));
+			const row = findContactMessageById.get(id);
+			if (!row) return c.json({ error: "Message not found." }, 404);
+			const raw = (await c.req.json().catch(() => null)) as Record<
+				string,
+				unknown
+			> | null;
+			const status = String(raw?.status ?? "");
+			if (!(STATUSES as readonly string[]).includes(status))
+				return c.json({ error: "Invalid status." }, 422);
+			updateContactMessageStatus.run(status, id);
+			return c.json({ ok: true, status });
+		},
+	);
 
 	// Reply to a message by email and mark it replied.
-	app.post("/contact/inbox/:id/reply", requireRole("admin"), async (c) => {
-		const id = Number(c.req.param("id"));
-		const row = findContactMessageById.get(id);
-		if (!row) return c.json({ error: "Message not found." }, 404);
-		const raw = (await c.req.json().catch(() => null)) as Record<
-			string,
-			unknown
-		> | null;
-		const text = String(raw?.message ?? "").trim();
-		if (!text) return c.json({ error: "Reply message is required." }, 422);
-		try {
-			await sendMail({
-				to: row.email,
-				subject: row.subject?.trim()
-					? `Re: ${row.subject.trim()}`
-					: "Re: your message",
-				text,
-			});
-			updateContactMessageStatus.run("replied", id);
-			return c.json({ ok: true });
-		} catch (err) {
-			return c.json(
-				{
-					ok: false,
-					error: err instanceof Error ? err.message : "Send failed.",
-				},
-				502,
-			);
-		}
-	});
+	app.post(
+		"/contact/inbox/:id/reply",
+		requireRole("admin"),
+		requirePermission("contact.reply"),
+		async (c) => {
+			const id = Number(c.req.param("id"));
+			const row = findContactMessageById.get(id);
+			if (!row) return c.json({ error: "Message not found." }, 404);
+			const raw = (await c.req.json().catch(() => null)) as Record<
+				string,
+				unknown
+			> | null;
+			const text = String(raw?.message ?? "").trim();
+			if (!text) return c.json({ error: "Reply message is required." }, 422);
+			try {
+				await sendMail({
+					to: row.email,
+					subject: row.subject?.trim()
+						? `Re: ${row.subject.trim()}`
+						: "Re: your message",
+					text,
+				});
+				updateContactMessageStatus.run("replied", id);
+				return c.json({ ok: true });
+			} catch (err) {
+				return c.json(
+					{
+						ok: false,
+						error: err instanceof Error ? err.message : "Send failed.",
+					},
+					502,
+				);
+			}
+		},
+	);
 
 	// Bulk actions over selected messages (read / archive / delete).
-	app.post("/contact/inbox/bulk", requireRole("admin"), async (c) => {
-		const raw = (await c.req.json().catch(() => null)) as Record<
-			string,
-			unknown
-		> | null;
-		const ids = Array.isArray(raw?.ids)
-			? (raw!.ids as unknown[]).filter(
-					(n): n is number =>
-						typeof n === "number" && Number.isInteger(n) && n > 0,
-				)
-			: [];
-		const action = String(raw?.action ?? "");
-		if (ids.length === 0)
-			return c.json({ error: "No messages selected." }, 422);
-		if (action === "delete") {
-			for (const id of ids) deleteContactMessage.run(id);
-		} else if (
-			action === "read" ||
-			action === "archived" ||
-			action === "archive"
-		) {
-			const status = action === "archive" ? "archived" : action;
-			for (const id of ids) updateContactMessageStatus.run(status, id);
-		} else {
-			return c.json({ error: "Invalid action." }, 422);
-		}
-		return c.json({ ok: true });
-	});
+	app.post(
+		"/contact/inbox/bulk",
+		requireRole("admin"),
+		requirePermission("contact.update", "contact.delete"),
+		async (c) => {
+			const raw = (await c.req.json().catch(() => null)) as Record<
+				string,
+				unknown
+			> | null;
+			const ids = Array.isArray(raw?.ids)
+				? (raw!.ids as unknown[]).filter(
+						(n): n is number =>
+							typeof n === "number" && Number.isInteger(n) && n > 0,
+					)
+				: [];
+			const action = String(raw?.action ?? "");
+			if (ids.length === 0)
+				return c.json({ error: "No messages selected." }, 422);
+			if (action === "delete") {
+				for (const id of ids) deleteContactMessage.run(id);
+			} else if (
+				action === "read" ||
+				action === "archived" ||
+				action === "archive"
+			) {
+				const status = action === "archive" ? "archived" : action;
+				for (const id of ids) updateContactMessageStatus.run(status, id);
+			} else {
+				return c.json({ error: "Invalid action." }, 422);
+			}
+			return c.json({ ok: true });
+		},
+	);
 
 	return app;
 };

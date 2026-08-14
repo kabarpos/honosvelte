@@ -140,15 +140,21 @@ export const deleteUser = db.query<null, [number]>(
 export const countUsers = db.query<{ n: number }, []>(
 	`SELECT COUNT(*) AS n FROM users`,
 );
+export const countSuperAdmins = db.query<{ n: number }, []>(
+	`SELECT COUNT(*) AS n FROM users WHERE role = 'super_admin'`,
+);
 export const listUsers = db.query<UserRow, [number, number]>(
 	`SELECT ${USER_COLUMNS} FROM users ORDER BY id DESC LIMIT ? OFFSET ?`,
 );
-export const searchUsers = db.query<UserRow, [string, number, number]>(
-	`SELECT ${USER_COLUMNS} FROM users
+export const searchUsers = db.query<UserRow, [string, string, number, number]>(
+	`SELECT id, name, email, password_hash AS passwordHash, role,
+     google_id AS googleId, avatar_url AS avatarUrl, status, whatsapp,
+     created_at AS createdAt
+   FROM users
    WHERE name LIKE ? OR email LIKE ?
    ORDER BY id DESC LIMIT ? OFFSET ?`,
 );
-export const countSearchUsers = db.query<{ n: number }, [string]>(
+export const countSearchUsers = db.query<{ n: number }, [string, string]>(
 	`SELECT COUNT(*) AS n FROM users WHERE name LIKE ? OR email LIKE ?`,
 );
 export const recentUsers = db.query<UserRow, [number]>(
@@ -266,6 +272,9 @@ export const deleteSession = db.query<null, [string]>(
 export const deleteOtherSessions = db.query<null, [number, string]>(
 	`DELETE FROM sessions WHERE user_id = ? AND token_hash != ?`,
 );
+export const deleteSessionsByUserId = db.query<null, [number]>(
+	`DELETE FROM sessions WHERE user_id = ?`,
+);
 export const updateSessionFlash = db.query<null, [string, string]>(
 	`UPDATE sessions SET flash = ? WHERE token_hash = ?`,
 );
@@ -277,11 +286,13 @@ export const updateSessionFlash = db.query<null, [string, string]>(
 export const insertPasswordReset = db.query<null, [string, string, string]>(
 	`INSERT INTO password_resets (email, token_hash, expires_at) VALUES (?, ?, ?)`,
 );
-export const findPasswordReset = db.query<PasswordResetRow, [string]>(
-	`SELECT email, token_hash AS tokenHash, expires_at AS expiresAt FROM password_resets WHERE token_hash = ?`,
-);
-export const deletePasswordResetsByEmail = db.query<null, [string]>(
-	`DELETE FROM password_resets WHERE email = ?`,
+export const consumePasswordReset = db.query<
+	{ email: string } | null,
+	[string, string, string]
+>(
+	`DELETE FROM password_resets
+   WHERE token_hash = ? AND email = ? AND expires_at > ?
+   RETURNING email`,
 );
 
 // ---------------------------------------------------------------------------
@@ -399,13 +410,14 @@ export const deleteMediaById = db.query<null, [number]>(
 export const listMediaPicker = db.query<
 	Pick<
 		MediaRow,
-		"id" | "originalName" | "mimeType" | "size" | "title" | "altText"
+		"id" | "userId" | "originalName" | "mimeType" | "size" | "title" | "altText"
 	>,
-	[string, string, string]
+	[string, string, string, string, string]
 >(
-	`SELECT id, original_name AS originalName, mime_type AS mimeType, size, title, alt_text AS altText
+	`SELECT id, user_id AS userId, original_name AS originalName, mime_type AS mimeType, size, title, alt_text AS altText
    FROM media
-   WHERE ? = '' OR original_name LIKE ? OR COALESCE(title, '') LIKE ?
+   WHERE (? = '' OR user_id = ?)
+     AND (? = '' OR original_name LIKE ? OR COALESCE(title, '') LIKE ?)
    ORDER BY id DESC LIMIT 20`,
 );
 
@@ -537,6 +549,25 @@ export const countContactMessages = db.query<{ n: number }, [string, string]>(
    WHERE (? = '' OR status = ?)`,
 );
 
+export const listContactMessagesSearch = db.query<
+	ContactMessageRow,
+	[string, string, string, string, string, string, string, number, number]
+>(
+	`SELECT ${CONTACT_COLUMNS} FROM contact_messages
+   WHERE (? = '' OR status = ?)
+     AND (? = '' OR name LIKE ? OR email LIKE ? OR COALESCE(subject, '') LIKE ? OR message LIKE ?)
+   ORDER BY id DESC LIMIT ? OFFSET ?`,
+);
+
+export const countContactMessagesSearch = db.query<
+	{ n: number },
+	[string, string, string, string, string, string, string]
+>(
+	`SELECT COUNT(*) AS n FROM contact_messages
+   WHERE (? = '' OR status = ?)
+     AND (? = '' OR name LIKE ? OR email LIKE ? OR COALESCE(subject, '') LIKE ? OR message LIKE ?)`,
+);
+
 /** One contact message by id, null when absent. */
 export const findContactMessageById = db.query<ContactMessageRow, [number]>(
 	`SELECT ${CONTACT_COLUMNS} FROM contact_messages WHERE id = ?`,
@@ -576,7 +607,7 @@ export const insertNotification = db.query<
 
 /** All admin user ids (notification fan-out targets). */
 export const adminUserIds = db.query<{ id: number }, []>(
-	`SELECT id FROM users WHERE role = 'admin'`,
+	`SELECT id FROM users WHERE role IN ('admin', 'super_admin')`,
 );
 
 /** Notifications visible to a user: their own + admin broadcasts (newest first). */
@@ -599,8 +630,9 @@ export const countUnreadNotifications = db.query<{ n: number }, [number]>(
 );
 
 /** Mark a single notification read. */
-export const markNotificationRead = db.query<null, [number]>(
-	`UPDATE notifications SET read = 1 WHERE id = ?`,
+export const markNotificationRead = db.query<null, [number, number]>(
+	`UPDATE notifications SET read = 1
+   WHERE id = ? AND (user_id = ? OR user_id IS NULL)`,
 );
 
 /** Mark all of a user's notifications (own + broadcasts) read. */
@@ -778,11 +810,11 @@ export const deleteWhatsAppTemplateById = db.query<null, [number]>(
 
 /** Insert one inbound webhook message (Dripsender → app). */
 export const insertWhatsAppMessage = db.query<
-	null,
+	{ id: number } | null,
 	[string | null, string, string | null, string | null, string, string | null]
 >(
-	`INSERT INTO whatsapp_messages (wa_id, phone, jid, name, body, wa_timestamp)
-   VALUES (?, ?, ?, ?, ?, ?)`,
+	`INSERT OR IGNORE INTO whatsapp_messages (wa_id, phone, jid, name, body, wa_timestamp)
+   VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
 );
 
 /** Most recent inbound messages, newest first (future admin inbox). */

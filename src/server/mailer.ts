@@ -103,8 +103,6 @@ async function sendSmtp(
 		port: cfg.smtpPort,
 		secure: cfg.smtpSecure,
 		auth: cfg.smtpUser ? { user: cfg.smtpUser, pass: cfg.smtpPass } : undefined,
-		// Self-signed / internal relays are common in dev — don't hard-fail TLS.
-		tls: { rejectUnauthorized: false },
 	});
 	await transport.sendMail({
 		from: cfg.from,
@@ -122,6 +120,7 @@ async function postJson(
 ): Promise<void> {
 	const res = await fetch(url, {
 		method: "POST",
+		signal: AbortSignal.timeout(10_000),
 		headers: {
 			authorization: `Bearer ${token}`,
 			"content-type": "application/json",

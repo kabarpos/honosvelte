@@ -492,7 +492,15 @@ describe("profile page & avatar upload", () => {
 	it("redirects guests away from /profile", async () => {
 		const res = await tus("/profile");
 		expect(res.status).toBe(302);
-		expect(new URL(res.headers.get("location") ?? "").pathname).toBe("/login");
+		const location = res.headers.get("location");
+		expect(location).toBeTruthy();
+		if (location) {
+			try {
+				expect(new URL(location).pathname).toBe("/login");
+			} catch {
+				throw new Error(`Invalid redirect location: ${location}`);
+			}
+		}
 	});
 
 	it("renders the Profile page for authenticated users", async () => {
@@ -577,10 +585,36 @@ describe("profile page & avatar upload", () => {
 
 		const res = await tus(`/uploads/${id}`, { method: "GET", cookie });
 		expect(res.status).toBe(200);
-		expect(res.headers.get("content-type")).toBe("text/html");
+		expect(res.headers.get("content-type")).toBe("application/octet-stream");
+		expect(res.headers.get("content-disposition")).toContain("attachment");
+		expect(res.headers.get("x-content-type-options")).toBe("nosniff");
 		const csp = res.headers.get("content-security-policy") ?? "";
 		const scriptSrc = csp.match(/script-src ([^;]+)/)?.[1] ?? "";
 		expect(scriptSrc).toBe("'none'");
+	});
+
+	it("rejects GET from another user's upload", async () => {
+		const id = await uploadImage(cookie, "image/png");
+		const res = await tus(`/uploads/${id}`, {
+			method: "GET",
+			cookie: otherCookie,
+		});
+		expect(res.status).toBe(404);
+	});
+
+	it("rejects GET for an incomplete upload", async () => {
+		const create = await tus("/uploads", {
+			method: "POST",
+			headers: {
+				"Upload-Length": "4",
+				"Upload-Metadata": `filename ${Buffer.from("partial.bin").toString("base64")}`,
+			},
+			cookie,
+		});
+		expect(create.status).toBe(201);
+		const id = (create.headers.get("Location") ?? "").replace("/uploads/", "");
+		const res = await tus(`/uploads/${id}`, { method: "GET", cookie });
+		expect(res.status).toBe(409);
 	});
 
 	it("rejects linking someone else's upload", async () => {
@@ -668,9 +702,15 @@ describe("google oauth stores a local avatar", () => {
 			{ cookie: `oauth_state=${state}` },
 		);
 		expect(cb.status).toBe(302);
-		expect(new URL(cb.headers.get("location") ?? "").pathname).toBe(
-			"/dashboard",
-		);
+		const location = cb.headers.get("location");
+		expect(location).toBeTruthy();
+		if (location) {
+			try {
+				expect(new URL(location).pathname).toBe("/dashboard");
+			} catch {
+				throw new Error(`Invalid redirect location: ${location}`);
+			}
+		}
 		const cookie = sessionCookie(cb);
 		expect(cookie).not.toBe("");
 
@@ -686,7 +726,7 @@ describe("google oauth stores a local avatar", () => {
 		expect(avatarUrl).toMatch(/^\/uploads\//);
 
 		// The local copy is served back with the downloaded content type.
-		const img = await tus(avatarUrl ?? "", { method: "GET" });
+		const img = await tus(avatarUrl ?? "", { method: "GET", cookie });
 		expect(img.status).toBe(200);
 		expect(img.headers.get("content-type")).toBe("image/jpeg");
 		expect(new Uint8Array(await img.arrayBuffer())).toEqual(PICTURE);

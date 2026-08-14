@@ -5,7 +5,13 @@
  */
 import { Type as t, type Static } from "@sinclair/typebox";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	renameSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, extname, join } from "node:path";
 import { Hono } from "hono";
 import { requireAuth, requirePermission } from "../auth";
@@ -35,7 +41,12 @@ const CATEGORIES: MediaCategory[] = [
 ];
 
 /** Content types that can carry scripts or markup — never stored/served. */
-const BLOCKED_MIME_PREFIXES = ["image/svg", "text/html", "text/xml", "application/xhtml"];
+const BLOCKED_MIME_PREFIXES = [
+	"image/svg",
+	"text/html",
+	"text/xml",
+	"application/xhtml",
+];
 const BLOCKED_MIME_EXACT = ["application/xml"];
 
 function isBlockedMime(mime: string): boolean {
@@ -53,9 +64,12 @@ function categoryForMime(mime: string): MediaCategory {
 	if (["application/pdf", "text/"].some((p) => mime.startsWith(p)))
 		return "document";
 	if (
-		["application/zip", "application/gzip", "application/x-tar", "application/x-7z-compressed"].includes(
-			mime,
-		)
+		[
+			"application/zip",
+			"application/gzip",
+			"application/x-tar",
+			"application/x-7z-compressed",
+		].includes(mime)
 	)
 		return "archive";
 	return "other";
@@ -81,7 +95,9 @@ export const MEDIA_VALIDATION_MESSAGES: Record<string, string> = {
 	"/description": "Description must be at most 500 characters.",
 };
 
-function toMedia(row: NonNullable<ReturnType<typeof findMediaById.get>>): Media {
+function toMedia(
+	row: NonNullable<ReturnType<typeof findMediaById.get>>,
+): Media {
 	return {
 		id: row.id,
 		userId: row.userId,
@@ -98,16 +114,23 @@ function toMedia(row: NonNullable<ReturnType<typeof findMediaById.get>>): Media 
 }
 
 /** Admin manages every file; a regular user manages only their own. */
-function canManage(user: User | null, media: { userId: number | null }): boolean {
+function canManage(
+	user: User | null,
+	media: { userId: number | null },
+): boolean {
 	return (
 		user !== null &&
-		(user.role === "super_admin" || user.role === "admin" || media.userId === user.id)
+		(user.role === "super_admin" ||
+			user.role === "admin" ||
+			media.userId === user.id)
 	);
 }
 
 function scopeFilter(user: User | null): string {
 	if (!user) return "-1";
-	return user.role === "super_admin" || user.role === "admin" ? "" : String(user.id);
+	return user.role === "super_admin" || user.role === "admin"
+		? ""
+		: String(user.id);
 }
 
 function paramId(value: string | undefined): number | null {
@@ -125,22 +148,35 @@ export const mediaRoutes = () => {
 
 	app.get("/media", requireAuth, requirePermission("media.read"), (c) => {
 		const user = c.var.user;
-		const page = Math.max(1, Number(c.req.query("page") ?? 1) || 1);
+		const page = Math.min(
+			1000,
+			Math.max(1, Number(c.req.query("page") ?? 1) || 1),
+		);
 		const perPage = Math.min(
 			100,
 			Math.max(1, Number(c.req.query("perPage") ?? 20) || 20),
 		);
 		const categoryParam = String(c.req.query("category") ?? "");
 		const search = String(c.req.query("search") ?? "");
-		const category = (CATEGORIES.includes(categoryParam as MediaCategory)
-			? categoryParam
-			: "") as MediaCategory;
+		const category = (
+			CATEGORIES.includes(categoryParam as MediaCategory) ? categoryParam : ""
+		) as MediaCategory;
 		const scope = scopeFilter(user);
 		const like = `%${search}%`;
-		const total = countMedia.get(category, category, scope, scope, like, like)?.n ?? 0;
+		const total =
+			countMedia.get(category, category, scope, scope, like, like)?.n ?? 0;
 		const media: Paginated<Media> = {
 			data: listMedia
-				.all(category, category, scope, scope, like, like, perPage, (page - 1) * perPage)
+				.all(
+					category,
+					category,
+					scope,
+					scope,
+					like,
+					like,
+					perPage,
+					(page - 1) * perPage,
+				)
 				.map(toMedia),
 			meta: {
 				currentPage: page,
@@ -157,58 +193,90 @@ export const mediaRoutes = () => {
 		});
 	});
 
-	app.post("/media", requireAuth, requirePermission("media.create"), async (c) => {
-		const user = c.var.user;
-		if (!user) return c.json({ error: "Unauthorized." }, 401);
-		const originalName = String(c.req.header("x-file-name") ?? "");
-		if (!originalName) return c.json({ error: "x-file-name header is required." }, 400);
-		const rawMime = String(c.req.header("content-type") ?? "").split(";")[0]!.trim();
-		if (!rawMime) return c.json({ error: "Content-Type header is required." }, 400);
-		const bytes = await c.req.raw.arrayBuffer();
-		if (!bytes.byteLength) return c.json({ error: "Empty file." }, 400);
-		if (config.upload.maxSize > 0 && bytes.byteLength > config.upload.maxSize)
-			return c.json({ error: "File exceeds the configured size limit." }, 400);
-		if (isBlockedMime(rawMime))
-			return c.json({ error: "This file type is not allowed." }, 400);
+	app.post(
+		"/media",
+		requireAuth,
+		requirePermission("media.create"),
+		async (c) => {
+			const user = c.var.user;
+			if (!user) return c.json({ error: "Unauthorized." }, 401);
+			const originalName = String(c.req.header("x-file-name") ?? "");
+			if (!originalName)
+				return c.json({ error: "x-file-name header is required." }, 400);
+			const rawMime = String(c.req.header("content-type") ?? "")
+				.split(";")[0]!
+				.trim();
+			if (!rawMime)
+				return c.json({ error: "Content-Type header is required." }, 400);
+			const bytes = await c.req.raw.arrayBuffer();
+			if (!bytes.byteLength) return c.json({ error: "Empty file." }, 400);
+			if (config.upload.maxSize > 0 && bytes.byteLength > config.upload.maxSize)
+				return c.json(
+					{ error: "File exceeds the configured size limit." },
+					400,
+				);
+			if (isBlockedMime(rawMime))
+				return c.json({ error: "This file type is not allowed." }, 400);
 
-		const category = categoryForMime(rawMime);
-		const filename = `${randomUUID()}${extname(originalName).toLowerCase()}`;
-		const writePath = filePath(filename);
-		mkdirSync(dirname(writePath), { recursive: true });
-		const result = insertMedia.get(
-			user.id,
-			filename,
-			originalName,
-			rawMime,
-			bytes.byteLength,
-			category,
-		);
-		if (!result)
-			return c.json({ error: "Could not store the file." }, 500);
-		writeFileSync(writePath, Buffer.from(bytes));
+			const category = categoryForMime(rawMime);
+			const filename = `${randomUUID()}${extname(originalName).toLowerCase()}`;
+			const writePath = filePath(filename);
+			const tempPath = `${writePath}.tmp-${randomUUID()}`;
+			mkdirSync(dirname(writePath), { recursive: true });
+			let fileCommitted = false;
+			let result: { id: number } | null = null;
+			try {
+				writeFileSync(tempPath, Buffer.from(bytes), { flag: "wx" });
+				renameSync(tempPath, writePath);
+				fileCommitted = true;
+				result = insertMedia.get(
+					user.id,
+					filename,
+					originalName,
+					rawMime,
+					bytes.byteLength,
+					category,
+				);
+				if (!result) {
+					unlinkSync(writePath);
+					return c.json({ error: "Could not store the file." }, 500);
+				}
+			} catch {
+				if (existsSync(tempPath)) unlinkSync(tempPath);
+				if (fileCommitted && existsSync(writePath)) unlinkSync(writePath);
+				if (result) deleteMediaById.run(result.id);
+				return c.json({ error: "Could not store the file." }, 500);
+			}
 
-		recordActivity(
-			c,
-			user.id,
-			"media.upload",
-			`Uploaded ${originalName} (${bytes.byteLength} bytes)`,
-		);
+			recordActivity(
+				c,
+				user.id,
+				"media.upload",
+				`Uploaded ${originalName} (${bytes.byteLength} bytes)`,
+			);
 
-		if (c.req.header("x-inertia")) return c.var.inertia.redirect("/media");
-		const row = findMediaById.get(result.id);
-		return row
-			? c.json({ media: toMedia(row) }, 201)
-			: c.json({ error: "Could not store the file." }, 500);
-	});
+			if (c.req.header("x-inertia")) return c.var.inertia.redirect("/media");
+			const row = findMediaById.get(result.id);
+			return row
+				? c.json({ media: toMedia(row) }, 201)
+				: c.json({ error: "Could not store the file." }, 500);
+		},
+	);
 
-app.get("/media/picker", requireAuth, requirePermission("media.read"), (c) => {
-		const q = String(c.req.query("q") ?? "");
-		const like = `%${q}%`;
-		const rows = listMediaPicker.all(like, like, like);
-		return c.json({
-			media: rows.map((r) => ({ ...r, url: `/media/${r.id}` })),
-		});
-	});
+	app.get(
+		"/media/picker",
+		requireAuth,
+		requirePermission("media.read"),
+		(c) => {
+			const q = String(c.req.query("q") ?? "");
+			const like = `%${q}%`;
+			const scope = scopeFilter(c.var.user);
+			const rows = listMediaPicker.all(scope, scope, like, like, like);
+			return c.json({
+				media: rows.map((r) => ({ ...r, url: `/media/${r.id}` })),
+			});
+		},
+	);
 
 	app.get("/media/:id", requireAuth, requirePermission("media.read"), (c) => {
 		const user = c.var.user;
@@ -218,9 +286,10 @@ app.get("/media/picker", requireAuth, requirePermission("media.read"), (c) => {
 		if (!canManage(user, row)) return c.json({ error: "Not allowed." }, 403);
 
 		const path = filePath(row.filename);
-		if (!existsSync(path)) return c.json({ error: "Media file is missing on disk." }, 404);
-		const inline = ["image", "video", "audio", "text/", "application/pdf"].some((p) =>
-			row.mimeType.startsWith(p),
+		if (!existsSync(path))
+			return c.json({ error: "Media file is missing on disk." }, 404);
+		const inline = ["image", "video", "audio", "text/", "application/pdf"].some(
+			(p) => row.mimeType.startsWith(p),
 		);
 		const file = Bun.file(path);
 		return new Response(file, {
@@ -232,40 +301,61 @@ app.get("/media/picker", requireAuth, requirePermission("media.read"), (c) => {
 		});
 	});
 
-	app.patch("/media/:id", requireAuth, requirePermission("media.update"), validateJson(mediaMetaBody), (c) => {
-		const user = c.var.user;
-		const id = paramId(c.req.param("id"));
-		const row = id ? findMediaById.get(id) : null;
-		if (!row) return c.json({ error: "Media not found." }, 404);
-		if (!canManage(user, row)) return c.json({ error: "Not allowed." }, 403);
+	app.patch(
+		"/media/:id",
+		requireAuth,
+		requirePermission("media.update"),
+		validateJson(mediaMetaBody),
+		(c) => {
+			const user = c.var.user;
+			const id = paramId(c.req.param("id"));
+			const row = id ? findMediaById.get(id) : null;
+			if (!row) return c.json({ error: "Media not found." }, 404);
+			if (!canManage(user, row)) return c.json({ error: "Not allowed." }, 403);
 
-		const body = c.req.valid("json") as MediaMetaBody;
-		updateMediaMeta.get(
-			body.originalName?.trim() || row.originalName,
-			body.title ?? null,
-			body.altText ?? null,
-			body.description ?? null,
-			row.id,
-		);
-		if (user)
-			recordActivity(c, user.id, "media.update", `Updated metadata of media #${row.id}`);
-		return c.var.inertia.redirect("/media");
-	});
+			const body = c.req.valid("json") as MediaMetaBody;
+			updateMediaMeta.get(
+				body.originalName?.trim() || row.originalName,
+				body.title ?? null,
+				body.altText ?? null,
+				body.description ?? null,
+				row.id,
+			);
+			if (user)
+				recordActivity(
+					c,
+					user.id,
+					"media.update",
+					`Updated metadata of media #${row.id}`,
+				);
+			return c.var.inertia.redirect("/media");
+		},
+	);
 
-	app.delete("/media/:id", requireAuth, requirePermission("media.delete"), (c) => {
-		const user = c.var.user;
-		const id = paramId(c.req.param("id"));
-		const row = id ? findMediaById.get(id) : null;
-		if (!row) return c.json({ error: "Media not found." }, 404);
-		if (!canManage(user, row)) return c.json({ error: "Not allowed." }, 403);
+	app.delete(
+		"/media/:id",
+		requireAuth,
+		requirePermission("media.delete"),
+		(c) => {
+			const user = c.var.user;
+			const id = paramId(c.req.param("id"));
+			const row = id ? findMediaById.get(id) : null;
+			if (!row) return c.json({ error: "Media not found." }, 404);
+			if (!canManage(user, row)) return c.json({ error: "Not allowed." }, 403);
 
-		const path = filePath(row.filename);
-		if (existsSync(path)) unlinkSync(path);
-		deleteMediaById.get(row.id);
-		if (user)
-			recordActivity(c, user.id, "media.delete", `Deleted media #${row.id} (${row.originalName})`);
-		return c.var.inertia.redirect("/media");
-	});
+			const path = filePath(row.filename);
+			if (existsSync(path)) unlinkSync(path);
+			deleteMediaById.get(row.id);
+			if (user)
+				recordActivity(
+					c,
+					user.id,
+					"media.delete",
+					`Deleted media #${row.id} (${row.originalName})`,
+				);
+			return c.var.inertia.redirect("/media");
+		},
+	);
 
 	return app;
 };
