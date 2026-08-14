@@ -271,26 +271,34 @@
           <h2 class="text-[1.1rem] m-0 mb-3">Profile information</h2>
           <form onsubmit={submitInfo} novalidate>
             <Field id="name" label="Name" error={info.errors.name}>
-              <input
-                id="name"
-                type="text"
-                name="name"
-                autocomplete="name"
-                class={inputClass}
-                bind:value={info.name}
-                onchange={() => info.clearErrors('name')}
-              />
+              {#snippet children({ errorId, hasError })}
+                <input
+                  id="name"
+                  type="text"
+                  name="name"
+                  autocomplete="name"
+                  class={inputClass}
+                  aria-invalid={hasError ? 'true' : undefined}
+                  aria-describedby={errorId}
+                  bind:value={info.name}
+                  onchange={() => info.clearErrors('name')}
+                />
+              {/snippet}
             </Field>
             <Field id="email" label="Email" error={info.errors.email}>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                autocomplete="email"
-                class={inputClass}
-                bind:value={info.email}
-                onchange={() => info.clearErrors('email')}
-              />
+              {#snippet children({ errorId, hasError })}
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  autocomplete="email"
+                  class={inputClass}
+                  aria-invalid={hasError ? 'true' : undefined}
+                  aria-describedby={errorId}
+                  bind:value={info.email}
+                  onchange={() => info.clearErrors('email')}
+                />
+              {/snippet}
             </Field>
             <button class={btnPrimary} type="submit" disabled={info.processing}>
               {info.processing ? 'Saving…' : 'Save changes'}
@@ -306,45 +314,57 @@
               label="Current password"
               error={pass.errors.currentPassword}
             >
-              <input
-                id="currentPassword"
-                type="password"
-                name="currentPassword"
-                autocomplete="current-password"
-                class={inputClass}
-                bind:value={pass.currentPassword}
-                onchange={() => pass.clearErrors('currentPassword')}
-              />
+              {#snippet children({ errorId, hasError })}
+                <input
+                  id="currentPassword"
+                  type="password"
+                  name="currentPassword"
+                  autocomplete="current-password"
+                  class={inputClass}
+                  aria-invalid={hasError ? 'true' : undefined}
+                  aria-describedby={errorId}
+                  bind:value={pass.currentPassword}
+                  onchange={() => pass.clearErrors('currentPassword')}
+                />
+              {/snippet}
             </Field>
             <Field
               id="password"
               label="New password"
               error={pass.errors.password}
             >
-              <input
-                id="password"
-                type="password"
-                name="password"
-                autocomplete="new-password"
-                class={inputClass}
-                bind:value={pass.password}
-                onchange={() => pass.clearErrors('password')}
-              />
+              {#snippet children({ errorId, hasError })}
+                <input
+                  id="password"
+                  type="password"
+                  name="password"
+                  autocomplete="new-password"
+                  class={inputClass}
+                  aria-invalid={hasError ? 'true' : undefined}
+                  aria-describedby={errorId}
+                  bind:value={pass.password}
+                  onchange={() => pass.clearErrors('password')}
+                />
+              {/snippet}
             </Field>
             <Field
               id="passwordConfirmation"
               label="Confirm new password"
               error={pass.errors.passwordConfirmation}
             >
-              <input
-                id="passwordConfirmation"
-                type="password"
-                name="passwordConfirmation"
-                autocomplete="new-password"
-                class={inputClass}
-                bind:value={pass.passwordConfirmation}
-                onchange={() => pass.clearErrors('passwordConfirmation')}
-              />
+              {#snippet children({ errorId, hasError })}
+                <input
+                  id="passwordConfirmation"
+                  type="password"
+                  name="passwordConfirmation"
+                  autocomplete="new-password"
+                  class={inputClass}
+                  aria-invalid={hasError ? 'true' : undefined}
+                  aria-describedby={errorId}
+                  bind:value={pass.passwordConfirmation}
+                  onchange={() => pass.clearErrors('passwordConfirmation')}
+                />
+              {/snippet}
             </Field>
             <button class={btnPrimary} type="submit" disabled={pass.processing}>
               {pass.processing ? 'Updating…' : 'Update password'}

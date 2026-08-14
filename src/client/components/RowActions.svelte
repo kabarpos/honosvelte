@@ -43,24 +43,49 @@
 
   function run(item: RowAction) {
     open = false
+    trigger?.focus()
     item.onClick()
   }
 
   $effect(() => {
     if (!open) return
     place()
+    const focusables = () =>
+      Array.from(
+        menu?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [],
+      )
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') open = false
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        open = false
+        trigger?.focus()
+        return
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        const items = focusables()
+        if (items.length === 0) return
+        const current = items.indexOf(document.activeElement as HTMLButtonElement)
+        const delta = e.key === 'ArrowDown' ? 1 : -1
+        const next = items[(current + delta + items.length) % items.length]
+        next?.focus()
+      }
     }
     const onDoc = (e: PointerEvent) => {
       const t = e.target as Node
-      if (trigger && !trigger.contains(t) && menu && !menu.contains(t)) open = false
+      if (trigger && !trigger.contains(t) && menu && !menu.contains(t)) {
+        open = false
+        trigger?.focus()
+      }
     }
+    // Focus the first item once the menu is placed.
+    const raf = requestAnimationFrame(() => focusables()[0]?.focus())
     window.addEventListener('keydown', onKey)
     window.addEventListener('pointerdown', onDoc)
     window.addEventListener('resize', place)
     window.addEventListener('scroll', place, true)
     return () => {
+      cancelAnimationFrame(raf)
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('pointerdown', onDoc)
       window.removeEventListener('resize', place)

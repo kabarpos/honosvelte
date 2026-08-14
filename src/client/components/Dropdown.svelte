@@ -23,22 +23,53 @@
 
   let open = $state(false);
   let root = $state<HTMLDivElement | null>(null);
+  let triggerRef = $state<HTMLDivElement | null>(null);
+  let menuRef = $state<HTMLDivElement | null>(null);
 
   function choose(item: Item) {
     if (item.disabled) return;
     open = false;
+    triggerRef?.focus();
     item.onclick?.();
+  }
+
+  function menuItems(): HTMLElement[] {
+    return Array.from(
+      menuRef?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [],
+    );
   }
 
   $effect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (root && !root.contains(e.target as Node)) open = false;
+      if (root && !root.contains(e.target as Node)) {
+        open = false;
+        triggerRef?.focus();
+      }
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && (open = false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        open = false;
+        triggerRef?.focus();
+        return;
+      }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const items = menuItems();
+        if (items.length === 0) return;
+        const current = items.indexOf(document.activeElement as HTMLElement);
+        const delta = e.key === "ArrowDown" ? 1 : -1;
+        const next = items[(current + delta + items.length) % items.length];
+        next?.focus();
+      }
+    };
+    // Move focus into the menu once it is rendered.
+    const raf = requestAnimationFrame(() => menuItems()[0]?.focus());
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
+      cancelAnimationFrame(raf);
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
     };
@@ -47,9 +78,12 @@
 
 <div class={`relative inline-block ${className}`} bind:this={root}>
   <div
+    bind:this={triggerRef}
     class="contents"
     role="button"
     tabindex="0"
+    aria-haspopup="menu"
+    aria-expanded={open}
     onclick={() => (open = !open)}
     onkeydown={(e) => {
       if (e.target !== e.currentTarget) return;
@@ -64,6 +98,7 @@
 
   {#if open}
     <div
+      bind:this={menuRef}
       class={`absolute top-full mt-2 min-w-[180px] bg-surface border border-border rounded-card shadow-card p-1 z-40 animate-[menu-in_120ms_ease] ${align === "right" ? "right-0" : "left-0"}`}
       role="menu"
     >

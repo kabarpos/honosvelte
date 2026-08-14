@@ -2,12 +2,15 @@
   let {
     checked = $bindable(false),
     label = undefined,
+    ariaLabel = undefined,
     disabled = false,
     id = undefined,
     class: className = "",
   }: {
     checked?: boolean;
     label?: string;
+    /** Accessible name fallback when no visible label is shown. */
+    ariaLabel?: string;
     disabled?: boolean;
     id?: string;
     class?: string;
@@ -27,6 +30,7 @@
     role="switch"
     aria-checked={checked}
     aria-labelledby={label ? id : undefined}
+    aria-label={label ? undefined : ariaLabel}
     {disabled}
     onclick={() => (checked = !checked)}
     class={track}
