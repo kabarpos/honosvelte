@@ -53,6 +53,7 @@
 - **2026-08-14 — OPS-01 partial:** Dockerfile runtime non-root (`adduser`, `USER app`), HEALTHCHECK memakai `bun -e` (guaranteed binary, bukan curl), `.env.production.example` tanpa secret, docker-compose healthcheck disinkronkan, CI job `docker-build` (build + boot + readiness probe); pin image ke digest masih pending.
 - **2026-08-14 — PERF-05 partial:** middleware kini mem-bypass session/settings resolution untuk `/health*` dan `/assets/*` (path-scoped early return; Inertia adapter tetap terisi agar onError/notFound aman); resolved user sudah tersimpan di request context; permission guard re-lookup masih pending.
 - **2026-08-14 — PERF-03 partial:** EXPLAIN QUERY PLAN dijalankan untuk users/media/activity/contact/notifications → `docs/audit/query-plan.md`; migration `0021` menambah covering index `(user_id, id DESC)` untuk menghilangkan temp B-tree pada pagination notifications; pola `(? = '' OR …)` dan FTS5 didokumentasikan sebagai open items.
+- **2026-08-14 — PERF-02 complete:** creation-with-upload POST kini streaming ke disk (`appendStream()` chunk-bounded, tanpa buffer full-body hingga 50 MiB); POST ber-checksum tetap buffered (checksum butuh chunk lengkap); PATCH tetap buffer per-chunk yang sudah dibatasi `TUS_CHUNK_MAX`; `tests/tus.test.ts` 45 pass.
 - **Current verification:** build/typecheck PASS (**0 error/0 warning**); full suite **209 pass, 0 fail, 816 assertions** across 27 files; **e2e suite 8 pass** (axe, keyboard modal, responsive, admin flows).
 
 ---
@@ -372,13 +373,17 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 
 ## PERF-02 — Streaming file operations
 
-- [ ] Stream media upload ke disk.
-- [ ] Hindari `arrayBuffer()` untuk file besar.
+- [x] Stream media upload ke disk.
+- [x] Hindari `arrayBuffer()` untuk file besar.
 - [x] Stream Tus GET memakai `Bun.file()`, tidak lagi `readFile()` seluruh file.
 - [ ] Hindari synchronous filesystem I/O di request path.
 - [ ] Benchmark memory usage pada concurrent upload.
 
-**Evidence:** `tests/tus.test.ts` tetap pass setelah streaming GET; media upload buffering dan benchmark masih pending.
+**Evidence:** creation-with-upload POST kini menulis body langsung ke disk via
+`appendStream()` (chunk-bounded, tanpa buffer full-body; `Upload-Checksum`
+pada POST masih memakai jalur buffered karena checksum butuh chunk lengkap);
+PATCH tetap buffer per-chunk (dibatasi `TUS_CHUNK_MAX`); suite `tests/tus.test.ts`
+45 pass termasuk concurrent PATCH dan chunk cap. Benchmark memory masih pending.
 
 ## PERF-03 — Perbaiki query plan
 

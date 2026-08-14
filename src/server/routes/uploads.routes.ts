@@ -31,6 +31,7 @@ import { rateLimit } from "../rate-limit";
 import { readBoundedBytes } from "../validation";
 import {
 	appendBytes,
+	appendStream,
 	detectMime,
 	fileSize,
 	removeFile,
@@ -138,7 +139,7 @@ export function handleOptions(): Response {
 
 export async function handlePost(
 	req: Request,
-	body: ArrayBuffer | undefined,
+	body: ArrayBuffer | ReadableStream<Uint8Array> | undefined,
 ): Promise<Response> {
 	const versionErr = checkVersion(req.headers);
 	if (versionErr)
@@ -177,8 +178,33 @@ export async function handlePost(
 	);
 
 	// Creation-With-Upload: if the POST carries a body, append it immediately.
+	// PERF-02: a request stream is written to disk in bounded chunks (no
+	// full-body buffering); only a checksum-bearing POST falls back to the
+	// buffered path (checksum needs the complete chunk).
 	let initialOffset = 0;
-	if (body && body.byteLength > 0) {
+	if (body && typeof (body as ReadableStream<Uint8Array>).getReader === "function") {
+		const stream = body as ReadableStream<Uint8Array>;
+		const { total, tooLarge } = await appendStream(
+			id,
+			stream,
+			uploadLength,
+		);
+		if (tooLarge) {
+			removeFile(id);
+			deleteUpload.run(id);
+			return errorResponse(413, "Initial chunk exceeds declared upload length");
+		}
+		if (total > 0) {
+			const res = advanceOffset.get(total, id, 0);
+			if (!res || res.n !== 1) {
+				// Race: shouldn't happen on a fresh row, but stay safe.
+				removeFile(id);
+				deleteUpload.run(id);
+				return errorResponse(409, "Offset conflict on initial append");
+			}
+			initialOffset = total;
+		}
+	} else if (body instanceof ArrayBuffer && body.byteLength > 0) {
 		const buf = new Uint8Array(body);
 		if (buf.byteLength > uploadLength) {
 			removeFile(id);
@@ -405,7 +431,7 @@ async function dispatch(
 	req: Request,
 	actualMethod: string,
 	id: string | null,
-	body: ArrayBuffer | undefined,
+	body: ArrayBuffer | ReadableStream<Uint8Array> | undefined,
 ): Promise<Response> {
 	const override = req.headers.get(H.xHttpMethodOverride.toLowerCase());
 	const method = (override ?? actualMethod).toUpperCase();
@@ -413,7 +439,8 @@ async function dispatch(
 	if (method === "POST" && !id) return handlePost(req, body);
 	if (method === "HEAD" && id) return handleHead(req, id);
 	if (method === "GET" && id) return handleGetFile(req, id);
-	if (method === "PATCH" && id) return handlePatch(req, id, body);
+	if (method === "PATCH" && id)
+		return handlePatch(req, id, body instanceof ArrayBuffer ? body : undefined);
 	if (method === "DELETE" && id) return handleDelete(req, id);
 	return new Response(JSON.stringify({ error: "Method not allowed" }), {
 		status: 405,
@@ -445,6 +472,13 @@ export const uploadsRoutes = () => {
 
 	// POST /uploads — create a new upload resource (Creation extension).
 	app.post("/", limitUpload, async (c) => {
+		// PERF-02: stream the body straight to disk when present; only a
+		// checksum-bearing POST (rare) needs the buffered path.
+		const rawBody = c.req.raw.body;
+		const hasChecksum = Boolean(c.req.header("upload-checksum"));
+		if (rawBody && !hasChecksum) {
+			return dispatch(c.req.raw, c.req.method, null, rawBody);
+		}
 		const bytes = await readBoundedBytes(c, uploadCap);
 		if (bytes === null) return c.json({ error: "Upload body too large." }, 413);
 		return dispatch(c.req.raw, c.req.method, null, bytes);

@@ -33,6 +33,35 @@ export async function appendBytes(
 	return data.byteLength;
 }
 
+/**
+ * Append a request body stream to the upload file in bounded chunks
+ * (PERF-02 — no full-body buffering for creation-with-upload). Stops as
+ * soon as `maxBytes` is exceeded and reports `tooLarge` so the caller can
+ * clean up; the caller must remove the row in that case.
+ */
+export async function appendStream(
+	id: string,
+	stream: ReadableStream<Uint8Array>,
+	maxBytes: number,
+): Promise<{ total: number; tooLarge: boolean }> {
+	const reader = stream.getReader();
+	let total = 0;
+	try {
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			if (value) {
+				total += value.byteLength;
+				if (total > maxBytes) return { total, tooLarge: true };
+				await appendFile(uploadPath(id), value);
+			}
+		}
+	} finally {
+		reader.cancel().catch(() => {});
+	}
+	return { total, tooLarge: false };
+}
+
 /** Write a complete file in one shot (used for server-side downloaded avatars). */
 export async function writeBytes(id: string, data: Uint8Array): Promise<void> {
 	await writeFile(uploadPath(id), data);
