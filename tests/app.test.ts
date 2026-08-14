@@ -371,6 +371,44 @@ describe("infrastructure", () => {
 		expect((await res.json()).status).toBe("ok");
 	});
 
+	it("splits liveness and readiness (OPS-02)", async () => {
+		const live = await call("/health/live");
+		expect(live.status).toBe(200);
+		expect((await live.json()).status).toBe("ok");
+
+		const ready = await call("/health/ready");
+		expect(ready.status).toBe(200);
+		const body = (await ready.json()) as {
+			status: string;
+			checks: Record<string, string>;
+		};
+		expect(body.status).toBe("ok");
+		expect(body.checks.db).toBe("ok");
+		expect(body.checks.migrations).toBe("ok");
+		expect(body.checks.storage).toBe("ok");
+	});
+
+	it("skips session/settings resolution on asset + health paths (PERF-05)", async () => {
+		// A forged session cookie on /health and /assets must not trigger a
+		// DB session lookup — the middleware short-circuits these paths.
+		const { writeFileSync, mkdirSync, rmSync } = await import("node:fs");
+		mkdirSync("dist/assets", { recursive: true });
+		const file = "dist/assets/__perf_test__.css";
+		writeFileSync(file, "body{}");
+		try {
+			const res = await call("/assets/__perf_test__.css", {
+				cookie: "session=forged-token-that-does-not-exist",
+			});
+			expect(res.status).toBe(200);
+			const ready = await call("/health/ready", {
+				cookie: "session=forged-token-that-does-not-exist",
+			});
+			expect(ready.status).toBe(200);
+		} finally {
+			rmSync(file, { force: true });
+		}
+	});
+
 	it("rejects an oversized JSON body before parsing (PERF-01)", async () => {
 		// REQUEST_BODY_LIMIT defaults to 100 KB; a Content-Length above the
 		// bound must be rejected with 413 without ever hitting the schema.

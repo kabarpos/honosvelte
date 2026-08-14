@@ -15,6 +15,7 @@ import type { FlashData, User } from "../shared/types";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { toPublicUser } from "./db";
 import { getPublicSettings } from "./settings";
+import { safeUrl } from "./url";
 import { Inertia, type InertiaAssets } from "./inertia";
 
 /** Context variables shared by every route/middleware. */
@@ -30,6 +31,37 @@ export interface AppEnv {
 
 export const inertiaMiddleware =
 	(assets: InertiaAssets) => async (c: Context<AppEnv>, next: Next) => {
+		const { pathname } = safeUrl(c.req.url);
+		// PERF-05: static assets and health probes never need the session —
+		// skip the user/session/settings DB work entirely. The Inertia
+		// adapter is still populated (empty settings) so onError/notFound
+		// handlers can rely on c.var.inertia for these paths too.
+		if (
+			pathname === "/health" ||
+			pathname.startsWith("/health/") ||
+			pathname.startsWith("/assets/")
+		) {
+			c.set("user", null);
+			c.set("flash", {});
+			c.set("sessionToken", null);
+			c.set(
+				"inertia",
+				new Inertia(
+					{
+						request: c.req.raw,
+						headers: Object.fromEntries(c.req.raw.headers.entries()),
+						user: null,
+						flash: {},
+						sessionToken: null,
+						settings: {},
+					},
+					assets,
+				),
+			);
+			await next();
+			return;
+		}
+
 		const raw = getCookie(c, SESSION_COOKIE);
 		const sessionToken = typeof raw === "string" && raw.length > 0 ? raw : null;
 		const row = resolveUser(sessionToken);

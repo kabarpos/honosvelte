@@ -74,6 +74,10 @@ migrate(db);
 
 /** Cheap liveness probe for the /health endpoint. */
 export const pingDb = db.query<{ n: number }, []>(`SELECT 1 AS n`);
+/** Applied-migration count — /health/ready verifies migrations ran. */
+export const migrationCount = db.query<{ n: number }, []>(
+	`SELECT COUNT(*) AS n FROM schema_migrations`,
+);
 
 // ---------------------------------------------------------------------------
 // Users

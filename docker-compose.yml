@@ -8,10 +8,22 @@ services:
       NODE_ENV: production
       APP_URL: ${APP_URL:-http://localhost:4000}
     volumes:
-      - ./data:/app/data # persistent SQLite database
+      # Persistent SQLite + uploads. The image runs as UID 1000 (non-root);
+      # on Linux, give the host directory to UID 1000:
+      #   mkdir -p data && sudo chown -R 1000:1000 data
+      - ./data:/app/data
     restart: unless-stopped
+    # Healthcheck uses `bun` (guaranteed in the image) hitting /health/ready
+    # (DB ping + storage writability).
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const r=await fetch('http://127.0.0.1:4000/health/ready');if(!r.ok)process.exit(1)",
+        ]
       interval: 30s
       timeout: 5s
+      start_period: 15s
       retries: 3

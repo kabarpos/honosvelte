@@ -11,7 +11,9 @@ import { secureHeaders } from "hono/secure-headers";
 import { compress } from "./compress";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { serveAsset } from "./assets";
-import { pingDb, toPublicUser } from "./db";
+import { config } from "./config";
+import { join } from "node:path";
+import { migrationCount, pingDb, toPublicUser } from "./db";
 import { getSettings } from "./settings";
 import { Inertia, type InertiaAssets } from "./inertia";
 import { inertiaMiddleware, type AppEnv } from "./inertia-middleware";
@@ -229,6 +231,46 @@ export function createApp(assets: InertiaAssets) {
 		);
 	});
 
+	app.get("/health/live", (c) =>
+		c.json({ status: "ok", uptime: process.uptime() }),
+	);
+	// Readiness (OPS-02): DB reachable, migrations applied, and the upload
+	// storage is writable. Returns 503 with the failing check otherwise.
+	app.get("/health/ready", async (c) => {
+		const checks: Record<string, string> = {};
+		try {
+			pingDb.get();
+			checks.db = "ok";
+		} catch {
+			checks.db = "down";
+		}
+		try {
+			// Migrations ran at startup (migrations.ts fails fast) — verify
+			// the tracking table exists and has applied rows.
+			const applied = (migrationCount.get() ?? { n: 0 }).n;
+			checks.migrations = applied > 0 ? "ok" : "none";
+		} catch {
+			checks.migrations = "down";
+		}
+		try {
+			const { mkdirSync, writeFileSync, rmSync } = await import(
+				"node:fs"
+			);
+			mkdirSync(config.upload.dir, { recursive: true });
+			const probe = join(config.upload.dir, `.probe-${process.pid}`);
+			writeFileSync(probe, "ok");
+			rmSync(probe, { force: true });
+			checks.storage = "ok";
+		} catch {
+			checks.storage = "unwritable";
+		}
+		const ready = Object.values(checks).every((v) => v === "ok");
+		return c.json(
+			{ status: ready ? "ok" : "unavailable", checks },
+			ready ? 200 : 503,
+		);
+	});
+	// Backwards-compatible alias for orchestrators on the old path.
 	app.get("/health", (c) => {
 		pingDb.get();
 		return c.json({ status: "ok", uptime: process.uptime() });

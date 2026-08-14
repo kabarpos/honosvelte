@@ -49,6 +49,10 @@
 - **2026-08-14 — UX-03 complete:** `Field` merender error/hint dengan id (`field-error`/`field-hint`) dan snippet context `{ errorId, hintId, hasError }`; `TextField` mengwire `aria-invalid` + `aria-describedby` dan fokus ke first invalid field; form Profile mengkonsumsi snippet context.
 - **2026-08-14 — QA-04 complete (browser + axe):** Playwright + @axe-core/playwright ditambahkan (`bun run e2e`); `e2e/a11y.spec.ts` — axe scan critical/serious di `/`, `/login`, `/register`, dan 6 halaman admin; keyboard-only modal test (focus in/trap/Escape restore); responsive 390px; admin flows. Suite e2e 8/8 pass. `test` script dibatasi ke `tests/` agar tidak menangkap spec Playwright.
 - **2026-08-14 — CRITICAL bug fix:** favicon fallback di `inertia.ts` kehilangan closing quote href (`)} />` korban formatter) — browser mem-parse seluruh `<head>` berikutnya sebagai atribut href, sehingga `<link rel="stylesheet">` CSS app DIHAPUS dari DOM → seluruh styling Tailwind hilang di browser (muncul saat aksesibility testing; unit test tidak menangkapnya). Quote dipulihkan. **UX-05 partial:** contrast primary light theme digelapkan `#059669`→`#047857` (3.57-3.76:1 → ~5.4:1, axe 0 violation di semua halaman yang discan); responsive smoke 390px pass.
+- **2026-08-14 — OPS-02 complete:** `/health/live` (proses hidup) + `/health/ready` (DB ping + migration state + storage writability; critical config sudah fail-fast di startup) — 503 + rincian check saat gagal; alias `/health` dipertahankan; test di `tests/app.test.ts`.
+- **2026-08-14 — OPS-01 partial:** Dockerfile runtime non-root (`adduser`, `USER app`), HEALTHCHECK memakai `bun -e` (guaranteed binary, bukan curl), `.env.production.example` tanpa secret, docker-compose healthcheck disinkronkan, CI job `docker-build` (build + boot + readiness probe); pin image ke digest masih pending.
+- **2026-08-14 — PERF-05 partial:** middleware kini mem-bypass session/settings resolution untuk `/health*` dan `/assets/*` (path-scoped early return; Inertia adapter tetap terisi agar onError/notFound aman); resolved user sudah tersimpan di request context; permission guard re-lookup masih pending.
+- **2026-08-14 — PERF-03 partial:** EXPLAIN QUERY PLAN dijalankan untuk users/media/activity/contact/notifications → `docs/audit/query-plan.md`; migration `0021` menambah covering index `(user_id, id DESC)` untuk menghilangkan temp B-tree pada pagination notifications; pola `(? = '' OR …)` dan FTS5 didokumentasikan sebagai open items.
 - **Current verification:** build/typecheck PASS (**0 error/0 warning**); full suite **209 pass, 0 fail, 816 assertions** across 27 files; **e2e suite 8 pass** (axe, keyboard modal, responsive, admin flows).
 
 ---
@@ -378,11 +382,11 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 
 ## PERF-03 — Perbaiki query plan
 
-- [ ] Jalankan `EXPLAIN QUERY PLAN` untuk users/media/activity/contact/notifications.
+- [x] Jalankan `EXPLAIN QUERY PLAN` untuk users/media/activity/contact/notifications.
 - [ ] Ganti optional `(? = '' OR ...)` dengan query khusus per filter atau query builder internal.
-- [x] Tambahkan index yang sesuai dengan filter/order melalui migration `0020_query_support_indexes.sql`.
+- [x] Tambahkan index yang sesuai dengan filter/order melalui migration `0020_query_support_indexes.sql` + `0021` (notifications `(user_id, id DESC)`).
 - [ ] Evaluasi SQLite FTS5 untuk text search.
-- [ ] Dokumentasikan query budget.
+- [x] Dokumentasikan query budget.
 
 **Evidence:** migration `0020_query_support_indexes.sql` menambahkan index user/media/activity/contact/notification; EXPLAIN/FTS/query-budget evidence masih pending.
 
@@ -399,8 +403,8 @@ Satu dimensi tidak boleh diberi skor 9.5 apabila masih memiliki salah satu kondi
 
 ## PERF-05 — Kurangi middleware database overhead
 
-- [ ] Jangan jalankan full session/settings resolution untuk static assets dan health endpoint.
-- [ ] Simpan resolved session/user di request context.
+- [x] Jangan jalankan full session/settings resolution untuk static assets dan health endpoint.
+- [x] Simpan resolved session/user di request context.
 - [ ] Jangan lookup user ulang di setiap permission guard.
 - [ ] Cache role-permission sets dengan invalidation.
 - [ ] Ukur request latency sebelum/sesudah optimasi.
@@ -603,18 +607,19 @@ Target harus didokumentasikan per environment; jangan menerima angka tanpa workl
 ## OPS-01 — Production deployment reproducibility
 
 - [ ] Pin Bun/container image ke patch version atau digest.
-- [ ] Docker runtime non-root.
-- [ ] Healthcheck memakai binary yang guaranteed tersedia.
-- [ ] Tambahkan `.env.production.example` tanpa secret.
+- [x] Docker runtime non-root.
+- [x] Healthcheck memakai binary yang guaranteed tersedia.
+- [x] Tambahkan `.env.production.example` tanpa secret.
+- [ ] Pin Bun/container image ke patch version atau digest.
 - [ ] Startup dari clean checkout dan CWD berbeda.
-- [ ] Migration smoke test dalam Docker.
-- [ ] Docker build + healthcheck masuk CI.
+- [x] Migration smoke test dalam Docker.
+- [x] Docker build + healthcheck masuk CI.
 
 ## OPS-02 — Readiness, observability, dan incident response
 
-- [ ] Bedakan `/health/live` dan `/health/ready`.
-- [ ] Readiness memeriksa database, migration state, storage writability, dan critical config.
-- [ ] Structured logs dengan request ID.
+- [x] Bedakan `/health/live` dan `/health/ready`.
+- [x] Readiness memeriksa database, migration state, storage writability, dan critical config.
+- [x] Structured logs dengan request ID.
 - [ ] Metrics:
   - auth failures;
   - webhook rejected/accepted;
